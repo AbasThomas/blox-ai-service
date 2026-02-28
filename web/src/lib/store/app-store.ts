@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PlanTier } from '@nextjs-blox/shared-types';
+import { Persona, PlanTier } from '@nextjs-blox/shared-types';
 
-type Persona = 'Freelancer' | 'JobSeeker' | 'Professional' | 'Enterprise' | 'Student';
+type UserPersona = Persona | `${Persona}`;
 
 export interface Asset {
   id: string;
@@ -35,7 +35,7 @@ interface UserProfile {
   name: string;
   email: string;
   tier: PlanTier;
-  persona: Persona;
+  persona: UserPersona;
   avatarUrl?: string;
   streak?: number;
   badges?: Badge[];
@@ -75,7 +75,7 @@ interface BloxState {
 
   // Legacy actions
   setTier: (tier: PlanTier) => void;
-  setPersona: (persona: Persona) => void;
+  setPersona: (persona: UserPersona) => void;
   setLastVisitedRoute: (route: string) => void;
   addNotification: (title: string) => void;
   markNotificationRead: (id: string) => void;
@@ -86,7 +86,7 @@ const DEFAULT_USER: UserProfile = {
   name: 'Demo User',
   email: 'demo@blox.app',
   tier: PlanTier.FREE,
-  persona: 'JobSeeker',
+  persona: Persona.JOB_SEEKER,
   streak: 5,
   badges: [],
 };

@@ -3,5 +3,6 @@ export * from './lib/entities';
 export * from './lib/enums';
 export * from './lib/integrations';
 export * from './lib/navigation';
+export * from './lib/onboarding';
 export * from './lib/public-profile';
 

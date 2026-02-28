@@ -33,3 +33,14 @@ export enum Visibility {
   TIME_LIMITED = 'TIME_LIMITED',
 }
 
+export enum Persona {
+  FREELANCER = 'Freelancer',
+  JOB_SEEKER = 'JobSeeker',
+  DESIGNER = 'Designer',
+  DEVELOPER = 'Developer',
+  STUDENT = 'Student',
+  EXECUTIVE = 'Executive',
+  PROFESSIONAL = 'Professional',
+  ENTERPRISE = 'Enterprise',
+}
+

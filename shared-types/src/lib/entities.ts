@@ -1,4 +1,4 @@
-import { AssetType, BillingCycle, JobStatus, PlanTier, Visibility } from './enums';
+import { AssetType, BillingCycle, JobStatus, Persona, PlanTier, Visibility } from './enums';
 
 export interface ApiResponse<T> {
   data: T;
@@ -26,7 +26,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   tier: PlanTier;
-  persona: 'Freelancer' | 'JobSeeker' | 'Professional' | 'Enterprise' | 'Student';
+  persona: Persona;
   mfaEnabled: boolean;
 }
 
