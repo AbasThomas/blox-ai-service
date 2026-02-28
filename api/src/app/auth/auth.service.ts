@@ -378,6 +378,10 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    if (!email || typeof email !== 'string') {
+      throw new BadRequestException('Email is required');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
     });

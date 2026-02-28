@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AiJobResult, AssetType, SeoSuggestionPayload, Visibility } from '@nextjs-blox/shared-types';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -35,12 +35,22 @@ export class AssetsService {
   }
 
   async create(userId: string, type: PrismaAssetType | AssetType, title: string, templateId?: string) {
+    const normalizedType = String(type ?? '');
+    if (!Object.values(PrismaAssetType).includes(normalizedType as PrismaAssetType)) {
+      throw new BadRequestException('Invalid asset type');
+    }
+
+    const normalizedTitle = typeof title === 'string' ? title.trim() : '';
+    if (!normalizedTitle) {
+      throw new BadRequestException('Title is required');
+    }
+
     const asset = await this.prisma.asset.create({
       data: {
         userId,
-        type: type as PrismaAssetType,
-        title,
-        slug: this.slugify(title),
+        type: normalizedType as PrismaAssetType,
+        title: normalizedTitle,
+        slug: this.slugify(normalizedTitle),
         content: { sections: [], generatingStatus: 'idle', templateId: templateId ?? null },
         healthScore: 0,
         visibility: 'PRIVATE',
@@ -80,6 +90,13 @@ export class AssetsService {
     },
   ) {
     const asset = await this.getById(userId, id);
+
+    if (
+      patch.visibility !== undefined &&
+      !Object.values(Visibility).includes(patch.visibility)
+    ) {
+      throw new BadRequestException('Invalid visibility');
+    }
 
     const updated = await this.prisma.asset.update({
       where: { id: asset.id },

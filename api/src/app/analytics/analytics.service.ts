@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { randomBytes } from 'crypto';
 
@@ -39,9 +39,21 @@ export class AnalyticsService {
   }
 
   async createShortLink(userId: string, assetId: string, source: string, targetUrl: string) {
+    if (!source || typeof source !== 'string' || !source.trim()) {
+      throw new BadRequestException('source is required');
+    }
+    if (!targetUrl || typeof targetUrl !== 'string' || !targetUrl.trim()) {
+      throw new BadRequestException('targetUrl is required');
+    }
+    try {
+      new URL(targetUrl);
+    } catch {
+      throw new BadRequestException('targetUrl must be a valid URL');
+    }
+
     const shortCode = randomBytes(4).toString('hex');
     return this.prisma.linkTracker.create({
-      data: { assetId, source, targetUrl, shortCode, clickCount: 0 },
+      data: { assetId, source: source.trim(), targetUrl: targetUrl.trim(), shortCode, clickCount: 0 },
     });
   }
 
@@ -49,5 +61,4 @@ export class AnalyticsService {
     return this.prisma.linkTracker.findMany({ where: { assetId } });
   }
 }
-
 
