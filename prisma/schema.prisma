@@ -1,0 +1,307 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  PREMIUM
+  ENTERPRISE
+}
+
+enum BillingCycle {
+  MONTHLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
+enum AssetType {
+  PORTFOLIO
+  RESUME
+  COVER_LETTER
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+  PASSWORD
+  TIME_LIMITED
+}
+
+model User {
+  id                String              @id @default(cuid())
+  email             String              @unique
+  passwordHash      String?
+  fullName          String
+  tier              PlanTier            @default(FREE)
+  persona           String              @default("JobSeeker")
+  mfaEnabled        Boolean             @default(false)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  oauthConnections  OAuthConnection[]
+  subscriptions     Subscription[]
+  assets            Asset[]
+  notifications     Notification[]
+  badges            BadgeProgress[]
+  featureUsage      FeatureUsage[]
+  comments          Comment[]
+  auditLogs         AuditLog[]
+  apiKeys           ApiKey[]
+}
+
+model OAuthConnection {
+  id          String   @id @default(cuid())
+  userId      String
+  provider    String
+  providerUid String
+  accessToken String?
+  refreshToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUid])
+  @@index([userId, provider])
+}
+
+model Subscription {
+  id                 String       @id @default(cuid())
+  userId             String
+  tier               PlanTier
+  cycle              BillingCycle
+  amountMinor        Int
+  currency           String       @default("USD")
+  provider           String       @default("paystack")
+  providerReference  String?
+  subscriptionCode   String?
+  trialEndsAt        DateTime?
+  periodStartAt      DateTime
+  periodEndAt        DateTime
+  autoRenew          Boolean      @default(true)
+  status             String       @default("active")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices           Invoice[]
+
+  @@index([userId, status])
+}
+
+model Invoice {
+  id               String       @id @default(cuid())
+  subscriptionId   String
+  amountMinor      Int
+  currency         String       @default("USD")
+  status           String
+  providerEventId  String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id              String         @id @default(cuid())
+  userId          String
+  type            AssetType
+  title           String
+  slug            String?
+  healthScore     Int            @default(0)
+  visibility      Visibility     @default(PRIVATE)
+  passwordHash    String?
+  expiresAt       DateTime?
+  seoConfig       Json?
+  content         Json
+  publishedUrl    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions        AssetVersion[]
+  comments        Comment[]
+  publishTargets  PublishTarget[]
+  analyticsLinks  LinkTracker[]
+
+  @@index([userId, type])
+  @@index([slug])
+}
+
+model AssetVersion {
+  id          String   @id @default(cuid())
+  assetId      String
+  versionLabel String
+  branchName   String?
+  content      Json
+  createdAt    DateTime @default(now())
+  createdBy    String
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
+}
+
+model Template {
+  id             String   @id @default(cuid())
+  ownerId        String?
+  name           String
+  category       String
+  industry       String
+  schemaVersion  String   @default("1.0")
+  definition     Json
+  isPublic       Boolean  @default(false)
+  priceMinor     Int?
+  currency       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  forks          TemplateFork[]
+  listings       MarketplaceListing[]
+
+  @@index([category, industry])
+}
+
+model TemplateFork {
+  id          String   @id @default(cuid())
+  templateId  String
+  userId      String
+  createdAt   DateTime @default(now())
+  template    Template @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, userId])
+}
+
+model PublishTarget {
+  id            String   @id @default(cuid())
+  assetId        String
+  subdomain      String?
+  customDomain   String?
+  sslProvisioned Boolean  @default(false)
+  isActive       Boolean  @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([subdomain])
+  @@index([customDomain])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  assetId      String
+  userId       String
+  body         String
+  resolved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  asset        Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  title       String
+  payload     Json?
+  readAt      DateTime?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model BadgeProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  badgeKey    String
+  progress    Int      @default(0)
+  unlockedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeKey])
+}
+
+model FeatureUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  featureKey  String
+  usedCount   Int      @default(0)
+  windowStart DateTime @default(now())
+  windowEnd   DateTime
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, featureKey])
+}
+
+model LinkTracker {
+  id          String   @id @default(cuid())
+  assetId      String
+  source      String
+  targetUrl   String
+  shortCode   String   @unique
+  clickCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action, createdAt])
+}
+
+model ApiKey {
+  id           String   @id @default(cuid())
+  userId       String
+  label        String
+  keyPrefix    String
+  keyHash      String
+  lastUsedAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketplaceListing {
+  id             String            @id @default(cuid())
+  templateId      String
+  sellerId        String
+  priceMinor      Int
+  currency        String            @default("USD")
+  status          String            @default("active")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  template        Template          @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  orders          MarketplaceOrder[]
+
+  @@index([sellerId, status])
+}
+
+model MarketplaceOrder {
+  id            String              @id @default(cuid())
+  listingId      String
+  buyerId        String
+  grossMinor     Int
+  commissionMinor Int
+  netMinor       Int
+  status         String              @default("pending")
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  listing        MarketplaceListing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([buyerId, status])
+}
+

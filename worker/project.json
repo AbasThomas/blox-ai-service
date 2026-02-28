@@ -1,0 +1,33 @@
+{
+  "name": "worker",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "worker/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/worker",
+        "main": "worker/src/main.ts",
+        "tsConfig": "worker/tsconfig.app.json",
+        "assets": ["worker/src/assets"]
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "worker:build"
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}
+

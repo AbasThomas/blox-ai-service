@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blox-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blox-worker
+  template:
+    metadata:
+      labels:
+        app: blox-worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/your-org/blox-worker:latest
+          envFrom:
+            - secretRef:
+                name: blox-secrets
+
+

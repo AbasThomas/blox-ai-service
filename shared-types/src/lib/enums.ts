@@ -1,0 +1,35 @@
+export enum PlanTier {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  PREMIUM = 'PREMIUM',
+  ENTERPRISE = 'ENTERPRISE',
+}
+
+export enum BillingCycle {
+  MONTHLY = 'MONTHLY',
+  SEMI_ANNUAL = 'SEMI_ANNUAL',
+  ANNUAL = 'ANNUAL',
+}
+
+export enum AssetType {
+  PORTFOLIO = 'PORTFOLIO',
+  RESUME = 'RESUME',
+  COVER_LETTER = 'COVER_LETTER',
+}
+
+export enum JobStatus {
+  QUEUED = 'QUEUED',
+  RUNNING = 'RUNNING',
+  PARTIAL = 'PARTIAL',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+  FALLBACK_COMPLETED = 'FALLBACK_COMPLETED',
+}
+
+export enum Visibility {
+  PUBLIC = 'PUBLIC',
+  PRIVATE = 'PRIVATE',
+  PASSWORD = 'PASSWORD',
+  TIME_LIMITED = 'TIME_LIMITED',
+}
+

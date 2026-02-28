@@ -1,0 +1,31 @@
+export const PROFESSIONAL_INTEGRATIONS = [
+  'linkedin',
+  'github',
+  'gitlab',
+  'stackoverflow',
+  'upwork',
+  'fiverr',
+  'freelancer',
+  'behance',
+  'dribbble',
+  'medium',
+  'substack',
+  'google-scholar',
+  'researchgate',
+  'orcid',
+  'notion',
+  'slack',
+  'trello',
+  'asana',
+  'jira',
+  'zapier',
+  'google-workspace',
+  'x',
+  'youtube',
+  'instagram',
+  'facebook',
+  'calendly',
+] as const;
+
+export type IntegrationProvider = (typeof PROFESSIONAL_INTEGRATIONS)[number];
+

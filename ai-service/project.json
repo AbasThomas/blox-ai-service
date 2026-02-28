@@ -1,0 +1,34 @@
+{
+  "name": "ai-service",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "ai-service/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/ai-service",
+        "main": "ai-service/src/main.ts",
+        "tsConfig": "ai-service/tsconfig.app.json",
+        "assets": ["ai-service/src/assets"]
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "ai-service:build"
+      }
+    },
+    "test": {
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}
+
+

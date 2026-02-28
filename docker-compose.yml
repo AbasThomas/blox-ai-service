@@ -1,0 +1,138 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-blox}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-blox}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: 3333
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-blox}
+      REDIS_URL: redis://redis:6379
+      MONGODB_URL: mongodb://mongo:27017/blox
+      APP_BASE_URL: http://localhost:4200
+      APP_URL: http://localhost:4200
+    ports:
+      - '3333:3333'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: infra/docker/ai-service.Dockerfile
+    env_file:
+      - .env
+    environment:
+      AI_SERVICE_PORT: 3334
+    ports:
+      - '3334:3334'
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      AI_SERVICE_URL: http://ai-service:3334
+      APP_BASE_URL: http://localhost:4200
+    depends_on:
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+      ai-service:
+        condition: service_started
+    restart: unless-stopped
+
+  realtime:
+    build:
+      context: .
+      dockerfile: infra/docker/realtime.Dockerfile
+    env_file:
+      - .env
+    environment:
+      REALTIME_PORT: 3335
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '3335:3335'
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    env_file:
+      - .env
+    environment:
+      PORT: 4200
+      NEXT_PUBLIC_APP_BASE_URL: http://localhost:4200
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3333
+    ports:
+      - '4200:4200'
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mongo_data:
+
+

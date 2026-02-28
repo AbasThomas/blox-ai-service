@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blox-web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: blox-web
+  template:
+    metadata:
+      labels:
+        app: blox-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/your-org/blox-web:latest
+          ports:
+            - containerPort: 4200
+
+
