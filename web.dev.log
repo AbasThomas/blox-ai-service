@@ -1,0 +1,88 @@
+
+[2m> [22m[2mnx run[22m web:dev --port=4200
+
+[2m> [22mnext dev --port=4200
+
+   [1m[38;2;173;127;168m▲ Next.js 16.0.11[39m[22m (Turbopack)
+   - Local:         http://localhost:4200
+   - Network:       http://192.168.1.131:4200
+
+ [32m[1m✓[22m[39m Starting...
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ [32m[1m✓[22m[39m Ready in 30.2s
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [33m[1m⚠[22m[39m Failed to reload dynamic routes: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [33m[1m⚠[22m[39m Failed to reload dynamic routes: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
+    at [3mignore-listed frames[23m
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+ [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
+    at [3mignore-listed frames[23m
+
+[2m> [22m[2mnx run[22m web:dev --port=4200
+
+[2m> [22mnext dev --port=4200
+

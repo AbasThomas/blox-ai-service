@@ -52,6 +52,10 @@ export class ScannerService {
     };
   }
 
+  async duplicate(userId: string, assetId: string, jobDescription: string) {
+    return this.scan(userId, assetId, jobDescription);
+  }
+
   async atsScore(userId: string, assetId: string) {
     const asset = await this.prisma.asset.findFirst({ where: { id: assetId, userId } });
     if (!asset) throw new NotFoundException('Asset not found');
@@ -113,5 +117,4 @@ export class ScannerService {
     };
   }
 }
-
 

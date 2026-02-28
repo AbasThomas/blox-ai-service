@@ -12,7 +12,7 @@ export class TemplatesService {
         isPublic: true,
         ...(category && { category }),
         ...(industry && { industry }),
-        ...(search && { name: { contains: search, mode: 'insensitive' as Prisma.QueryMode } }),
+        ...(search && { name: { contains: search, mode: 'insensitive' } }),
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -74,7 +74,7 @@ export class TemplatesService {
         status: 'active',
         template: {
           ...(category && { category }),
-          ...(search && { name: { contains: search, mode: 'insensitive' as Prisma.QueryMode } }),
+          ...(search && { name: { contains: search, mode: 'insensitive' } }),
         },
       },
       include: { template: true },
@@ -97,5 +97,4 @@ export class TemplatesService {
     });
   }
 }
-
 

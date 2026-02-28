@@ -3,7 +3,7 @@ import { AiJobResult, AssetType, SeoSuggestionPayload, Visibility } from '@nextj
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { AssetType as PrismaAssetType, Prisma } from '@prisma/client';
 import axios from 'axios';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL ?? 'http://localhost:3334';
@@ -16,9 +16,9 @@ export class AssetsService {
     @InjectQueue('asset-duplicate') private readonly duplicateQueue: Queue,
   ) {}
 
-  async list(userId: string, type?: AssetType) {
+  async list(userId: string, type?: PrismaAssetType | AssetType) {
     return this.prisma.asset.findMany({
-      where: { userId, ...(type ? { type } : {}) },
+      where: { userId, ...(type ? { type: type as PrismaAssetType } : {}) },
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
@@ -34,11 +34,11 @@ export class AssetsService {
     });
   }
 
-  async create(userId: string, type: AssetType, title: string, templateId?: string) {
+  async create(userId: string, type: PrismaAssetType | AssetType, title: string, templateId?: string) {
     const asset = await this.prisma.asset.create({
       data: {
         userId,
-        type,
+        type: type as PrismaAssetType,
         title,
         slug: this.slugify(title),
         content: { sections: [], generatingStatus: 'idle', templateId: templateId ?? null },
@@ -153,7 +153,7 @@ export class AssetsService {
 
     await this.prisma.asset.update({
       where: { id: asset.id },
-      data: { seoConfig: mergedSeo as Prisma.InputJsonValue },
+      data: { seoConfig: mergedSeo as unknown as Prisma.InputJsonValue },
     });
 
     return suggestion;
@@ -357,7 +357,7 @@ export class AssetsService {
 
   private async tryAiSeoSuggestion(input: {
     title: string;
-    type: AssetType;
+    type: PrismaAssetType;
     fullName: string;
     contentText: string;
   }): Promise<Partial<SeoSuggestionPayload> | null> {

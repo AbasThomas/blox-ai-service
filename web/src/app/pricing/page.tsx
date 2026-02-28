@@ -63,7 +63,7 @@ export default function PricingPage() {
           return (
             <div key={plan.tier}
               className={`rounded-2xl border-2 bg-white p-6 flex flex-col shadow-sm ${plan.color} relative`}>
-              {plan.badge && (
+              {'badge' in plan && plan.badge && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-3 py-0.5 text-xs font-bold text-white">
                   {plan.badge}
                 </span>

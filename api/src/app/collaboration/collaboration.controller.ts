@@ -1,23 +1,37 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { CollaborationService } from './collaboration.service';
+import { JwtAuthGuard } from '../common/guards/jwt.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
+@UseGuards(JwtAuthGuard)
 @Controller('collaboration')
 export class CollaborationController {
   constructor(private readonly collaborationService: CollaborationService) {}
 
-  @Get('workspace/:id')
-  workspace(@Param('id') id: string) {
-    return this.collaborationService.workspace(id);
+  @Get(':assetId/comments')
+  getComments(
+    @CurrentUser() _user: User,
+    @Param('assetId') assetId: string,
+  ) {
+    return this.collaborationService.getComments(assetId);
   }
 
-  @Post('workspace/:id/comment')
-  comment(@Param('id') id: string, @Body() payload: { body: string; mention?: string }) {
-    return this.collaborationService.comment(id, payload.body, payload.mention);
+  @Post(':assetId/comments')
+  addComment(
+    @CurrentUser() user: User,
+    @Param('assetId') assetId: string,
+    @Body() payload: { body: string },
+  ) {
+    return this.collaborationService.addComment(user.id, assetId, payload.body);
   }
 
-  @Post('workspace/:id/permission')
-  permission(@Param('id') id: string, @Body() payload: { userId: string; role: 'view' | 'edit' }) {
-    return this.collaborationService.permission(id, payload.userId, payload.role);
+  @Post('comments/:commentId/resolve')
+  resolveComment(
+    @CurrentUser() user: User,
+    @Param('commentId') commentId: string,
+  ) {
+    return this.collaborationService.resolveComment(user.id, commentId);
   }
 }
 
