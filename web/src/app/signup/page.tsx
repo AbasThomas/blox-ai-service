@@ -5,15 +5,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
-import { PlanTier } from '@nextjs-blox/shared-types';
+import { Persona, PlanTier } from '@nextjs-blox/shared-types';
 
-type Persona = 'Freelancer' | 'JobSeeker' | 'Professional' | 'Student';
+type SignupPersona =
+  | Persona.FREELANCER
+  | Persona.JOB_SEEKER
+  | Persona.DESIGNER
+  | Persona.DEVELOPER
+  | Persona.STUDENT
+  | Persona.EXECUTIVE;
 
-const PERSONAS: { value: Persona; label: string; desc: string }[] = [
-  { value: 'Freelancer', label: 'Freelancer', desc: 'Client work & portfolio' },
-  { value: 'JobSeeker', label: 'Job Seeker', desc: 'Resumes & applications' },
-  { value: 'Professional', label: 'Professional', desc: 'Career advancement' },
-  { value: 'Student', label: 'Student', desc: 'First jobs & internships' },
+const PERSONAS: { value: SignupPersona; label: string; desc: string }[] = [
+  { value: Persona.FREELANCER, label: 'Freelancer', desc: 'Client work & portfolio' },
+  { value: Persona.JOB_SEEKER, label: 'Job Seeker', desc: 'Resumes & applications' },
+  { value: Persona.DESIGNER, label: 'Designer', desc: 'Portfolio-first layout' },
+  { value: Persona.DEVELOPER, label: 'Developer', desc: 'Projects & technical depth' },
+  { value: Persona.STUDENT, label: 'Student', desc: 'First jobs & internships' },
+  { value: Persona.EXECUTIVE, label: 'Executive', desc: 'Leadership & outcomes' },
 ];
 
 export default function SignupPage() {
@@ -25,7 +33,7 @@ export default function SignupPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    persona: 'JobSeeker' as Persona,
+    persona: Persona.JOB_SEEKER as SignupPersona,
     acceptTerms: false,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -63,20 +71,21 @@ export default function SignupPage() {
       setServerError('');
       try {
         const result = (await authApi.signup({
+          fullName: form.name,
           name: form.name,
           email: form.email,
           password: form.password,
           persona: form.persona,
-        })) as { accessToken: string; refreshToken: string; user: { id: string; name: string; email: string; tier: PlanTier; persona: string } };
+        })) as { accessToken: string; refreshToken: string; user: { id: string; name?: string; fullName?: string; email: string; tier: PlanTier; persona: string } };
 
         login(
           { accessToken: result.accessToken, refreshToken: result.refreshToken },
           {
             id: result.user.id,
-            name: result.user.name,
+            name: result.user.fullName ?? result.user.name ?? form.name,
             email: result.user.email,
             tier: result.user.tier ?? PlanTier.FREE,
-            persona: result.user.persona as Persona,
+            persona: result.user.persona as SignupPersona,
           },
         );
         router.push('/dashboard');

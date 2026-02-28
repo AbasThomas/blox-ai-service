@@ -56,7 +56,7 @@ async function del<T>(path: string): Promise<T> {
 
 // Auth
 export const authApi = {
-  signup: (data: { name: string; email: string; password: string; persona: string }) =>
+  signup: (data: { name?: string; fullName?: string; email: string; password: string; persona: string }) =>
     post('/auth/signup', data),
   login: (data: { email: string; password: string; rememberMe?: boolean }) =>
     post('/auth/login', data),
@@ -137,6 +137,15 @@ export const collabApi = {
 // Integrations
 export const integrationsApi = {
   list: () => get('/integrations'),
+  connect: (provider: string) => post(`/integrations/connect/${provider}`, {}),
   disconnect: (provider: string) => del(`/integrations/${provider}`),
   getProviders: () => get('/integrations/providers'),
+};
+
+// Onboarding import flow
+export const onboardingApi = {
+  startImport: (data: unknown) => post('/onboarding/import/start', data),
+  getImportStatus: (runId: string) => get(`/onboarding/import/${runId}/status`),
+  getImportPreview: (runId: string) => get(`/onboarding/import/${runId}/preview`),
+  confirmImport: (runId: string, data: unknown) => post(`/onboarding/import/${runId}/confirm`, data),
 };
