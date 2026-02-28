@@ -17,6 +17,7 @@ interface ProviderDefinition {
   authUrl: string | null;
   scopes: string[];
   priority: 'primary' | 'secondary' | 'optional';
+  oauthEnvKeys?: string[];
 }
 
 const OAUTH_BASE = '/v1/auth/oauth';
@@ -30,6 +31,7 @@ const PROVIDERS: ProviderDefinition[] = [
     authUrl: `${OAUTH_BASE}/linkedin`,
     scopes: ['r_liteprofile', 'r_emailaddress'],
     priority: 'primary',
+    oauthEnvKeys: ['LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET'],
   },
   {
     id: 'github',
@@ -39,6 +41,7 @@ const PROVIDERS: ProviderDefinition[] = [
     authUrl: `${OAUTH_BASE}/github`,
     scopes: ['read:user', 'user:email', 'repo'],
     priority: 'secondary',
+    oauthEnvKeys: ['GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET'],
   },
   {
     id: 'upwork',
@@ -48,6 +51,7 @@ const PROVIDERS: ProviderDefinition[] = [
     authUrl: `${OAUTH_BASE}/upwork`,
     scopes: ['freelancer.profile.read', 'graphql'],
     priority: 'secondary',
+    oauthEnvKeys: ['UPWORK_CLIENT_ID', 'UPWORK_CLIENT_SECRET'],
   },
   {
     id: 'fiverr',
@@ -84,6 +88,7 @@ const PROVIDERS: ProviderDefinition[] = [
     authUrl: `${OAUTH_BASE}/figma`,
     scopes: ['file_read'],
     priority: 'optional',
+    oauthEnvKeys: ['FIGMA_CLIENT_ID', 'FIGMA_CLIENT_SECRET'],
   },
   {
     id: 'coursera',
@@ -133,15 +138,36 @@ export class IntegrationsService {
       throw new NotFoundException('Provider not supported');
     }
 
+    const existing = await this.prisma.oAuthConnection.findFirst({
+      where: { userId, provider: providerDef.id },
+      select: { id: true, createdAt: true },
+    });
+
+    const oauthConfigured = this.hasOauthConfig(providerDef);
+    const shouldUseOAuth = providerDef.mode === 'oauth' && oauthConfigured;
+
+    if (!existing && !shouldUseOAuth) {
+      await this.prisma.oAuthConnection.create({
+        data: {
+          userId,
+          provider: providerDef.id,
+          providerUid: `${userId}:${providerDef.id}:fallback`,
+          accessToken: null,
+          refreshToken: null,
+        },
+      });
+    }
+
     return {
       provider: providerDef.id,
       mode: providerDef.mode,
-      authUrl: providerDef.authUrl,
+      authUrl: shouldUseOAuth ? providerDef.authUrl : null,
       scopes: providerDef.scopes,
-      connected: !!(await this.prisma.oAuthConnection.findFirst({
-        where: { userId, provider: providerDef.id },
-        select: { id: true },
-      })),
+      connected: existing ? true : !shouldUseOAuth,
+      fallbackMode: !shouldUseOAuth,
+      message: shouldUseOAuth
+        ? 'Continue with OAuth to import live data.'
+        : 'Using fallback/manual import until OAuth app credentials are configured.',
       privacyNotice: 'We only read public/profile data and never post or modify your accounts.',
     };
   }
@@ -166,5 +192,11 @@ export class IntegrationsService {
     });
 
     return { provider, connected: false };
+  }
+
+  private hasOauthConfig(provider: ProviderDefinition) {
+    const keys = provider.oauthEnvKeys ?? [];
+    if (keys.length === 0) return true;
+    return keys.every((key) => !!process.env[key]);
   }
 }

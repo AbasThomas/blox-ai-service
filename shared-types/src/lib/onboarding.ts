@@ -51,7 +51,8 @@ export interface MergedProfileDraft {
   name: string;
   headline: string;
   whatTheyDo: string;
-  bio: string;
+  about: string;
+  bio?: string;
   skills: string[];
   projects: Array<{
     name: string;
@@ -76,6 +77,7 @@ export interface StartOnboardingImportPayload {
 
 export interface ImportJobStatusResponse {
   runId: string;
+  queueJobId?: string;
   status: 'queued' | 'running' | 'awaiting_review' | 'completed' | 'failed' | 'partial';
   progressPct: number;
   startedAt?: string;

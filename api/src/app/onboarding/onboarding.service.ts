@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Prisma } from '@prisma/client';
 import {
   ImportJobStatusResponse,
   ImportProvider,
@@ -171,14 +172,16 @@ export class OnboardingService {
     };
 
     if (run.draftAssetId) {
+      const mergedContent = {
+        ...(preview as object),
+        mergedProfile: merged,
+        generatingStatus: 'completed',
+      } as unknown as Prisma.InputJsonValue;
+
       await this.prisma.asset.update({
         where: { id: run.draftAssetId },
         data: {
-          content: {
-            ...(preview as object),
-            mergedProfile: merged,
-            generatingStatus: 'completed',
-          },
+          content: mergedContent,
         },
       });
     }
@@ -189,7 +192,7 @@ export class OnboardingService {
         status: 'completed',
         progressPct: 100,
         completedAt: new Date(),
-        confirmedPayload: merged,
+        confirmedPayload: merged as unknown as Prisma.InputJsonValue,
       },
     });
 

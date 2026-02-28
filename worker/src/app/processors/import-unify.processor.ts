@@ -38,6 +38,30 @@ interface ProviderImportData {
   raw?: unknown;
 }
 
+interface MergeConflict {
+  field: 'name' | 'headline';
+  recommendedProvider: string;
+  recommendedValue: string;
+  candidates: Array<{ provider: string; value: string }>;
+}
+
+interface MergedProfilePayload {
+  name: string;
+  headline: string;
+  whatTheyDo: string;
+  about: string;
+  bio: string;
+  skills: string[];
+  projects: Array<{ name: string; description: string; url?: string; source: ProviderId }>;
+  links: Record<string, string>;
+  location?: string;
+  persona: string;
+  profileImageUrl?: string;
+  faviconUrl?: string;
+  conflicts: MergeConflict[];
+  seoKeywords: string[];
+}
+
 @Processor('import-unify')
 export class ImportUnifyProcessor extends WorkerHost {
   private readonly logger = new Logger(ImportUnifyProcessor.name);
@@ -215,7 +239,11 @@ export class ImportUnifyProcessor extends WorkerHost {
     } satisfies ProviderImportData;
   }
 
-  private async mergeAndGenerateAbout(imported: ProviderImportData[], persona: string, location?: string) {
+  private async mergeAndGenerateAbout(
+    imported: ProviderImportData[],
+    persona: string,
+    location?: string,
+  ): Promise<MergedProfilePayload> {
     const linkedin = imported.find((item) => item.provider === 'linkedin');
     const upwork = imported.find((item) => item.provider === 'upwork');
     const github = imported.find((item) => item.provider === 'github');
@@ -251,6 +279,7 @@ export class ImportUnifyProcessor extends WorkerHost {
       headline,
       whatTheyDo,
       about,
+      bio: about,
       skills,
       projects,
       links,
@@ -262,14 +291,19 @@ export class ImportUnifyProcessor extends WorkerHost {
     };
   }
 
-  private async createDraftAsset(userId: string, runId: string, providers: ProviderId[], merged: any) {
+  private async createDraftAsset(
+    userId: string,
+    runId: string,
+    providers: ProviderId[],
+    merged: MergedProfilePayload,
+  ) {
     const title = `${merged.name} Portfolio`;
     const content = {
       generatingStatus: 'completed',
       templateId: this.personaTemplate(merged.persona),
       hero: { heading: merged.name, body: merged.headline },
       about: { body: merged.about },
-      projects: { items: merged.projects.map((project: any) => `${project.name} - ${project.description}`) },
+      projects: { items: merged.projects.map((project) => `${project.name} - ${project.description}`) },
       skills: { items: merged.skills },
       contact: { body: Object.entries(merged.links).map(([k, v]) => `${k}: ${v}`).join(' | ') },
       links: Object.entries(merged.links).map(([label, url]) => ({ label, url })),
@@ -368,7 +402,7 @@ export class ImportUnifyProcessor extends WorkerHost {
     });
   }
 
-  private autoFillScore(merged: any) {
+  private autoFillScore(merged: MergedProfilePayload) {
     const checks = [
       !!merged.name,
       !!merged.headline,
@@ -413,8 +447,12 @@ export class ImportUnifyProcessor extends WorkerHost {
     return unique.slice(0, 16);
   }
 
-  private conflicts(input: { linkedin?: ProviderImportData; upwork?: ProviderImportData; github?: ProviderImportData }) {
-    const out: Array<{ field: string; recommendedProvider: string; recommendedValue: string; candidates: Array<{ provider: string; value: string }> }> = [];
+  private conflicts(input: {
+    linkedin?: ProviderImportData;
+    upwork?: ProviderImportData;
+    github?: ProviderImportData;
+  }): MergeConflict[] {
+    const out: MergeConflict[] = [];
     const nameCandidates = [
       { provider: 'linkedin', value: input.linkedin?.name ?? '' },
       { provider: 'upwork', value: input.upwork?.name ?? '' },

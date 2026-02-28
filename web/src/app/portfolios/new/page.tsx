@@ -30,6 +30,7 @@ interface IntegrationItem {
 
 interface ImportStatus {
   runId: string;
+  queueJobId?: string;
   status: 'queued' | 'running' | 'awaiting_review' | 'completed' | 'failed' | 'partial';
   progressPct: number;
   message?: string;
@@ -92,10 +93,54 @@ export default function PortfolioNewPage() {
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
+  const [manualLinkedinHeadline, setManualLinkedinHeadline] = useState('');
+  const [manualLinkedinSummary, setManualLinkedinSummary] = useState('');
+  const [manualUpworkTitle, setManualUpworkTitle] = useState('');
+  const [manualUpworkOverview, setManualUpworkOverview] = useState('');
+  const [manualSkills, setManualSkills] = useState('');
 
   const selectedProviders = useMemo(
     () => connectedProviders(integrations).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider)),
     [integrations],
+  );
+  const manualSkillList = useMemo(
+    () =>
+      manualSkills
+        .split(/[\n,]+/)
+        .map((skill) => skill.trim())
+        .filter(Boolean),
+    [manualSkills],
+  );
+  const manualFallback = useMemo(() => {
+    const next: Record<string, unknown> = {};
+    if (manualLinkedinHeadline.trim() || manualLinkedinSummary.trim()) {
+      next.linkedin = {
+        headline: manualLinkedinHeadline.trim(),
+        summary: manualLinkedinSummary.trim(),
+      };
+    }
+    if (manualUpworkTitle.trim() || manualUpworkOverview.trim() || manualSkillList.length > 0) {
+      next.upwork = {
+        headline: manualUpworkTitle.trim(),
+        summary: manualUpworkOverview.trim(),
+        skills: manualSkillList,
+      };
+    }
+    return next;
+  }, [
+    manualLinkedinHeadline,
+    manualLinkedinSummary,
+    manualSkillList,
+    manualUpworkOverview,
+    manualUpworkTitle,
+  ]);
+  const fallbackProviders = useMemo(
+    () => Object.keys(manualFallback).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider as Provider)) as Provider[],
+    [manualFallback],
+  );
+  const importProviders = useMemo(
+    () => Array.from(new Set([...selectedProviders, ...fallbackProviders])),
+    [fallbackProviders, selectedProviders],
   );
 
   const loadIntegrations = useCallback(async () => {
@@ -147,16 +192,23 @@ export default function PortfolioNewPage() {
 
   const handleConnect = async (provider: Provider) => {
     try {
-      const res = (await integrationsApi.connect(provider)) as { authUrl?: string | null; mode?: string };
+      const res = (await integrationsApi.connect(provider)) as {
+        authUrl?: string | null;
+        mode?: string;
+        connected?: boolean;
+        message?: string;
+      };
       if (res.authUrl) {
         window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333'}${res.authUrl}`;
         return;
       }
 
-      setStatusError(
-        `Provider ${provider} currently requires ${res.mode === 'manual' ? 'manual' : 'token'} fallback. Continue and use fallback fields.`,
-      );
-      setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
+      if (res.connected) {
+        setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
+      }
+      if (res.message) {
+        setStatusError(res.message);
+      }
     } catch (error) {
       setStatusError(error instanceof Error ? error.message : 'Failed to connect provider');
     }
@@ -173,17 +225,18 @@ export default function PortfolioNewPage() {
 
   const startImport = async () => {
     setStatusError('');
-    if (selectedProviders.length === 0) {
-      setStatusError('Connect at least one provider, or connect manually in the next step.');
+    if (importProviders.length === 0) {
+      setStatusError('Connect at least one provider or fill manual fallback fields before starting import.');
       return;
     }
 
     try {
       const res = (await onboardingApi.startImport({
         persona,
-        providers: selectedProviders,
+        providers: importProviders,
         personalSiteUrl: personalSiteUrl || undefined,
         locationHint: locationHint || undefined,
+        manualFallback: Object.keys(manualFallback).length > 0 ? manualFallback : undefined,
       })) as ImportStatus;
 
       setRunId(res.runId);

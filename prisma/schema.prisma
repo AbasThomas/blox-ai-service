@@ -54,6 +54,7 @@ model User {
   apiKeys           ApiKey[]
   onboardingSessions OnboardingSession[]
   importRuns        ProfileImportRun[]
+  importedSnapshots ImportedProfileSnapshot[]
 }
 
 model OAuthConnection {
