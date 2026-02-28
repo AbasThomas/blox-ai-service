@@ -64,6 +64,23 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      <section className="mb-6 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 p-5 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">Build Your Portfolio in 2 Minutes</h2>
+            <p className="text-sm text-slate-600">
+              Connect LinkedIn, GitHub, Upwork, and more. We import only profile/public data and never post on your behalf.
+            </p>
+          </div>
+          <Link
+            href="/portfolios/new"
+            className="inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700"
+          >
+            Start guided import
+          </Link>
+        </div>
+      </section>
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
@@ -211,4 +228,3 @@ export default function DashboardPage() {
     </FeaturePage>
   );
 }
-
