@@ -22,6 +22,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { ScannerModule } from './scanner/scanner.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
 import { AdminModule } from './admin/admin.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -69,10 +70,10 @@ import { AdminModule } from './admin/admin.module';
     ScannerModule,
     CollaborationModule,
     AdminModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
 

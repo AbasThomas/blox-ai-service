@@ -1,60 +1,170 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-const ALL_PROVIDERS = [
-  { id: 'linkedin', name: 'LinkedIn', category: 'professional', authUrl: '/v1/auth/oauth/linkedin' },
-  { id: 'github', name: 'GitHub', category: 'developer', authUrl: '/v1/auth/oauth/github' },
-  { id: 'google', name: 'Google', category: 'productivity', authUrl: '/v1/auth/oauth/google' },
-  { id: 'upwork', name: 'Upwork', category: 'freelance', authUrl: null },
-  { id: 'behance', name: 'Behance', category: 'creative', authUrl: null },
-  { id: 'dribbble', name: 'Dribbble', category: 'creative', authUrl: null },
-  { id: 'notion', name: 'Notion', category: 'productivity', authUrl: null },
-  { id: 'slack', name: 'Slack', category: 'productivity', authUrl: null },
-  { id: 'trello', name: 'Trello', category: 'productivity', authUrl: null },
-  { id: 'asana', name: 'Asana', category: 'productivity', authUrl: null },
-  { id: 'gitlab', name: 'GitLab', category: 'developer', authUrl: null },
-  { id: 'medium', name: 'Medium', category: 'content', authUrl: null },
-  { id: 'hashnode', name: 'Hashnode', category: 'content', authUrl: null },
-  { id: 'devto', name: 'Dev.to', category: 'content', authUrl: null },
-  { id: 'x', name: 'X (Twitter)', category: 'social', authUrl: null },
-  { id: 'instagram', name: 'Instagram', category: 'social', authUrl: null },
-  { id: 'youtube', name: 'YouTube', category: 'content', authUrl: null },
-  { id: 'fiverr', name: 'Fiverr', category: 'freelance', authUrl: null },
-  { id: 'toptal', name: 'Toptal', category: 'freelance', authUrl: null },
-  { id: 'stackoverflow', name: 'Stack Overflow', category: 'developer', authUrl: null },
-  { id: 'kaggle', name: 'Kaggle', category: 'data', authUrl: null },
-  { id: 'researchgate', name: 'ResearchGate', category: 'academic', authUrl: null },
-  { id: 'orcid', name: 'ORCID', category: 'academic', authUrl: null },
-  { id: 'google-workspace', name: 'Google Workspace', category: 'productivity', authUrl: null },
-  { id: 'calendly', name: 'Calendly', category: 'scheduling', authUrl: null },
+type ProviderCategory =
+  | 'professional'
+  | 'developer'
+  | 'freelance'
+  | 'creative'
+  | 'education'
+  | 'productivity';
+
+interface ProviderDefinition {
+  id: string;
+  name: string;
+  category: ProviderCategory;
+  mode: 'oauth' | 'token' | 'manual';
+  authUrl: string | null;
+  scopes: string[];
+  priority: 'primary' | 'secondary' | 'optional';
+}
+
+const OAUTH_BASE = '/v1/auth/oauth';
+
+const PROVIDERS: ProviderDefinition[] = [
+  {
+    id: 'linkedin',
+    name: 'LinkedIn',
+    category: 'professional',
+    mode: 'oauth',
+    authUrl: `${OAUTH_BASE}/linkedin`,
+    scopes: ['r_liteprofile', 'r_emailaddress'],
+    priority: 'primary',
+  },
+  {
+    id: 'github',
+    name: 'GitHub',
+    category: 'developer',
+    mode: 'oauth',
+    authUrl: `${OAUTH_BASE}/github`,
+    scopes: ['read:user', 'user:email', 'repo'],
+    priority: 'secondary',
+  },
+  {
+    id: 'upwork',
+    name: 'Upwork',
+    category: 'freelance',
+    mode: 'oauth',
+    authUrl: `${OAUTH_BASE}/upwork`,
+    scopes: ['freelancer.profile.read', 'graphql'],
+    priority: 'secondary',
+  },
+  {
+    id: 'fiverr',
+    name: 'Fiverr',
+    category: 'freelance',
+    mode: 'manual',
+    authUrl: null,
+    scopes: [],
+    priority: 'optional',
+  },
+  {
+    id: 'behance',
+    name: 'Behance',
+    category: 'creative',
+    mode: 'manual',
+    authUrl: null,
+    scopes: [],
+    priority: 'optional',
+  },
+  {
+    id: 'dribbble',
+    name: 'Dribbble',
+    category: 'creative',
+    mode: 'manual',
+    authUrl: null,
+    scopes: [],
+    priority: 'optional',
+  },
+  {
+    id: 'figma',
+    name: 'Figma',
+    category: 'creative',
+    mode: 'oauth',
+    authUrl: `${OAUTH_BASE}/figma`,
+    scopes: ['file_read'],
+    priority: 'optional',
+  },
+  {
+    id: 'coursera',
+    name: 'Coursera',
+    category: 'education',
+    mode: 'manual',
+    authUrl: null,
+    scopes: [],
+    priority: 'optional',
+  },
 ];
 
 @Injectable()
 export class IntegrationsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listWithStatus(userId: string) {
-    const connected = await this.prisma.oAuthConnection.findMany({
-      where: { userId },
-      select: { provider: true, createdAt: true },
-    });
-    const connectedSet = new Set(connected.map((c) => c.provider));
+  getProviderCatalog() {
+    return PROVIDERS;
+  }
 
-    return ALL_PROVIDERS.map((p) => ({
-      ...p,
-      connected: connectedSet.has(p.id),
-      connectedAt: connected.find((c) => c.provider === p.id)?.createdAt ?? null,
-    }));
+  async listWithStatus(userId: string) {
+    const connections = await this.prisma.oAuthConnection.findMany({
+      where: { userId },
+      select: {
+        provider: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const index = new Map(connections.map((item) => [item.provider, item]));
+
+    return PROVIDERS.map((provider) => {
+      const connection = index.get(provider.id);
+      return {
+        ...provider,
+        connected: !!connection,
+        connectedAt: connection?.createdAt ?? null,
+        updatedAt: connection?.updatedAt ?? null,
+      };
+    });
+  }
+
+  async connect(userId: string, provider: string) {
+    const providerDef = PROVIDERS.find((item) => item.id === provider);
+    if (!providerDef) {
+      throw new NotFoundException('Provider not supported');
+    }
+
+    return {
+      provider: providerDef.id,
+      mode: providerDef.mode,
+      authUrl: providerDef.authUrl,
+      scopes: providerDef.scopes,
+      connected: !!(await this.prisma.oAuthConnection.findFirst({
+        where: { userId, provider: providerDef.id },
+        select: { id: true },
+      })),
+      privacyNotice: 'We only read public/profile data and never post or modify your accounts.',
+    };
   }
 
   async disconnect(userId: string, provider: string) {
-    await this.prisma.oAuthConnection.deleteMany({ where: { userId, provider } });
+    const providerDef = PROVIDERS.find((item) => item.id === provider);
+    if (!providerDef) {
+      throw new NotFoundException('Provider not supported');
+    }
+
+    await this.prisma.oAuthConnection.deleteMany({
+      where: { userId, provider },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'OAUTH_DISCONNECT',
+        entityType: 'OAuthConnection',
+        metadata: { provider },
+      },
+    });
+
     return { provider, connected: false };
   }
-
-  getProviders() {
-    return ALL_PROVIDERS;
-  }
 }
-
-

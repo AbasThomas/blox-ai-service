@@ -102,6 +102,24 @@ export class AuthService {
 
   async signup(dto: SignupDto) {
     const email = dto.email.toLowerCase().trim();
+    const resolvedFullName = (dto.fullName ?? dto.name ?? '').trim();
+    if (resolvedFullName.length < 2) {
+      throw new BadRequestException('Full name is required');
+    }
+
+    const allowedPersonas = new Set([
+      'Freelancer',
+      'JobSeeker',
+      'Designer',
+      'Developer',
+      'Student',
+      'Executive',
+      'Professional',
+      'Enterprise',
+    ]);
+    const persona = allowedPersonas.has(dto.persona ?? '')
+      ? (dto.persona as string)
+      : 'JobSeeker';
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -118,8 +136,8 @@ export class AuthService {
       data: {
         email,
         passwordHash,
-        fullName: dto.fullName,
-        persona: dto.persona ?? 'JobSeeker',
+        fullName: resolvedFullName,
+        persona,
         tier: 'FREE',
         subscriptions: {
           create: {
