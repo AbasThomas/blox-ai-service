@@ -24,6 +24,18 @@
 - AI service: `http://localhost:3334/v1`
 - Realtime service: `http://localhost:3335`
 
+## Onboarding Import Flow (Profile -> Portfolio Draft)
+- Entry point: Dashboard card `Build Your Portfolio in 2 Minutes` -> `/portfolios/new`.
+- Connect providers in onboarding step 1. If OAuth keys are configured (`LINKEDIN_*`, `GITHUB_*`, `UPWORK_*`, `FIGMA_*`), OAuth can be used. If not configured, the app automatically uses fallback/manual connect mode.
+- Import generation runs asynchronously via BullMQ queue `import-unify` (worker service).
+- Manual fallback fields in step 1 can provide LinkedIn/Upwork headline, summary/overview, and skills when OAuth is skipped.
+- Step 3 provides merge-conflict review before confirmation and draft finalization.
+
+### Expected Generation Quality
+- Typical draft generation target: under 2 minutes on local/dev infrastructure.
+- Auto-fill target: 80-90% when LinkedIn + GitHub + Upwork data is available; lower when only manual fallback is provided.
+- Persona selection controls default template bias and AI tone.
+
 ## Budget assumptions (~$400/month for ~50k users)
 - Railway app services: ~$120
 - Managed PostgreSQL: ~$80

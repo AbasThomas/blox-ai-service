@@ -13,8 +13,11 @@ interface Integration {
   id: string;
   name: string;
   category: string;
+  mode: 'oauth' | 'token' | 'manual';
+  scopes: string[];
+  priority: 'primary' | 'secondary' | 'optional';
   connected: boolean;
-  authUrl: string;
+  authUrl: string | null;
 }
 
 interface Subscription {
@@ -49,6 +52,7 @@ export default function SettingsPage() {
   // Integrations tab
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
+  const [integrationMsg, setIntegrationMsg] = useState('');
 
   // Subscription tab
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -132,7 +136,33 @@ export default function SettingsPage() {
     try {
       await integrationsApi.disconnect(provider);
       setIntegrations((prev) => prev.map((i) => i.id === provider ? { ...i, connected: false } : i));
+      setIntegrationMsg('Provider disconnected.');
     } catch { /* ignore */ }
+  };
+
+  const handleConnectIntegration = async (provider: string) => {
+    setIntegrationMsg('');
+    try {
+      const res = await integrationsApi.connect(provider) as {
+        authUrl?: string | null;
+        connected?: boolean;
+        message?: string;
+      };
+
+      if (res.authUrl) {
+        window.location.href = `${apiBase}${res.authUrl}`;
+        return;
+      }
+
+      if (res.connected) {
+        setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
+      }
+      if (res.message) {
+        setIntegrationMsg(res.message);
+      }
+    } catch (err) {
+      setIntegrationMsg(err instanceof Error ? err.message : 'Failed to connect integration.');
+    }
   };
 
   const handleCancelSubscription = async () => {
@@ -276,6 +306,9 @@ export default function SettingsPage() {
       {activeTab === 'Integrations' && (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">Connect your accounts to import data and sync content.</p>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+            We only read public/profile data and never post or modify anything.
+          </div>
           {loadingIntegrations ? (
             <div className="grid gap-3 md:grid-cols-3">
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -294,22 +327,30 @@ export default function SettingsPage() {
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">Not connected</span>
                     )}
                   </div>
-                  <span className="text-xs text-slate-400 capitalize">{integration.category}</span>
+                  <span className="text-xs text-slate-400 capitalize">
+                    {integration.priority} - {integration.category} - {integration.mode}
+                  </span>
+                  {integration.scopes.length > 0 ? (
+                    <p className="text-[11px] text-slate-500">Scopes: {integration.scopes.join(', ')}</p>
+                  ) : null}
                   {integration.connected ? (
                     <button onClick={() => handleDisconnect(integration.id)}
                       className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50">
                       Disconnect
                     </button>
                   ) : (
-                    <a href={`${apiBase}${integration.authUrl}`}
-                      className="block rounded-md bg-slate-900 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700">
+                    <button
+                      onClick={() => handleConnectIntegration(integration.id)}
+                      className="block rounded-md bg-slate-900 px-3 py-1.5 text-center text-xs font-medium text-white hover:bg-slate-700"
+                    >
                       Connect
-                    </a>
+                    </button>
                   )}
                 </div>
               ))}
             </div>
           )}
+          {integrationMsg ? <p className="text-xs text-slate-600">{integrationMsg}</p> : null}
         </div>
       )}
 

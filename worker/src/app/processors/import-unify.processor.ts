@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import axios from 'axios';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL ?? 'http://localhost:3334';
@@ -181,12 +182,13 @@ export class ImportUnifyProcessor extends WorkerHost {
         }),
       ]);
 
-      const projects = (reposRes.data as Array<any>).slice(0, 8).map((repo) => ({
-        name: repo.name ?? 'Project',
-        description: repo.description ?? 'Open-source project',
-        url: repo.html_url ?? undefined,
+      const repos = reposRes.data as Array<Record<string, unknown>>;
+      const projects = repos.slice(0, 8).map((repo) => ({
+        name: this.text(repo.name) || 'Project',
+        description: this.text(repo.description) || 'Open-source project',
+        url: this.text(repo.html_url) || undefined,
       }));
-      const skills = [...new Set((reposRes.data as Array<any>).map((repo) => repo.language).filter(Boolean))] as string[];
+      const skills = [...new Set(repos.map((repo) => this.text(repo.language)).filter(Boolean))];
 
       return {
         provider,
@@ -211,7 +213,10 @@ export class ImportUnifyProcessor extends WorkerHost {
       const name = profile?.identity?.fullName ?? undefined;
       const headline = profile?.identity?.title ?? undefined;
       const summary = profile?.identity?.overview ?? undefined;
-      const skills = (profile?.skills?.nodes ?? []).map((row: any) => row?.name).filter(Boolean).slice(0, 15);
+      const skills = ((profile?.skills?.nodes ?? []) as Array<Record<string, unknown>>)
+        .map((row) => this.text(row.name))
+        .filter(Boolean)
+        .slice(0, 15);
       return {
         provider,
         name,
@@ -317,6 +322,7 @@ export class ImportUnifyProcessor extends WorkerHost {
       },
       mergedProfile: merged,
     };
+    const typedContent = content as unknown as Prisma.InputJsonValue;
 
     const asset = await this.prisma.asset.create({
       data: {
@@ -326,7 +332,7 @@ export class ImportUnifyProcessor extends WorkerHost {
         slug: this.slugify(title),
         visibility: 'PRIVATE',
         healthScore: 84,
-        content: content as any,
+        content: typedContent,
       },
     });
 
@@ -335,7 +341,7 @@ export class ImportUnifyProcessor extends WorkerHost {
         assetId: asset.id,
         versionLabel: 'v1.0 (Imported Draft)',
         branchName: 'main',
-        content: content as any,
+        content: typedContent,
         createdBy: userId,
       },
     });
@@ -374,7 +380,7 @@ export class ImportUnifyProcessor extends WorkerHost {
       if (headRes.status >= 200 && headRes.status < 400) return direct;
       const page = await axios.get(normalized, { timeout: 8_000 });
       const html = typeof page.data === 'string' ? page.data : '';
-      const match = html.match(/<link[^>]+rel=[\"'](?:shortcut )?icon[\"'][^>]*href=[\"']([^\"']+)[\"']/i);
+      const match = html.match(/<link[^>]+rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i);
       if (match?.[1]) return new URL(match[1], normalized).toString();
       return `https://www.google.com/s2/favicons?domain=${new URL(normalized).host}&sz=128`;
     } catch {
@@ -388,17 +394,17 @@ export class ImportUnifyProcessor extends WorkerHost {
         runId,
         userId,
         provider,
-        rawPayload: raw as any,
-        normalizedPayload: normalized as any,
+        rawPayload: raw as unknown as Prisma.InputJsonValue,
+        normalizedPayload: normalized as unknown as Prisma.InputJsonValue,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14),
       },
     });
   }
 
-  private async updateRun(runId: string, patch: Record<string, unknown>) {
+  private async updateRun(runId: string, patch: Prisma.ProfileImportRunUpdateInput) {
     await this.prisma.profileImportRun.update({
       where: { id: runId },
-      data: patch as any,
+      data: patch,
     });
   }
 

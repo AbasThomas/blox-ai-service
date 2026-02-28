@@ -89,7 +89,6 @@ export default function PortfolioNewPage() {
   const [runId, setRunId] = useState('');
   const [status, setStatus] = useState<ImportStatus | null>(null);
   const [statusError, setStatusError] = useState('');
-  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
@@ -170,11 +169,8 @@ export default function PortfolioNewPage() {
           const previewRes = (await onboardingApi.getImportPreview(runId)) as {
             preview?: Record<string, unknown>;
           };
-          const nextPreview = previewRes.preview ?? null;
-          setPreview(nextPreview);
-          const conflictRows = Array.isArray((nextPreview as any)?.conflicts)
-            ? ((nextPreview as any).conflicts as ImportConflict[])
-            : [];
+          const nextPreview = (previewRes.preview ?? null) as { conflicts?: ImportConflict[] } | null;
+          const conflictRows = Array.isArray(nextPreview?.conflicts) ? nextPreview.conflicts : [];
           setConflicts(conflictRows);
           if (step !== 3) setStep(3);
         }
@@ -351,7 +347,7 @@ export default function PortfolioNewPage() {
       {step === 1 ? (
         <div className="space-y-5">
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-            We only read public/profile data — never post or modify anything.
+            We only read public/profile data - never post or modify anything.
           </div>
 
           {loadingIntegrations ? (
@@ -370,7 +366,7 @@ export default function PortfolioNewPage() {
                       {integration.connected ? 'Connected' : 'Not connected'}
                     </span>
                   </div>
-                  <p className="mb-3 text-xs text-slate-500 capitalize">{integration.priority} • {integration.category}</p>
+                  <p className="mb-3 text-xs text-slate-500 capitalize">{integration.priority} - {integration.category}</p>
                   {integration.connected ? (
                     <button
                       onClick={() => handleDisconnect(integration.id)}
@@ -393,6 +389,66 @@ export default function PortfolioNewPage() {
 
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-xs text-slate-600">
             Partial connects are fine. You can skip any provider and still generate a draft with manual fallback data.
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-slate-900">Manual fallback inputs (optional)</h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Use these if OAuth is skipped. We merge this with connected account data before AI generation.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <label className="text-xs text-slate-700">
+                LinkedIn headline
+                <input
+                  value={manualLinkedinHeadline}
+                  onChange={(e) => setManualLinkedinHeadline(e.target.value)}
+                  placeholder="Senior React Developer"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="text-xs text-slate-700 sm:col-span-2">
+                LinkedIn summary
+                <textarea
+                  value={manualLinkedinSummary}
+                  onChange={(e) => setManualLinkedinSummary(e.target.value)}
+                  rows={3}
+                  placeholder="I build high-performing web apps and lead frontend architecture..."
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="text-xs text-slate-700">
+                Upwork title
+                <input
+                  value={manualUpworkTitle}
+                  onChange={(e) => setManualUpworkTitle(e.target.value)}
+                  placeholder="Full Stack Developer"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="text-xs text-slate-700 sm:col-span-2">
+                Upwork overview
+                <textarea
+                  value={manualUpworkOverview}
+                  onChange={(e) => setManualUpworkOverview(e.target.value)}
+                  rows={3}
+                  placeholder="I have delivered 50+ projects across SaaS and e-commerce..."
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="text-xs text-slate-700 sm:col-span-2">
+                Skills (comma or new line separated)
+                <textarea
+                  value={manualSkills}
+                  onChange={(e) => setManualSkills(e.target.value)}
+                  rows={2}
+                  placeholder="React, Next.js, TypeScript, Node.js"
+                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+            </div>
+            <p className="mt-3 text-xs text-slate-500">
+              Active import sources: {importProviders.length > 0 ? importProviders.join(', ') : 'none yet'}
+            </p>
           </div>
 
           <div className="flex gap-3">

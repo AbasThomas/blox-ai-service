@@ -8,9 +8,9 @@ import { assetsApi } from '@/lib/api';
 import { PlanTier } from '@nextjs-blox/shared-types';
 
 const TYPE_ICONS: Record<string, string> = {
-  PORTFOLIO: '🎨',
-  RESUME: '📄',
-  COVER_LETTER: '✉️',
+  PORTFOLIO: 'PF',
+  RESUME: 'CV',
+  COVER_LETTER: 'CL',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -55,7 +55,7 @@ export default function DashboardPage() {
           { label: 'Total Assets', value: assets.length },
           { label: 'Published', value: published },
           { label: 'Avg Health Score', value: `${avgHealth}/100` },
-          { label: 'Day Streak', value: `${user.streak ?? 0} 🔥` },
+          { label: 'Day Streak', value: `${user.streak ?? 0} streak` },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
             <p className="text-2xl font-black text-slate-900">{stat.value}</p>
@@ -89,9 +89,9 @@ export default function DashboardPage() {
             <h2 className="mb-3 text-base font-bold text-slate-900">Quick actions</h2>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { href: '/portfolios/new', label: 'New Portfolio', icon: '🎨', color: 'bg-purple-50 border-purple-200 hover:border-purple-400' },
-                { href: '/resumes/new', label: 'New Resume', icon: '📄', color: 'bg-blue-50 border-blue-200 hover:border-blue-400' },
-                { href: '/cover-letters/new', label: 'New Cover Letter', icon: '✉️', color: 'bg-green-50 border-green-200 hover:border-green-400' },
+                { href: '/portfolios/new', label: 'New Portfolio', icon: 'PF', color: 'bg-purple-50 border-purple-200 hover:border-purple-400' },
+                { href: '/resumes/new', label: 'New Resume', icon: 'CV', color: 'bg-blue-50 border-blue-200 hover:border-blue-400' },
+                { href: '/cover-letters/new', label: 'New Cover Letter', icon: 'CL', color: 'bg-green-50 border-green-200 hover:border-green-400' },
               ].map((action) => (
                 <Link key={action.href} href={action.href}
                   className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-colors ${action.color}`}>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                 {user.badges.map((badge) => (
                   <div key={badge.id} className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium shadow-sm"
                     title={badge.description}>
-                    <span>{badge.icon === 'star' ? '⭐' : badge.icon === 'fire' ? '🔥' : '🏆'}</span>
+                    <span>{badge.icon === 'star' ? '*' : badge.icon === 'fire' ? 'streak' : 'win'}</span>
                     <span>{badge.name}</span>
                   </div>
                 ))}
@@ -212,14 +212,14 @@ export default function DashboardPage() {
             <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-purple-50 p-4">
               <p className="text-sm font-bold text-slate-900">Unlock Pro features</p>
               <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                <li>✓ 25 assets</li>
-                <li>✓ AI critiques & suggestions</li>
-                <li>✓ Custom domains</li>
-                <li>✓ Advanced analytics</li>
+                <li>- 25 assets</li>
+                <li>- AI critiques & suggestions</li>
+                <li>- Custom domains</li>
+                <li>- Advanced analytics</li>
               </ul>
               <Link href="/checkout"
                 className="mt-3 block rounded-md bg-blue-600 px-3 py-2 text-center text-xs font-bold text-white hover:bg-blue-700">
-                Upgrade to Pro — $9.99/mo
+                Upgrade to Pro - $9.99/mo
               </Link>
             </div>
           )}
@@ -228,3 +228,4 @@ export default function DashboardPage() {
     </FeaturePage>
   );
 }
+
