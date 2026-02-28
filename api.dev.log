@@ -1,76 +1,7 @@
 
-[7m[1m[36m NX [39m[22m[27m  [36mRunning target [1mserve[22m for project api and [1m3[22m tasks it depends on:[39m
+> @nextjs-blox/source@0.0.0 dev:api
+> nx serve api
 
-[2m[36m[39m[22m
-
-[2m> [22m[2mnx run[22m shared-types:build  [2m[local cache][22m
-
-
-[2m> [22m[2mnx run[22m shared-config:build  [2m[local cache][22m
-
-
-[2m> [22m[2mnx run[22m api:build  [2m[local cache][22m
-
-Compiling TypeScript files for project "api"...
-Done compiling TypeScript files for project "api".
-
-[2m> [22m[2mnx run[22m api:serve:development
-
-[7m[1m[33m NX [39m[22m[27m  [33mNx Daemon is not enabled. Assets and package.json files will not be updated when files change.[39m
-[2J[3J[H
-5:14:53 PM - Starting compilation in watch mode...
-5:15:17 PM - Found 0 errors. Watching for file changes.
-[1m[31mDebugger listening on ws://localhost:9229/e04f6af4-935b-4594-b096-72b667eefe53
-[39m[22m
-[1m[31mDebugger listening on ws://localhost:9229/e04f6af4-935b-4594-b096-72b667eefe53
-[39m[22m
-[1m[31mFor help, see: https://nodejs.org/en/docs/inspector
-[39m[22m
-[1m[31mReferenceError: exports is not defined in ES module scope
-This file is being treated as an ES module because it has a '.js' file extension and 'C:\Users\USER\Desktop\Nextjs_blox\dist\shared-types\package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
-    at file:///C:/Users/USER/Desktop/Nextjs_blox/dist/shared-types/src/index.js:2:23
-    at ModuleJobSync.runSync (node:internal/modules/esm/module_job:517:37)
-    at ModuleLoader.importSyncForRequire (node:internal/modules/esm/loader:388:47)
-    at loadESMFromCJS (node:internal/modules/cjs/loader:1578:24)
-    at Module._compile (node:internal/modules/cjs/loader:1743:5)
-    at Object..js (node:internal/modules/cjs/loader:1893:10)
-    at Module.load (node:internal/modules/cjs/loader:1481:32)
-    at Module.<anonymous> (node:internal/modules/cjs/loader:1300:12)
-    at Module._load (C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nx\js\src\executors\node\node-with-require-overrides.js:15:31)
-    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
-[39m[22m
-[7m[1m[36m NX [39m[22m[27m [1mProcess exited with code 1, waiting for changes to restart...[22m
-[2J[3J[H
-5:17:27 PM - File change detected. Starting incremental compilation...
-5:17:32 PM - Found 0 errors. Watching for file changes.
-[2J[3J[H
-5:17:33 PM - File change detected. Starting incremental compilation...
-5:17:34 PM - Found 0 errors. Watching for file changes.
-[1m[31mDebugger listening on ws://localhost:9229/547e16b2-7e5d-46c0-9168-e8e32c859742
-Debugger listening on ws://localhost:9229/547e16b2-7e5d-46c0-9168-e8e32c859742
-For help, see: https://nodejs.org/en/docs/inspector
-[39m[22m
-[2J[3J[H
-5:17:36 PM - File change detected. Starting incremental compilation...
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.controller.ts(12,10): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'BillingCycle'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.controller.ts(12,24): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'PlanTier'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.service.ts(7,10): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'BillingCycle'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.service.ts(7,24): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'PlanTier'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.service.ts(9,30): error TS2307: Cannot find module '@nextjs-blox/shared-config' or its corresponding type declarations.
-5:17:39 PM - Found 5 errors. Watching for file changes.
-[1m[31mDebugger listening on ws://localhost:9229/6142b821-88c2-4431-bbda-36c2fb3132ee
-Debugger listening on ws://localhost:9229/6142b821-88c2-4431-bbda-36c2fb3132ee
-For help, see: https://nodejs.org/en/docs/inspector
-[39m[22m
-[1m[31mBuild failed, waiting for changes to restart...[39m[22m
-[2J[3J[H
-5:17:41 PM - File change detected. Starting incremental compilation...
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.controller.ts(12,10): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'BillingCycle'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.controller.ts(12,24): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'PlanTier'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.service.ts(7,10): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'BillingCycle'.
-/Users/USER/Desktop/Nextjs_blox/api/src/app/billing/billing.service.ts(7,24): error TS2305: Module '"@nextjs-blox/shared-types"' has no exported member 'PlanTier'.
-5:17:45 PM - Found 4 errors. Watching for file changes.
-[1m[31mBuild failed, waiting for changes to restart...[39m[22m
 
 [7m[1m[36m NX [39m[22m[27m  [36mRunning target [1mserve[22m for project api and [1m3[22m tasks it depends on:[39m
 
@@ -84,11 +15,129 @@ For help, see: https://nodejs.org/en/docs/inspector
 
 [2m> [22m[2mnx run[22m api:build  [2m[local cache][22m
 
-Compiling TypeScript files for project "api"...
-Done compiling TypeScript files for project "api".
 
 [2m> [22m[2mnx run[22m api:serve:development
 
 [7m[1m[33m NX [39m[22m[27m  [33mNx Daemon is not enabled. Assets and package.json files will not be updated when files change.[39m
 [2J[3J[H
-5:18:57 PM - Starting compilation in watch mode...
+7:39:10 PM - Starting compilation in watch mode...
+7:40:04 PM - Found 0 errors. Watching for file changes.
+[1m[31mDebugger listening on ws://localhost:9229/16c1f338-25f5-480b-8554-c66f95b37b2e
+Debugger listening on ws://localhost:9229/16c1f338-25f5-480b-8554-c66f95b37b2e
+For help, see: https://nodejs.org/en/docs/inspector
+[39m[22m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +307ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMongooseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMailModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +74ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +79ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIdentityModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueuesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +9ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAdminModule dependencies initialized[39m[38;5;3m +41ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGraphQLSchemaBuilderModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIntegrationsModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTemplatesModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScannerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBillingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCollaborationModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGraphQLModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAssetsModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPublishModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mOnboardingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:27 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMongooseCoreModule dependencies initialized[39m[38;5;3m +430ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [32mSwagger docs: http://localhost:3333/docs[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/v1}:[39m[38;5;3m +19ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1, GET} route[39m[38;5;3m +14ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/v1/health}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/v1/auth}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/signup, POST} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/login, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/refresh, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/me, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/logout, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/forgot-password, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/reset-password, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/mfa/setup, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/mfa/verify, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/auth/oauth/providers, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAssetsController {/v1/assets}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/limits, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id, PATCH} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/generate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/seo/suggest, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/seo/og-image, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/duplicate, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/versions, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/versions, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/assets/:id/versions/:versionId/restore, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mBillingController {/v1/billing}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/plans, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/subscription, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/checkout, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/verify, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/cancel, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/billing/webhooks/paystack, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mIntegrationsController {/v1/integrations}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/integrations, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/integrations/providers, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/integrations/connect/:provider, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/integrations/:provider, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalyticsController {/v1/analytics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/analytics/:assetId, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/analytics/:assetId/links, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/analytics/:assetId/links, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublishController {/v1/publish}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/publish, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/publish/:assetId/unpublish, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/publish/:assetId/status, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicProfileController {/v1/public}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/public/:subdomain, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mQueuesController {/v1/queues}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/queues/health, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTemplatesController {/v1/templates}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/templates, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/templates/marketplace, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/templates/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/templates/:id/fork, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/templates/marketplace/upload, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mScannerController {/v1/scanner}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/scanner/scan, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/scanner/duplicate, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/scanner/ats, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/scanner/critique, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCollaborationController {/v1/collaboration}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/collaboration/:assetId/comments, GET} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/collaboration/:assetId/comments, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/collaboration/comments/:commentId/resolve, POST} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminController {/v1/admin}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/admin/users, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/admin/audit-logs, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/admin/api-keys, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mOnboardingController {/v1/onboarding}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/onboarding/import/start, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/onboarding/import/:runId/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/onboarding/import/:runId/preview, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:28 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/v1/onboarding/import/:runId/confirm, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:29 PM [32m    LOG[39m [38;5;3m[GraphQLModule] [39m[32mMapped {/graphql, POST} route[39m[38;5;3m +664ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:29 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +11ms[39m
+[32m[Nest] 7488  - [39m02/28/2026, 7:40:29 PM [32m    LOG[39m [32mBlox API running on http://localhost:3333/v1[39m

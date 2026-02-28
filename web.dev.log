@@ -1,7 +1,13 @@
 
-[2m> [22m[2mnx run[22m web:dev --port=4200
+> @nextjs-blox/source@0.0.0 dev:web
+> nx dev web
 
-[2m> [22mnext dev --port=4200
+[33mConvert compiler options from json failed, No inputs were found in config file 'tsconfig.json'. Specified 'include' paths were '["jest.config.ts","jest.config.cts","src/**/*.test.ts","src/**/*.spec.ts","src/**/*.test.tsx","src/**/*.spec.tsx","src/**/*.test.js","src/**/*.spec.js","src/**/*.test.jsx","src/**/*.spec.jsx","src/**/*.d.ts"]' and 'exclude' paths were '["node_modules","jest.config.ts","jest.config.cts","**/*.spec.ts","**/*.test.ts","src/**/*.spec.ts","src/**/*.test.ts"]'.[39m
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+
+[2m> [22m[2mnx run[22m web:dev
+
+[2m> [22mnext dev --port 4200
 
    [1m[38;2;173;127;168m▲ Next.js 16.0.11[39m[22m (Turbopack)
    - Local:         http://localhost:4200
@@ -9,80 +15,118 @@
 
  [32m[1m✓[22m[39m Starting...
 [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
- [32m[1m✓[22m[39m Ready in 30.2s
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('slug' !== 'id').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [33m[1m⚠[22m[39m Failed to reload dynamic routes: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [33m[1m⚠[22m[39m Failed to reload dynamic routes: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('id' !== 'slug').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection: Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
-    at [3mignore-listed frames[23m
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\shared\lib\router\utils\sorted-routes.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\default-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\route-matcher-managers\dev-route-matcher-manager.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\render-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
-C:\Users\USER\Desktop\Nextjs_blox\node_modules\next\dist\server\dev\hot-reloader-turbopack.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
- [31m[1m⨯[22m[39m unhandledRejection:  Error: You cannot use different slug names for the same dynamic path ('__metadata_id__' !== 'subdomain').
-    at [3mignore-listed frames[23m
+ [32m[1m✓[22m[39m Ready in 16.5s
+ [37m[1m○[22m[39m Compiling / ...
+ [31m[1m⨯[22m[39m ./shared-types/src/index.ts
+Specified module format (CommonJs) is not matching the module format of the source code (EcmaScript Modules)
+The CommonJs module format was specified in the package.json that is affecting this source file or by using an special extension, but Ecmascript import/export syntax is used in the source code.
+The module was automatically converted to an EcmaScript module, but that is in conflict with the specified module format. Either change the "type" field in the package.json or replace EcmaScript import/export syntax with CommonJs syntas in the source file.
+In some cases EcmaScript import/export syntax is added by an transform and isn't actually part of the source code. In these cases revisit transformation options to inject the correct syntax.
 
-[2m> [22m[2mnx run[22m web:dev --port=4200
+Import traces:
+  Server Component:
+    ./shared-types/src/index.ts
+    ./web/src/lib/pricing.ts
+    ./web/src/app/page.tsx
 
-[2m> [22mnext dev --port=4200
+  Client Component Browser:
+    ./shared-types/src/index.ts [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
 
+  Client Component SSR:
+    ./shared-types/src/index.ts [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+
+
+./shared-types/src/lib/enums.ts
+Specified module format (CommonJs) is not matching the module format of the source code (EcmaScript Modules)
+The CommonJs module format was specified in the package.json that is affecting this source file or by using an special extension, but Ecmascript import/export syntax is used in the source code.
+The module was automatically converted to an EcmaScript module, but that is in conflict with the specified module format. Either change the "type" field in the package.json or replace EcmaScript import/export syntax with CommonJs syntas in the source file.
+In some cases EcmaScript import/export syntax is added by an transform and isn't actually part of the source code. In these cases revisit transformation options to inject the correct syntax.
+
+Import traces:
+  Server Component:
+    ./shared-types/src/lib/enums.ts
+    ./web/src/lib/pricing.ts
+    ./web/src/app/page.tsx
+
+  Client Component Browser:
+    ./shared-types/src/lib/enums.ts [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./shared-types/src/lib/enums.ts [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+
+
+./shared-types/src/lib/integrations.ts
+Specified module format (CommonJs) is not matching the module format of the source code (EcmaScript Modules)
+The CommonJs module format was specified in the package.json that is affecting this source file or by using an special extension, but Ecmascript import/export syntax is used in the source code.
+The module was automatically converted to an EcmaScript module, but that is in conflict with the specified module format. Either change the "type" field in the package.json or replace EcmaScript import/export syntax with CommonJs syntas in the source file.
+In some cases EcmaScript import/export syntax is added by an transform and isn't actually part of the source code. In these cases revisit transformation options to inject the correct syntax.
+
+Import traces:
+  Server Component:
+    ./shared-types/src/lib/integrations.ts
+    ./shared-types/src/index.ts
+    ./web/src/lib/pricing.ts
+    ./web/src/app/page.tsx
+
+  Client Component Browser:
+    ./shared-types/src/lib/integrations.ts [Client Component Browser]
+    ./shared-types/src/index.ts [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./shared-types/src/lib/integrations.ts [Client Component SSR]
+    ./shared-types/src/index.ts [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+
+
+./shared-types/src/lib/navigation.ts
+Specified module format (CommonJs) is not matching the module format of the source code (EcmaScript Modules)
+The CommonJs module format was specified in the package.json that is affecting this source file or by using an special extension, but Ecmascript import/export syntax is used in the source code.
+The module was automatically converted to an EcmaScript module, but that is in conflict with the specified module format. Either change the "type" field in the package.json or replace EcmaScript import/export syntax with CommonJs syntas in the source file.
+In some cases EcmaScript import/export syntax is added by an transform and isn't actually part of the source code. In these cases revisit transformation options to inject the correct syntax.
+
+Import traces:
+  Server Component:
+    ./shared-types/src/lib/navigation.ts
+    ./shared-types/src/index.ts
+    ./web/src/lib/pricing.ts
+    ./web/src/app/page.tsx
+
+  Client Component Browser:
+    ./shared-types/src/lib/navigation.ts [Client Component Browser]
+    ./shared-types/src/index.ts [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Client Component Browser]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./shared-types/src/lib/navigation.ts [Client Component SSR]
+    ./shared-types/src/index.ts [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Client Component SSR]
+    ./web/src/components/layout/header.tsx [Server Component]
+    ./web/src/app/layout.tsx [Server Component]
+
+
+ [37m[1m○[22m[39m Compiling /_error ...
+ GET / [31m500[39m in 12.7s[2m (compile: 11.9s, proxy.ts: 385ms, render: 420ms)[22m
+ [32m[1m✓[22m[39m Compiled in 588ms
+ GET / [32m200[39m in 4.5s[2m (compile: 1406ms, proxy.ts: 276ms, render: 2.8s)[22m

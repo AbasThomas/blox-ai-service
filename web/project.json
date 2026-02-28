@@ -5,6 +5,13 @@
   "projectType": "application",
   "tags": [],
   "// targets": "to see all targets run: nx show project web --web",
-  "targets": {}
+  "targets": {
+    "dev": {
+      "options": {
+        "cwd": "web",
+        "command": "next dev --port 4200"
+      }
+    }
+  }
 }
 

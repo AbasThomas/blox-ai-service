@@ -86,6 +86,7 @@
   },
   "dependencies": {
     "@apollo/server": "^5.4.0",
+    "@as-integrations/express5": "^1.1.2",
     "@huggingface/transformers": "^3.8.1",
     "@nestjs/apollo": "^13.2.4",
     "@nestjs/axios": "^4.0.1",

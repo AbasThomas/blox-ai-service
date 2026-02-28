@@ -29,12 +29,12 @@ export function proxy(request: NextRequest) {
     }
 
     if (url.pathname === '/sitemap.xml') {
-      url.pathname = `/sitemap/${subdomain}`;
+      url.pathname = `/subdomain-sitemap/${subdomain}`;
       return NextResponse.rewrite(url);
     }
 
     if (url.pathname === '/robots.txt') {
-      url.pathname = `/sitemap/${subdomain}`;
+      url.pathname = `/subdomain-sitemap/${subdomain}`;
       url.searchParams.set('format', 'robots');
       return NextResponse.rewrite(url);
     }

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BillingCycle, PlanTier } from '@nextjs-blox/shared-types';
-import { Paystack } from '@paystack/paystack-sdk';
+import Paystack from '@paystack/paystack-sdk';
 import { BLOX_PRICING } from '@nextjs-blox/shared-config';
 import { createHmac } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -14,14 +14,25 @@ import { MailService } from '../common/mail/mail.service';
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  private readonly paystack = new Paystack(
-    process.env.PAYSTACK_SECRET_KEY ?? 'sk_test_replace',
-  );
+  private readonly paystack: {
+    transaction?: {
+      initialize?: (payload: Record<string, unknown>) => Promise<{ data: { authorization_url: string; reference: string } }>;
+      verify?: (ref: string) => Promise<{ data: Record<string, unknown> }>;
+    };
+  } | null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
-  ) {}
+  ) {
+    try {
+      this.paystack = new Paystack(
+        process.env.PAYSTACK_SECRET_KEY ?? 'sk_test_replace',
+      ) as BillingService['paystack'];
+    } catch {
+      this.paystack = null;
+    }
+  }
 
   getPlans() {
     return {
@@ -50,7 +61,11 @@ export class BillingService {
     const callbackUrl = `${process.env.APP_BASE_URL ?? 'http://localhost:4200'}/success?ref=${reference}`;
 
     try {
-      const res = await (this.paystack.transaction as unknown as {
+      const tx = this.paystack?.transaction;
+      if (!tx?.initialize) {
+        throw new Error('Paystack SDK not initialized');
+      }
+      const res = await (tx as {
         initialize: (p: Record<string, unknown>) => Promise<{ data: { authorization_url: string; reference: string } }>;
       }).initialize({
         email,
@@ -97,7 +112,11 @@ export class BillingService {
 
   async verifyPayment(reference: string) {
     try {
-      const res = await (this.paystack.transaction as unknown as {
+      const tx = this.paystack?.transaction;
+      if (!tx?.verify) {
+        throw new Error('Paystack SDK not initialized');
+      }
+      const res = await (tx as {
         verify: (ref: string) => Promise<{ data: Record<string, unknown> }>;
       }).verify(reference);
 
@@ -291,5 +310,4 @@ export class BillingService {
     return sub;
   }
 }
-
 
