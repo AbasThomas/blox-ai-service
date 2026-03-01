@@ -41,6 +41,7 @@ export default function CoverLettersPage() {
   const [letters, setLetters] = useState<CoverLetterAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [jobUrl, setJobUrl] = useState('');
+  const [jobContextMap, setJobContextMap] = useState<Record<string, string>>({});
   const [creatingFromJob, setCreatingFromJob] = useState(false);
   const [message, setMessage] = useState('');
   const [expandedVersionId, setExpandedVersionId] = useState<string | null>(null);
@@ -67,6 +68,53 @@ export default function CoverLettersPage() {
     () => [...letters].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)),
     [letters],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadJobContext = async () => {
+      const targets = recentLetters.slice(0, 10);
+      const entries = await Promise.all(
+        targets.map(async (letter) => {
+          try {
+            const fullAsset = await assetsApi.getById(letter.id) as {
+              content?: { jobDescription?: string };
+            };
+            const rawJobDescription = fullAsset.content?.jobDescription?.trim();
+            if (!rawJobDescription) return null;
+
+            const cleaned = rawJobDescription.replace(/^Job URL:\s*/i, '').trim();
+            if (cleaned.startsWith('http')) {
+              try {
+                const hostname = new URL(cleaned).hostname.replace(/^www\./, '');
+                return [letter.id, hostname] as const;
+              } catch {
+                return [letter.id, cleaned.slice(0, 80)] as const;
+              }
+            }
+
+            return [letter.id, cleaned.slice(0, 80)] as const;
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      const mappedEntries = entries.filter((entry): entry is readonly [string, string] => entry !== null);
+      if (mappedEntries.length === 0) return;
+
+      setJobContextMap((prev) => ({
+        ...prev,
+        ...Object.fromEntries(mappedEntries),
+      }));
+    };
+
+    loadJobContext();
+    return () => {
+      cancelled = true;
+    };
+  }, [recentLetters]);
 
   const handleCreateFromJobUrl = useCallback(async () => {
     const trimmedUrl = jobUrl.trim();
@@ -177,7 +225,9 @@ export default function CoverLettersPage() {
                   <div className="min-w-0">
                     <h2 className="truncate text-base font-bold text-white">{letter.title}</h2>
                     <p className="mt-1 text-xs text-slate-500">Updated: {formatDate(letter.updatedAt)}</p>
-                    <p className="mt-1 text-xs text-slate-500">Job link status: {getJobHint(letter.title)}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Job link status: {jobContextMap[letter.id] ? `Linked to ${jobContextMap[letter.id]}` : getJobHint(letter.title)}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:w-auto">
                     <Link

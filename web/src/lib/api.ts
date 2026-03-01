@@ -114,8 +114,9 @@ export const scannerApi = {
 export const analyticsApi = {
   getAssetAnalytics: (id: string, params?: Record<string, string>) =>
     get(`/analytics/${id}${params ? '?' + new URLSearchParams(params) : ''}`),
-  createShortLink: (assetId: string, source: string) =>
-    post('/analytics/links', { assetId, source }),
+  createShortLink: (assetId: string, source: string, targetUrl: string) =>
+    post(`/analytics/${assetId}/links`, { source, targetUrl }),
+  listShortLinks: (assetId: string) => get(`/analytics/${assetId}/links`),
 };
 
 // Publish

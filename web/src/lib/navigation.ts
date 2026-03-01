@@ -4,6 +4,7 @@ import {
   FileText,
   Mail,
   LayoutTemplate,
+  Activity,
   Receipt,
   Settings,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ export const SIDEBAR_ITEMS = [
   { href: '/resumes', label: 'Resumes & CVs', icon: FileText },
   { href: '/cover-letters', label: 'Cover Letters', icon: Mail },
   { href: '/templates', label: 'Templates & Tools', icon: LayoutTemplate },
+  { href: '/analytics', label: 'Analytics', icon: Activity },
   { href: '/billing', label: 'Billing & Invoices', icon: Receipt },
   { href: '/settings', label: 'Settings & Career', icon: Settings },
 ];
