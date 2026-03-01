@@ -5,13 +5,11 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  background-image: radial-gradient(circle at top right, rgba(34, 143, 135, 0.16), transparent 46%),
-    radial-gradient(circle at 8% 20%, rgba(14, 116, 144, 0.18), transparent 36%);
+  @apply bg-[#0C0F13] text-slate-200 antialiased;
   min-height: 100vh;
 }
 
@@ -30,4 +28,3 @@ h4 {
   outline: 2px solid #228f87;
   outline-offset: 2px;
 }
-
