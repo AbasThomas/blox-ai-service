@@ -47,18 +47,11 @@ export default function DashboardPage() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="relative min-h-[calc(100vh-80px)] overflow-hidden" style={{ background: '#0C0F13' }}>
-      {/* Immersive Background */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <HexagonBackground hexagonSize={50} proximity={250} />
-      </div>
-
-      <div className="relative z-10">
-        <FeaturePage
-          title={`COMMAND CENTER: ${user.name.split(' ')[0].toUpperCase()}`}
-          description={`Tier Level: ${user.tier}. ${user.tier === PlanTier.FREE ? 'System features restricted. Initiate upgrade sequence.' : 'All premium protocols verified and online.'}`}
-          headerIcon={<ShieldCheck className="h-6 w-6" />}
-        >
+    <FeaturePage
+      title={`COMMAND CENTER: ${user.name.split(' ')[0].toUpperCase()}`}
+      description={`Tier Level: ${user.tier}. ${user.tier === PlanTier.FREE ? 'System features restricted. Initiate upgrade sequence.' : 'All premium protocols verified and online.'}`}
+      headerIcon={<ShieldCheck className="h-6 w-6" />}
+    >
           {/* Stats row */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
             {[
@@ -293,8 +286,6 @@ export default function DashboardPage() {
             </aside>
           </div>
         </FeaturePage>
-      </div>
-    </div>
   );
 }
 

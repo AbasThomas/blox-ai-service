@@ -24,9 +24,9 @@ import {
 } from 'lucide-react';
 import { BillingCycle, PlanTier, type PricingPlan } from '@nextjs-blox/shared-types';
 import { billingApi } from '@/lib/api';
-import { InteractiveGridPattern } from '../components/shared/interactive-grid-pattern';
-import { WaveGridBackground } from '../components/shared/wave-grid-background';
-import { HexagonBackground } from '../components/shared/hexagon-background';
+import { InteractiveGridPattern } from '@/components/shared/interactive-grid-pattern';
+import { WaveGridBackground } from '@/components/shared/wave-grid-background';
+import { HexagonBackground } from '@/components/shared/hexagon-background';
 import { cn } from '@/lib/utils';
 
 // ── brand token ──────────────────────────────────────────────────────────────

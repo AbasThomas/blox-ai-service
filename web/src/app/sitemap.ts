@@ -24,14 +24,14 @@ async function fetchPublishedPortfolios(): Promise<PublicPortfolioEntry[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes: MetadataRoute.Sitemap = [
+  const staticRoutes = [
     { url: `${BASE_URL}/`,           changeFrequency: 'weekly',  priority: 1.0 },
     { url: `${BASE_URL}/pricing`,    changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/templates`,  changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${BASE_URL}/marketplace`,changeFrequency: 'weekly',  priority: 0.7 },
     { url: `${BASE_URL}/help`,       changeFrequency: 'monthly', priority: 0.6 },
     // Auth pages intentionally excluded — they carry noindex anyway
-  ].map((entry) => ({ ...entry, lastModified: new Date() }));
+  ].map((entry) => ({ ...entry, lastModified: new Date() })) as MetadataRoute.Sitemap;
 
   const portfolios = await fetchPublishedPortfolios();
 
