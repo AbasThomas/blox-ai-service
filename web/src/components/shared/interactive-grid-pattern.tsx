@@ -106,7 +106,8 @@ export function InteractiveGridPattern({
   return (
     <div
       ref={containerRef}
-      className={cn("absolute inset-0 overflow-hidden bg-[#0C0F13]", className)}
+      className={cn("absolute inset-0 overflow-hidden", className)}
+      style={{ backgroundColor: "#020612" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
@@ -164,7 +165,7 @@ export function InteractiveGridPattern({
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 0%, transparent 30%, rgba(10,10,10,0.8) 100%)",
+            "radial-gradient(ellipse at center, transparent 0%, transparent 30%, rgba(2,6,18,0.9) 100%)",
         }}
       />
 

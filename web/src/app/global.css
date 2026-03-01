@@ -32,10 +32,34 @@ h4 {
   outline: 2px solid #228f87;
   outline-offset: 2px;
 }
+.londrina-shadow-regular {
+  font-family: "Londrina Shadow", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
 .bungee-inline-regular {
   font-family: "Bungee Inline", sans-serif;
   font-weight: 400;
   font-style: normal;
+}
+
+.rubik-maze-regular {
+  font-family: "Rubik Maze", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.black-ops-one-regular {
+  font-family: "Black Ops One", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.landing-header-fonts h1,
+.landing-header-fonts h2,
+.landing-header-fonts h3 {
+  font-family: "Black Ops One", "Bungee Inline", "Londrina Shadow", "Rubik Maze", ui-sans-serif, system-ui;
 }
 
 @keyframes hero-btn-shine {

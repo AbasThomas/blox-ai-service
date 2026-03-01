@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Bot,
   Github,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { BillingCycle, PlanTier, type PricingPlan } from '@nextjs-blox/shared-types';
 import { billingApi } from '@/lib/api';
@@ -85,64 +87,19 @@ function FeatureCard({
   className?: string;
   children?: React.ReactNode;
 }) {
-  const [glowPoint, setGlowPoint] = useState({ x: 50, y: 50 });
-  const [isHovering, setIsHovering] = useState(false);
-
-  function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setGlowPoint({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    });
-  }
-
-  function onMouseLeave() {
-    setIsHovering(false);
-  }
-
   return (
     <motion.div
-      className={cn("group relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/[0.06] p-7 backdrop-blur-2xl flex flex-col", className)}
+      className={cn("relative overflow-hidden rounded-[1.75rem] border border-[#2a3a55]/70 bg-transparent p-7 flex flex-col", className)}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay, ...SPRING_GOD_MODE }}
-      whileHover={{ y: -8, scale: 1.015 }}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      onMouseEnter={() => setIsHovering(true)}
-      style={{
-        boxShadow: isHovering
-          ? `0 18px 45px -20px rgba(30,206,250,0.7), inset 0 1px 0 rgba(255,255,255,0.28)`
-          : "0 12px 30px -22px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12)",
-      }}
+      style={{ boxShadow: "none" }}
     >
-      <motion.div
-        className="pointer-events-none absolute -inset-16"
-        animate={{ x: ["-85%", "160%"] }}
-        transition={{ duration: 5.5 + delay, repeat: Infinity, ease: "linear" }}
-        style={{
-          background:
-            "linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(190,235,255,0.06) 40%, rgba(190,235,255,0.26) 50%, rgba(255,255,255,0) 62%)",
-          opacity: 0.45,
-        }}
-      />
-
-      <motion.div
-        className="pointer-events-none absolute inset-0"
-        animate={{ opacity: isHovering ? 1 : spark ? 0.9 : 0.55 }}
-        transition={{ duration: 0.25 }}
-        style={{
-          background: `radial-gradient(circle at ${glowPoint.x}% ${glowPoint.y}%, rgba(30,206,250,0.24) 0%, rgba(30,206,250,0.1) 22%, rgba(0,0,0,0) 62%)`,
-        }}
-      />
-
-      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] bg-gradient-to-b from-white/15 via-white/0 to-transparent" />
-
       <div className="relative z-10 flex h-full flex-col">
         <div className="mb-auto">
           <motion.div
-            className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-[#1ECEFA]"
+            className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#2b3d59]/80 bg-transparent text-[#1ECEFA]"
             animate={spark ? { rotate: [0, 7, -7, 0], scale: [1, 1.08, 1] } : {}}
             transition={{ duration: 1.4, ease: "easeInOut" }}
           >
@@ -161,8 +118,6 @@ function FeatureCard({
           transition={{ duration: 1.4, repeat: Infinity }}
         />
       )}
-
-      <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-[#1ECEFA]/12 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
     </motion.div>
   );
 }
@@ -395,7 +350,7 @@ export default function HomePage() {
 
   return (
     <div
-      className="overflow-hidden"
+      className="landing-header-fonts overflow-hidden"
       style={{ background: OBSIDIAN }}
     >
 
@@ -799,6 +754,60 @@ export default function HomePage() {
 
 
       {/* ══════════════════════════════════════════════════════════════════════
+          FAQ SECTION
+      ══════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
+        {/* Interactive Grid Background */}
+        <InteractiveGridPattern
+          className="absolute inset-0 opacity-60"
+          cellSize={60}
+          glowColor="rgba(30, 206, 250, 0.35)"
+          borderColor="rgba(255, 255, 255, 0.03)"
+          proximity={250}
+        />
+        
+        {/* Gradient Overlays for smooth blending */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(30,206,250,0.08)_0%,transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0C0F13] via-transparent to-[#0C0F13]" />
+
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <motion.div
+            className="mb-16 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={SPRING_GOD_MODE}
+          >
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#1ECEFA]">Got Questions?</p>
+            <h2 className="font-display text-3xl font-black text-white md:text-5xl">Frequently Asked Questions</h2>
+          </motion.div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Is it really free to start?",
+                a: "Yes! Our Free plan gives you access to the core builder, 1 full portfolio block, ATS scanning, and basic templates without ever asking for a credit card. You can stay on it forever."
+              },
+              {
+                q: "How good is the SEO?",
+                a: "Every Blox portfolio is statically generated using Next.js, meaning sub-second load times and perfect Core Web Vitals. We automatically generate optimal meta tags, Open Graph images, and semantic HTML for maximum search visibility."
+              },
+              {
+                q: "Can I use my custom domain?",
+                a: "Absolutely. On our Pro and Premium plans, you can easily connect your own domain (e.g., yourname.com) with automatic SSL provisioning. Free users will be hosted on a yourname.blox.app subdomain."
+              },
+              {
+                q: "Is my data secure?",
+                a: "We take privacy seriously. Your data is encrypted at rest and in transit. We don't sell your personal data to third parties, and you have complete control to export or delete your account at any time."
+              }
+            ].map((faq, i) => (
+              <FAQItem key={i} question={faq.q} answer={faq.a} delay={i * 0.1} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
           FINAL CTA
       ══════════════════════════════════════════════════════════════════════ */}
       {/* ══════════════════════════════════════════════════════════════════════
@@ -819,6 +828,24 @@ export default function HomePage() {
           <LiquidButton />
         </motion.div>
       </section>
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          MASSIVE BRAND FOOTER
+      ══════════════════════════════════════════════════════════════════════ */}
+      <div 
+        className="text-center w-full mb-20 pr-4 pl-4"
+        style={{
+          maskImage: 'linear-gradient(180deg, transparent, black 0%, black 55%, transparent)', 
+          WebkitMaskImage: 'linear-gradient(180deg, transparent, black 0%, black 55%, transparent)'
+        }}
+      >
+        <h1 
+          className="text-[22vw] leading-[0.7] select-none text-[rgba(30,206,250,0.06)] tracking-tighter mix-blend-screen scale-y-110 reveal-on-scroll"
+          style={{ fontFamily: '"Rubik Maze", system-ui' }}
+        >
+          BLOX
+        </h1>
+      </div>
     </div>
   );
 }
@@ -872,5 +899,51 @@ function LiquidButton() {
         />
       ))}
     </div>
+  );
+}
+
+/** Animated Accordion for FAQ */
+function FAQItem({ question, answer, delay }: { question: string; answer: string; delay: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <motion.div
+      className="overflow-hidden rounded-2xl border bg-slate-900/40 backdrop-blur-xl"
+      style={{ borderColor: isOpen ? `${CYAN}40` : '#1e2535' }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay, ...SPRING_GOD_MODE }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between p-6 text-left transition-colors focus:outline-none"
+      >
+        <span className="font-display text-lg font-bold text-white tracking-wide">{question}</span>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-[#1ECEFA] transition-transform duration-300">
+          <motion.div
+            initial={false}
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {isOpen ? <Minus size={16} /> : <Plus size={16} />}
+          </motion.div>
+        </div>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <div className="px-6 pb-6 text-slate-400 text-sm leading-relaxed">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

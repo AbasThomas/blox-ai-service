@@ -10,6 +10,8 @@ export interface HexagonBackgroundProps {
   hexagonSize?: number
   /** Gap between hexagons in pixels */
   hexagonMargin?: number
+  /** Mouse proximity radius for highlighting */
+  proximity?: number
   /** Glow color on hover */
   glowColor?: string
   /** Base border color */
@@ -21,11 +23,13 @@ export function HexagonBackground({
   children,
   hexagonSize = 60,
   hexagonMargin = 2,
+  proximity = 140,
   glowColor = "rgba(30, 206, 250, 0.4)",
   borderColor = "rgba(63, 63, 70, 0.3)",
 }: HexagonBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [grid, setGrid] = useState({ rows: 0, cols: 0, scale: 1 })
+  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 })
 
   const hexWidth = hexagonSize
   const hexHeight = hexagonSize * 1.15
@@ -55,10 +59,66 @@ export function HexagonBackground({
     return () => ro.disconnect()
   }, [updateGrid])
 
+  const updateMousePosition = useCallback((clientX: number, clientY: number) => {
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const localX = clientX - rect.left
+    const localY = clientY - rect.top
+
+    if (localX < 0 || localY < 0 || localX > rect.width || localY > rect.height) {
+      setMousePos({ x: -1000, y: -1000 })
+      return
+    }
+
+    setMousePos({ x: localX, y: localY })
+  }, [])
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      updateMousePosition(e.clientX, e.clientY)
+    }
+
+    const onMouseLeave = () => {
+      setMousePos({ x: -1000, y: -1000 })
+    }
+
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseleave", onMouseLeave)
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseleave", onMouseLeave)
+    }
+  }, [updateMousePosition])
+
   const scaledHexWidth = hexWidth * grid.scale
   const scaledHexHeight = hexHeight * grid.scale
   const scaledRowSpacing = rowSpacing * grid.scale
   const scaledMargin = hexagonMargin * grid.scale
+  const scaledProximity = proximity * grid.scale
+
+  const withAlpha = useCallback((color: string, alpha: number) => {
+    const safeAlpha = Math.max(0, Math.min(1, alpha))
+
+    if (color.startsWith("rgba(")) {
+      return color.replace(/[\d.]+\)\s*$/, `${safeAlpha})`)
+    }
+
+    if (color.startsWith("rgb(")) {
+      return color.replace("rgb(", "rgba(").replace(")", `, ${safeAlpha})`)
+    }
+
+    const hex = color.replace("#", "")
+    if (hex.length === 6) {
+      const r = Number.parseInt(hex.slice(0, 2), 16)
+      const g = Number.parseInt(hex.slice(2, 4), 16)
+      const b = Number.parseInt(hex.slice(4, 6), 16)
+      return `rgba(${r}, ${g}, ${b}, ${safeAlpha})`
+    }
+
+    return color
+  }, [])
 
   const hexagonStyle = useMemo(
     () => ({
@@ -93,22 +153,54 @@ export function HexagonBackground({
               }}
             >
               {Array.from({ length: grid.cols }).map((_, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={cn(
-                    "relative shrink-0 transition-all duration-1000",
-                    "[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
-                    "before:absolute before:inset-0 before:bg-[var(--border-color)]",
-                    "before:transition-all before:duration-1000",
-                    "after:absolute after:inset-[var(--margin)] after:bg-[#0C0F13]",
-                    "after:[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
-                    "after:transition-all after:duration-500",
-                    "hover:before:bg-[var(--glow-color)] hover:before:duration-0",
-                    "hover:after:bg-[#161B22] hover:after:duration-0",
-                    "hover:before:shadow-[0_0_20px_var(--glow-color)]",
-                  )}
-                  style={hexagonStyle as React.CSSProperties}
-                />
+                (() => {
+                  const centerX =
+                    colIndex * (scaledHexWidth + scaledMargin) +
+                    (isOddRow ? scaledHexWidth * 0.5 : 0) +
+                    scaledHexWidth * 0.45
+                  const centerY = rowIndex * scaledRowSpacing + scaledHexHeight * 0.3
+
+                  const dx = mousePos.x - centerX
+                  const dy = mousePos.y - centerY
+                  const distance = Math.sqrt(dx * dx + dy * dy)
+                  const proximityFactor = Math.max(0, 1 - distance / scaledProximity)
+
+                  const dynamicBorder =
+                    proximityFactor > 0
+                      ? withAlpha(glowColor, 0.2 + proximityFactor * 0.65)
+                      : borderColor
+                  const dynamicFill =
+                    proximityFactor > 0
+                      ? withAlpha("#161B22", 0.9 + proximityFactor * 0.1)
+                      : "#0C0F13"
+                  const dynamicShadow =
+                    proximityFactor > 0
+                      ? `0 0 ${10 + 24 * proximityFactor}px ${withAlpha(glowColor, 0.25 + proximityFactor * 0.45)}`
+                      : "none"
+
+                  return (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      className={cn(
+                        "relative shrink-0 transition-all duration-500",
+                        "[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
+                        "before:absolute before:inset-0 before:bg-[var(--dynamic-border)]",
+                        "before:shadow-[var(--dynamic-shadow)] before:transition-all before:duration-500",
+                        "after:absolute after:inset-[var(--margin)] after:bg-[var(--dynamic-fill)]",
+                        "after:[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
+                        "after:transition-all after:duration-300",
+                      )}
+                      style={
+                        {
+                          ...hexagonStyle,
+                          "--dynamic-border": dynamicBorder,
+                          "--dynamic-fill": dynamicFill,
+                          "--dynamic-shadow": dynamicShadow,
+                        } as React.CSSProperties
+                      }
+                    />
+                  )
+                })()
               ))}
             </div>
           )

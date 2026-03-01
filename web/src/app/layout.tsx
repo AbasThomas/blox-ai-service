@@ -25,10 +25,10 @@
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Bungee+Inline&family=Londrina+Shadow&display=swap"
-            rel="stylesheet"
-          />
+            <link
+              href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Bungee+Inline&family=Londrina+Shadow&family=Rubik+Maze&display=swap"
+              rel="stylesheet"
+            />
         </head>
         <body>
           <PosthogProvider>
