@@ -14,6 +14,14 @@
         "tsConfig": "shared-config/tsconfig.lib.json",
         "assets": ["shared-config/*.md"]
       }
+    },
+    "patch-dist": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node -e \"const fs=require('fs');const p=JSON.parse(fs.readFileSync('dist/shared-config/package.json','utf8'));p.type='commonjs';fs.writeFileSync('dist/shared-config/package.json',JSON.stringify(p,null,2));console.log('patched dist/shared-config/package.json -> type: commonjs');\""
+      }
     }
   }
 }

@@ -78,6 +78,22 @@ export default function SettingsPage() {
     finally { setLoadingSub(false); }
   }, []);
 
+  // Handle OAuth callback result and deep-link tab from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') as Tab | null;
+    const connected = params.get('connected');
+    const errorParam = params.get('error');
+
+    if (tabParam && TABS.includes(tabParam)) setActiveTab(tabParam);
+    if (connected) setIntegrationMsg(`${connected} connected successfully.`);
+    if (errorParam) setIntegrationMsg(`Connection failed: ${errorParam.replace(/_/g, ' ')}`);
+
+    if (tabParam || connected || errorParam) {
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'Integrations') loadIntegrations();
     if (activeTab === 'Subscription') loadSubscription();
@@ -150,7 +166,8 @@ export default function SettingsPage() {
       };
 
       if (res.authUrl) {
-        window.location.href = `${apiBase}${res.authUrl}`;
+        const token = localStorage.getItem('blox_access_token') ?? '';
+        window.location.href = `${apiBase}${res.authUrl}?token=${encodeURIComponent(token)}`;
         return;
       }
 

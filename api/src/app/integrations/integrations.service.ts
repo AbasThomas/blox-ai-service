@@ -161,7 +161,7 @@ export class IntegrationsService {
     return {
       provider: providerDef.id,
       mode: providerDef.mode,
-      authUrl: shouldUseOAuth ? providerDef.authUrl : null,
+      authUrl: !existing && shouldUseOAuth ? providerDef.authUrl : null,
       scopes: providerDef.scopes,
       connected: existing ? true : !shouldUseOAuth,
       fallbackMode: !shouldUseOAuth,

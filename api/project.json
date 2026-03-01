@@ -18,7 +18,7 @@
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
+      "dependsOn": ["build", {"projects": ["shared-types"], "target": "patch-dist"}, {"projects": ["shared-config"], "target": "patch-dist"}],
       "options": {
         "buildTarget": "api:build"
       }
