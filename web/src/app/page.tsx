@@ -4,25 +4,28 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
   useInView,
-  useScroll,
   AnimatePresence,
 } from 'framer-motion';
 import {
   Sparkles,
-  Zap,
-  LayoutGrid,
   Globe,
   Star,
   CheckCircle,
-  Layers,
   FileText,
   ChevronRight,
+  Database,
+  MousePointer2,
+  TrendingUp,
+  Bot,
+  Github,
 } from 'lucide-react';
+import { BillingCycle, PlanTier, type PricingPlan } from '@nextjs-blox/shared-types';
+import { billingApi } from '@/lib/api';
 import { InteractiveGridPattern } from '../components/shared/interactive-grid-pattern';
+import { WaveGridBackground } from '../components/shared/wave-grid-background';
+import { HexagonBackground } from '../components/shared/hexagon-background';
+import { cn } from '@/lib/utils';
 
 // ── brand token ──────────────────────────────────────────────────────────────
 const CYAN = '#1ECEFA';
@@ -64,12 +67,14 @@ function BloxLogo({ size = 36, pulse = false }: { size?: number; pulse?: boolean
   );
 }
 
-/** Magnetic Bento Card with 3D Parallax and AI-Spark */
+/** Glassmorphic animated feature card */
 function FeatureCard({
   icon: Icon,
   title,
   desc,
   delay,
+  className,
+  children,
   spark = false,
 }: {
   icon: React.ElementType;
@@ -77,64 +82,87 @@ function FeatureCard({
   desc: string;
   delay: number;
   spark?: boolean;
+  className?: string;
+  children?: React.ReactNode;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(y, [-100, 100], [15, -15]), SPRING_GOD_MODE);
-  const rotateY = useSpring(useTransform(x, [-100, 100], [-15, 15]), SPRING_GOD_MODE);
+  const [glowPoint, setGlowPoint] = useState({ x: 50, y: 50 });
+  const [isHovering, setIsHovering] = useState(false);
 
   function onMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(e.clientX - centerX);
-    y.set(e.clientY - centerY);
+    setGlowPoint({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
   }
 
   function onMouseLeave() {
-    x.set(0);
-    y.set(0);
+    setIsHovering(false);
   }
 
   return (
     <motion.div
-      ref={ref}
-      className="relative overflow-hidden rounded-none border border-white/5 bg-[#161B22] p-8"
+      className={cn("group relative overflow-hidden rounded-[1.75rem] border border-white/15 bg-white/[0.06] p-7 backdrop-blur-2xl flex flex-col", className)}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay, ...SPRING_GOD_MODE }}
+      whileHover={{ y: -8, scale: 1.015 }}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      onMouseEnter={() => setIsHovering(true)}
+      style={{
+        boxShadow: isHovering
+          ? `0 18px 45px -20px rgba(30,206,250,0.7), inset 0 1px 0 rgba(255,255,255,0.28)`
+          : "0 12px 30px -22px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.12)",
+      }}
     >
       <motion.div
-        className="absolute inset-0 pointer-events-none"
-        animate={spark ? {
-          background: [
-            "radial-gradient(circle at 50% 50%, rgba(30,206,250,0) 0%, transparent 100%)",
-            "radial-gradient(circle at 50% 50%, rgba(30,206,250,0.1) 0%, transparent 70%)",
-            "radial-gradient(circle at 50% 50%, rgba(30,206,250,0) 0%, transparent 100%)",
-          ],
-        } : {}}
-        transition={{ duration: 1.5 }}
+        className="pointer-events-none absolute -inset-16"
+        animate={{ x: ["-85%", "160%"] }}
+        transition={{ duration: 5.5 + delay, repeat: Infinity, ease: "linear" }}
+        style={{
+          background:
+            "linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(190,235,255,0.06) 40%, rgba(190,235,255,0.26) 50%, rgba(255,255,255,0) 62%)",
+          opacity: 0.45,
+        }}
       />
-      
-      <div style={{ transform: "translateZ(20px)" }}>
-        <Icon size={24} className="mb-6 text-[#1ECEFA]" />
-        <h3 className="mb-4 text-xl font-black uppercase tracking-tight text-white">{title}</h3>
-        <p className="text-sm leading-relaxed text-slate-400">{desc}</p>
+
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        animate={{ opacity: isHovering ? 1 : spark ? 0.9 : 0.55 }}
+        transition={{ duration: 0.25 }}
+        style={{
+          background: `radial-gradient(circle at ${glowPoint.x}% ${glowPoint.y}%, rgba(30,206,250,0.24) 0%, rgba(30,206,250,0.1) 22%, rgba(0,0,0,0) 62%)`,
+        }}
+      />
+
+      <div className="pointer-events-none absolute inset-0 rounded-[1.75rem] bg-gradient-to-b from-white/15 via-white/0 to-transparent" />
+
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="mb-auto">
+          <motion.div
+            className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-[#1ECEFA]"
+            animate={spark ? { rotate: [0, 7, -7, 0], scale: [1, 1.08, 1] } : {}}
+            transition={{ duration: 1.4, ease: "easeInOut" }}
+          >
+            <Icon size={22} />
+          </motion.div>
+          <h3 className="mb-3 text-lg font-black uppercase tracking-tight text-white">{title}</h3>
+          <p className="text-sm leading-relaxed text-slate-300/90">{desc}</p>
+        </div>
+        {children && <div className="mt-8 flex-1">{children}</div>}
       </div>
 
       {spark && (
         <motion.div
-          className="absolute right-4 top-4 h-1 w-1 bg-[#1ECEFA]"
-          animate={{ scale: [1, 4, 1], opacity: [0, 1, 0] }}
-          transition={{ duration: 1.5 }}
+          className="absolute right-5 top-5 h-2 w-2 rounded-full bg-[#1ECEFA]"
+          animate={{ scale: [1, 3.2, 1], opacity: [0.2, 1, 0.2] }}
+          transition={{ duration: 1.4, repeat: Infinity }}
         />
       )}
+
+      <div className="pointer-events-none absolute -bottom-10 -right-10 h-28 w-28 rounded-full bg-[#1ECEFA]/12 blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
     </motion.div>
   );
 }
@@ -184,15 +212,8 @@ function DemoBlock({ label, delay, col, row }: { label: string; delay: number; c
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function HomePage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
-
   const sec1 = useRef<HTMLElement>(null);
   const sec2 = useRef<HTMLElement>(null);
-  const sec3 = useRef<HTMLElement>(null);
   const sec4 = useRef<HTMLElement>(null);
 
   // section refs for Glow-Flow
@@ -200,7 +221,7 @@ export default function HomePage() {
   const [sparkIndex, setSparkIndex] = useState<number | null>(null);
   useEffect(() => {
     const interval = setInterval(() => {
-      const idx = Math.floor(Math.random() * 6);
+      const idx = Math.floor(Math.random() * 9);
       setSparkIndex(idx);
       setTimeout(() => setSparkIndex(null), 1500);
     }, 3000);
@@ -210,7 +231,35 @@ export default function HomePage() {
   // AI demo animation
   const [demoPhase, setDemoPhase] = useState<'idle' | 'typing' | 'snapping' | 'done'>('idle');
   const [typedText, setTypedText] = useState('');
+  const [isAnnual, setIsAnnual] = useState(true);
+  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+  const [pricingLoading, setPricingLoading] = useState(true);
   const DEMO_TEXT = '5yr dev. React, Node, AWS. Ex-Stripe. Open source contributor. CS Stanford.';
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadPricingPlans = async () => {
+      try {
+        const result = await billingApi.getPlans() as { plans?: PricingPlan[] };
+        if (mounted && Array.isArray(result?.plans)) {
+          setPricingPlans(result.plans);
+        }
+      } catch (error) {
+        console.error('Failed to load pricing plans', error);
+      } finally {
+        if (mounted) {
+          setPricingLoading(false);
+        }
+      }
+    };
+
+    void loadPricingPlans();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const DEMO_BLOCKS = [
     { label: 'Experience', col: 1, row: 1 },
@@ -222,12 +271,87 @@ export default function HomePage() {
   ];
 
   const FEATURES = [
-    { icon: Sparkles, title: 'AI Import & Unification', desc: 'Pull data from LinkedIn, GitHub, Upwork and 22+ networks. Our AI normalises, deduplicates, and enriches every entry automatically.' },
-    { icon: LayoutGrid, title: 'Modular Block Engine', desc: 'Drag, snap, and rearrange resume sections as independent blocks. Combine templates and publish multiple variants in seconds.' },
-    { icon: Zap, title: 'ATS & SEO Scorecards', desc: 'Real-time scoring against job descriptions. Get actionable keyword gaps, density fixes, and formatting hints before you apply.' },
-    { icon: Globe, title: 'Instant Subdomain Publish', desc: 'Go live on yourname.blox.app the moment you hit publish. Custom domains, Open Graph cards, and analytics built-in.' },
-    { icon: FileText, title: 'Cover Letter Generator', desc: 'Role-aware AI writes tailored cover letters from your block data. Edit, regenerate, and export to PDF or DOCX in one click.' },
-    { icon: Layers, title: '5,000+ Template Pipeline', desc: 'An ever-growing library of recruiter-tested templates across industries. Filter by role, sector, seniority, or visual style.' },
+    {
+      icon: Database,
+      title: 'AI-Powered Imports',
+      desc: 'Pull unified data from LinkedIn, GitHub, Upwork and 22+ networks automatically.',
+      className: "md:col-span-2 md:row-span-2",
+      visual: (
+        <div className="relative h-48 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0C0F13]/50">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+          <div className="flex h-full items-center justify-center gap-2 sm:gap-4 px-2">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0077b5]/20 font-bold text-[#0077b5] border border-[#0077b5]/50 shadow-[0_0_20px_rgba(0,119,181,0.5)]">in</div>
+            <div className="hidden sm:block h-0.5 w-6 bg-gradient-to-r from-[#0077b5] to-[#1ECEFA]" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1ECEFA]/20 text-[#1ECEFA] border border-[#1ECEFA]/50 shadow-[0_0_30px_rgba(30,206,250,0.6)] z-10"><Bot size={40} /></div>
+            <div className="hidden sm:block h-0.5 w-6 bg-gradient-to-r from-[#1ECEFA] to-white/80" />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.3)]"><Github size={24} /></div>
+          </div>
+        </div>
+      )
+    },
+    {
+      icon: Sparkles,
+      title: 'Smart About & Bio Refinement',
+      desc: 'Our AI normalizes and enriches your professional summary for maximum impact.',
+      className: "md:col-span-1 md:row-span-1",
+    },
+    {
+      icon: FileText,
+      title: 'ATS-Compliant Materials',
+      desc: 'Generate high-score resumes and cover letters tailored for applicant tracking systems.',
+      className: "md:col-span-1 md:row-span-1",
+    },
+    {
+      icon: MousePointer2,
+      title: 'Drag-and-Drop Editor',
+      desc: 'Rearrange resume sections as independent blocks with physical weight.',
+      className: "md:col-span-1 md:row-span-2",
+      visual: (
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="h-12 w-full rounded-xl border border-white/10 bg-white/5 p-3 flex items-center gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform -rotate-2 -translate-x-2">
+            <div className="h-4 w-4 rounded-sm bg-[#1ECEFA]/50" />
+            <div className="h-2 w-1/2 rounded-full bg-white/20" />
+          </div>
+          <div className="h-12 w-full rounded-xl border border-[#1ECEFA]/40 bg-[#1ECEFA]/15 p-3 flex items-center gap-3 shadow-[0_16px_32px_rgba(30,206,250,0.25)] transform rotate-1 translate-x-2 z-10 scale-[1.05]">
+            <div className="h-4 w-4 rounded-sm bg-[#1ECEFA]" />
+            <div className="h-2 w-2/3 rounded-full bg-white/90" />
+          </div>
+          <div className="h-12 w-full rounded-xl border border-white/10 bg-white/5 p-3 flex items-center gap-3 shadow-[0_4px_12px_rgba(0,0,0,0.5)] transform rotate-1 translate-x-1">
+            <div className="h-4 w-4 rounded-sm bg-[#1ECEFA]/30" />
+            <div className="h-2 w-1/3 rounded-full bg-white/10" />
+          </div>
+        </div>
+      )
+    },
+    {
+      icon: TrendingUp,
+      title: 'Built-in Analytics',
+      desc: 'Track views, engagement, and heatmaps to see how recruiters interact.',
+      className: "md:col-span-2 md:row-span-1",
+      visual: (
+        <div className="relative mt-4 h-24 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0C0F13]/50 p-4">
+          <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-[2px] px-4">
+            {[20, 35, 30, 60, 80, 50, 95, 70, 45, 85, 40].map((h, i) => (
+              <motion.div
+                key={i}
+                className="w-full rounded-t-sm bg-gradient-to-t from-[#1ECEFA]/10 to-[#1ECEFA]/60"
+                initial={{ height: "0%" }}
+                whileInView={{ height: `${h}%` }}
+                transition={{ duration: 1, delay: i * 0.05 + 0.5, ease: "easeOut" }}
+                viewport={{ once: true }}
+              />
+            ))}
+          </div>
+          <div className="absolute top-3 left-4 rounded bg-[#1ECEFA]/20 px-2 py-0.5 text-[10px] font-bold text-[#1ECEFA]">LIVE DATA</div>
+        </div>
+      )
+    },
+    {
+      icon: Globe,
+      title: 'Real Hosting & Domains',
+      desc: 'Go live on yourname.blox.app or connect your own custom domain.',
+      className: "md:col-span-1 md:row-span-1",
+    },
   ];
 
   const runDemo = useCallback(() => {
@@ -253,6 +377,20 @@ export default function HomePage() {
     e.currentTarget.style.setProperty('--x', `${x}px`);
     e.currentTarget.style.setProperty('--y', `${y}px`);
   }, []);
+
+  const getPlanAmount = useCallback((tier: PlanTier, cycle: BillingCycle) => {
+    return pricingPlans.find((plan) => plan.tier === tier && plan.cycle === cycle)?.amountUsd ?? null;
+  }, [pricingPlans]);
+
+  const formatUsd = useCallback((value: number | null) => {
+    if (value === null) return pricingLoading ? '...' : 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }, [pricingLoading]);
 
 
   return (
@@ -336,73 +474,148 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           FEATURES (Bento Grid)
       ══════════════════════════════════════════════════════════════════════ */}
-    
+      <section ref={sec2 as React.RefObject<HTMLElement>} className="relative overflow-hidden px-6 py-32">
+        <WaveGridBackground className="absolute inset-0" gridSize={32} waveHeight={34} waveSpeed={1.05} color={CYAN} />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.62)_0%,rgba(3,7,18,0.38)_40%,rgba(3,7,18,0.75)_100%)]" />
+
+        <div className="relative z-10 mx-auto max-w-7xl">
+          <motion.div
+            className="mb-20 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={SPRING_GOD_MODE}
+          >
+            <motion.p
+              className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[#7edcff]"
+              animate={{ opacity: [0.75, 1, 0.75] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              Everything You Need
+            </motion.p>
+            <h2 className="font-display text-4xl font-black tracking-tighter text-white md:text-7xl">
+              GLASS SYSTEMS. <span className="text-[#1ECEFA]">LIVE MOTION.</span>
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-sm text-slate-300/85 md:text-base">
+              A fully animated toolkit where every capability is layered in glass, depth, and reactive light.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-6 auto-rows-min grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+            {FEATURES.map((f, i) => (
+              <FeatureCard
+                key={f.title}
+                icon={f.icon}
+                title={f.title}
+                desc={f.desc}
+                delay={i * 0.06}
+                spark={sparkIndex === i}
+                className={f.className}
+              >
+                {f.visual}
+              </FeatureCard>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SCROLL-ASSEMBLED RESUME (Section 3)
+          HOW IT WORKS (Process Flow)
       ══════════════════════════════════════════════════════════════════════ */}
-      <div ref={containerRef} className="relative h-[300vh]">
-        <section ref={sec3 as React.RefObject<HTMLElement>} className="sticky top-0 h-screen overflow-hidden">
-          <div className="flex h-full items-center justify-center p-6">
-            <motion.div
-              className="absolute z-0 text-center"
-              style={{ opacity: useTransform(scrollYProgress, [0, 0.2], [1, 0]) }}
-            >
-              <h2 className="font-display text-4xl font-black tracking-tighter text-white md:text-7xl">
-                YOUR RESUME, <span className="text-[#1ECEFA]">ASSEMBLED.</span>
-              </h2>
-            </motion.div>
+      <section className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
+        <div className="absolute inset-0">
+          <HexagonBackground 
+            hexagonSize={45} 
+            hexagonMargin={3} 
+            glowColor="rgba(30, 206, 250, 0.4)" 
+            className="opacity-60"
+          />
+        </div>
+        
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <motion.div
+            className="mb-20 text-center"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={SPRING_GOD_MODE}
+          >
+            <p className="mb-4 text-xs font-bold uppercase tracking-[0.24em] text-[#7edcff]">Workflow</p>
+            <h2 className="font-display text-4xl font-black tracking-tighter text-white md:text-5xl">
+              From Chaos to <span className="text-[#1ECEFA]">Deployed.</span>
+            </h2>
+          </motion.div>
 
-            <div className="relative h-[550px] w-[380px] border border-white/10 bg-[#161B22]/50 backdrop-blur-xl">
-              {/* Central Portfolio Preview */}
-              <div className="p-8">
-                <div className="mb-6 h-4 w-1/3 bg-white/10" />
-                <div className="mb-2 h-2 w-full bg-white/5" />
-                <div className="mb-2 h-2 w-full bg-white/5" />
-                <div className="mb-8 h-2 w-2/3 bg-white/5" />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="h-24 bg-white/5" />
-                  <div className="h-24 bg-white/5" />
-                </div>
-              </div>
+          <div className="relative">
+            {/* Connecting Line (Desktop only) */}
+            <div className="absolute left-1/2 top-10 hidden h-[calc(100%-80px)] w-0.5 -translate-x-1/2 bg-gradient-to-b from-transparent via-[#1ECEFA]/20 to-transparent md:block" />
 
-              {/* Floating UI Elements */}
+            <div className="space-y-12 md:space-y-0 text-center md:text-left">
               {[
-                { label: "Experience", x: -350, y: -180, rot: -12 },
-                { label: "Skill: React", x: 350, y: -250, rot: 8 },
-                { label: "Stripe.png", x: -400, y: 80, rot: 4 },
-                { label: "Education", x: 400, y: 250, rot: -8 },
-                { label: "Skill: Python", x: -250, y: 350, rot: 15 },
-              ].map((el, i) => {
-                const progressStart = 0.2 + (i * 0.1);
-                const progressEnd = progressStart + 0.2;
-                
-                const xTransform = useTransform(scrollYProgress, [progressStart, progressEnd], [el.x, 0]);
-                const yTransform = useTransform(scrollYProgress, [progressStart, progressEnd], [el.y, 0]);
-                const rotateTransform = useTransform(scrollYProgress, [progressStart, progressEnd], [el.rot, 0]);
-                const opacityTransform = useTransform(scrollYProgress, [progressStart, progressEnd - 0.05, progressEnd], [0, 1, 1]);
-
-                return (
+                {
+                  step: "01",
+                  title: "Connect & Ingest",
+                  desc: "Drop in your LinkedIn URL or raw text. Our engine instantly processes and cleans the data.",
+                  icon: Database,
+                },
+                {
+                  step: "02",
+                  title: "AI Refinement",
+                  desc: "Blox normalizes formatting, identifies skill gaps, and enhances your bullet points for maximum impact.",
+                  icon: Sparkles,
+                },
+                {
+                  step: "03",
+                  title: "Visual Snap",
+                  desc: "Drag the processed nodes into any template block. Everything snaps together with pixel-perfect alignment.",
+                  icon: MousePointer2,
+                },
+                {
+                  step: "04",
+                  title: "Instant Publish",
+                  desc: "Hit deploy to launch your personal site globally, complete with custom domains and analytics.",
+                  icon: Globe,
+                }
+              ].map((step, i) => (
+                <div key={step.step} className="relative flex flex-col items-center md:flex-row md:even:flex-row-reverse group">
+                  
+                  {/* The central node representing the step number */}
                   <motion.div
-                    key={el.label}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-none border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-4 py-2 text-[10px] font-bold text-[#1ECEFA] uppercase"
-                    style={{
-                      x: xTransform,
-                      y: yTransform,
-                      rotate: rotateTransform,
-                      opacity: opacityTransform,
-                    }}
+                    className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#0C0F13] shadow-[0_0_30px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:border-[#1ECEFA]/40 group-hover:scale-110 md:absolute md:left-1/2 md:-translate-x-1/2"
+                    initial={{ opacity: 0, scale: 0 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ delay: i * 0.1, ...SPRING_GOD_MODE }}
                   >
-                    {el.label}
+                    <div className="absolute inset-2 rounded-xl bg-gradient-to-b from-[#1ECEFA]/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    <span className="font-display text-2xl font-black text-[#1ECEFA]">{step.step}</span>
                   </motion.div>
-                );
-              })}
+
+                  {/* Content Box */}
+                  <motion.div
+                    className={`mt-6 w-full max-w-md md:mt-0 md:w-1/2 ${i % 2 === 0 ? 'md:pr-20 md:text-right' : 'md:pl-20 md:text-left'}`}
+                    initial={{ opacity: 0, x: i % 2 === 0 ? -40 : 40 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ delay: i * 0.1 + 0.1, ...SPRING_GOD_MODE }}
+                  >
+                    <div className={`relative overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.03] p-8 backdrop-blur-xl transition-all duration-300 group-hover:border-[#1ECEFA]/20 group-hover:bg-white/[0.05]`}>
+                      <div className={`mb-4 flex items-center gap-4 ${i % 2 === 0 ? 'md:flex-row-reverse' : ''} justify-center md:justify-start`}>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1ECEFA]/10 text-[#1ECEFA]">
+                          <step.icon size={20} />
+                        </div>
+                        <h3 className="font-display text-2xl font-black text-white">{step.title}</h3>
+                      </div>
+                      <p className="text-base text-slate-400">{step.desc}</p>
+                    </div>
+                  </motion.div>
+
+                </div>
+              ))}
             </div>
           </div>
-        </section>
-      </div>
-
+        </div>
+      </section>
       {/* ══════════════════════════════════════════════════════════════════════
           TESTIMONIALS
       ══════════════════════════════════════════════════════════════════════ */}
@@ -455,7 +668,7 @@ export default function HomePage() {
           PRICING PREVIEW
       ══════════════════════════════════════════════════════════════════════ */}
       <section ref={sec4 as React.RefObject<HTMLElement>} className="px-6 py-24">
-        <div className="mx-auto max-w-4xl text-center">
+        <div className="mx-auto max-w-5xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -463,77 +676,127 @@ export default function HomePage() {
             transition={SPRING_GOD_MODE}
           >
             <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Pricing</p>
-            <h2 className="font-display text-3xl font-black text-white md:text-5xl">
-              Start free. Scale when<br />you're ready.
+            <h2 className="font-display text-4xl font-black text-white md:text-5xl">
+              Simple, Transparent Pricing
             </h2>
+            
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <span className={`text-sm font-semibold transition-colors duration-300 ${!isAnnual ? 'text-white' : 'text-slate-500'}`}>Monthly</span>
+              <button 
+                onClick={() => setIsAnnual(!isAnnual)}
+                className="relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ background: isAnnual ? CYAN : '#1e2535' }}
+              >
+                <span className="sr-only">Toggle annual pricing</span>
+                <span
+                  className={`${isAnnual ? 'translate-x-7' : 'translate-x-1'} inline-block h-6 w-6 transform rounded-full bg-white transition duration-300`}
+                />
+              </button>
+              <span className={`text-sm font-semibold transition-colors duration-300 ${isAnnual ? 'text-white' : 'text-slate-500'}`}>Annually</span>
+              <span className="ml-2 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider text-black" style={{ background: CYAN }}>Save up to 35%</span>
+            </div>
           </motion.div>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-16 grid gap-6 md:grid-cols-3">
             {[
-              { name: 'Free', price: '$0', period: 'forever', features: ['3 portfolio blocks', 'ATS scanner', '1 subdomain', 'Basic templates'], highlight: false },
-              { name: 'Pro', price: '$12', period: '/month', features: ['Unlimited blocks', 'AI generation', 'Custom domains', 'Priority export', 'Advanced analytics'], highlight: true },
-              { name: 'Premium', price: '$29', period: '/month', features: ['Everything in Pro', 'White-label', 'API access', 'Team workspaces', 'Dedicated support'], highlight: false },
+              {
+                name: 'Free',
+                priceMonthly: '$0',
+                priceAnnual: '$0',
+                periodMonthly: '',
+                periodAnnual: '',
+                features: ['Basic templates', '1 portfolio', 'Watermarked'],
+                highlight: false,
+                popular: false,
+              },
+              {
+                name: 'Pro',
+                priceMonthly: formatUsd(getPlanAmount(PlanTier.PRO, BillingCycle.MONTHLY)),
+                priceAnnual: formatUsd(getPlanAmount(PlanTier.PRO, BillingCycle.ANNUAL)),
+                periodMonthly: '/mo',
+                periodAnnual: '/yr',
+                features: ['Unlimited portfolios', 'Custom domain', 'Analytics reporting', 'Advanced AI features'],
+                highlight: true,
+                popular: true,
+              },
+              {
+                name: 'Premium',
+                priceMonthly: formatUsd(getPlanAmount(PlanTier.PREMIUM, BillingCycle.MONTHLY)),
+                priceAnnual: formatUsd(getPlanAmount(PlanTier.PREMIUM, BillingCycle.ANNUAL)),
+                periodMonthly: '/mo',
+                periodAnnual: '/yr',
+                features: ['Everything in Pro', 'E-commerce integration', 'Video résumé blocks', 'Career coach AI'],
+                highlight: false,
+                popular: false,
+              },
             ].map((plan, i) => (
               <motion.div
                 key={plan.name}
-                className="relative overflow-hidden rounded-2xl border p-6"
+                className="relative overflow-hidden rounded-[2rem] border p-8 text-left"
                 style={{
                   borderColor: plan.highlight ? CYAN : '#1e2535',
                   background: plan.highlight
-                    ? `linear-gradient(135deg, ${CYAN}18, rgba(8,11,20,0.95))`
-                    : 'linear-gradient(135deg, #111827, #0d1420)',
-                  boxShadow: plan.highlight ? `0 0 40px ${CYAN}25` : 'none',
+                    ? `linear-gradient(135deg, ${CYAN}15, rgba(8,11,20,0.95))`
+                    : 'linear-gradient(135deg, rgba(17,24,39,0.6), rgba(13,20,32,0.8))',
+                  boxShadow: plan.highlight ? `0 0 40px ${CYAN}20` : 'none',
+                  backdropFilter: 'blur(16px)',
                 }}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, ...SPRING_GOD_MODE }}
-                whileHover={{ scale: 1.02, y: -4 }}
+                whileHover={{ scale: 1.02, y: -6 }}
               >
-                {plan.highlight && (
+                {plan.popular && isAnnual && (
                   <div
-                    className="absolute right-4 top-4 rounded-full px-2 py-0.5 text-[10px] font-black text-black"
+                    className="absolute right-5 top-5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider text-black shadow-[0_0_12px_rgba(30,206,250,0.5)]"
                     style={{ background: CYAN }}
                   >
-                    POPULAR
+                    MOST POPULAR
                   </div>
                 )}
-                <h3 className="font-display text-base font-bold text-white">{plan.name}</h3>
-                <div className="mt-3 flex items-end gap-1">
-                  <span className="font-display text-4xl font-black text-white">{plan.price}</span>
-                  <span className="mb-1 text-sm text-slate-500">{plan.period}</span>
+                <h3 className="font-display text-xl font-bold text-white">{plan.name}</h3>
+                <div className="mt-4 flex items-end gap-1">
+                  <span className="font-display text-4xl font-black text-white">{isAnnual ? plan.priceAnnual : plan.priceMonthly}</span>
+                  <span className="mb-1 text-sm text-slate-400">{isAnnual ? plan.periodAnnual : plan.periodMonthly}</span>
                 </div>
-                <ul className="mt-5 space-y-2">
+                <ul className="mt-8 space-y-4">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-slate-400">
-                      <CheckCircle size={13} style={{ color: plan.highlight ? CYAN : '#374151' }} />
+                    <li key={f} className="flex items-center gap-3 text-sm text-slate-300">
+                      <div className="flex shrink-0 items-center justify-center rounded-full p-0.5" style={{ background: plan.highlight ? `${CYAN}20` : 'rgba(255,255,255,0.05)' }}>
+                        <CheckCircle size={14} style={{ color: plan.highlight ? CYAN : '#6b7280' }} />
+                      </div>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <Link href={plan.name === 'Free' ? '/signup' : '/pricing'}>
-                  <motion.div
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold"
-                    style={
-                      plan.highlight
-                        ? { background: CYAN, color: '#000' }
-                        : { border: `1px solid ${CYAN}30`, color: 'white', background: 'transparent' }
-                    }
-                    whileHover={{
-                      scale: 1.03,
-                      boxShadow: plan.highlight ? `0 0 24px ${CYAN}70` : `0 0 12px ${CYAN}30`,
-                    }}
-                    whileTap={{ scale: 0.97 }}
-                    transition={SPRING_GOD_MODE}
-                  >
-                    Get started <ChevronRight size={14} />
-                  </motion.div>
-                </Link>
+                <div className="mt-10">
+                  <Link href={plan.name === 'Free' ? '/signup' : '/pricing'} className="w-full">
+                    <motion.div
+                      className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold tracking-wide"
+                      style={
+                        plan.highlight
+                          ? { background: CYAN, color: '#000' }
+                          : { border: `1px solid ${CYAN}30`, color: 'white', background: 'rgba(255,255,255,0.03)' }
+                      }
+                      whileHover={{
+                        scale: 1.02,
+                        boxShadow: plan.highlight ? `0 0 24px ${CYAN}70` : `0 0 12px ${CYAN}30`,
+                        background: plan.highlight ? CYAN : `${CYAN}15`,
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={SPRING_GOD_MODE}
+                    >
+                      {plan.name === 'Free' ? 'Start for free' : 'Get started'} <ChevronRight size={16} />
+                    </motion.div>
+                  </Link>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
+
 
       {/* ══════════════════════════════════════════════════════════════════════
           FINAL CTA
