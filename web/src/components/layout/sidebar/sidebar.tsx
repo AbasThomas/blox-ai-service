@@ -53,7 +53,7 @@ export function Sidebar() {
               <span className={`text-sm font-bold tracking-wider uppercase ${isActive ? '' : ''}`}>{item.label}</span>
               
               {/* Optional Notification Badge on Nav Items */}
-              {item.label === 'Dashboard' && unreadCount > 0 && (
+              {item.href === '/dashboard' && unreadCount > 0 && (
                  <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#1ECEFA] px-1.5 text-[10px] font-black text-black">
                    {unreadCount}
                  </span>

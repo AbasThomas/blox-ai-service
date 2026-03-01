@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
 
@@ -25,6 +25,7 @@ const TONES: Array<{ id: Tone; label: string; desc: string }> = [
 
 export default function CoverLetterEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<CoverLetterContent>({
     tone: 'professional',
@@ -39,6 +40,7 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
   const [generatingStatus, setGeneratingStatus] = useState('');
   const [activeSection, setActiveSection] = useState<'job' | 'tone' | 'edit'>('job');
   const [wordCount, setWordCount] = useState(0);
+  const [prefilledJobUrl, setPrefilledJobUrl] = useState(false);
 
   const loadAsset = useCallback(async () => {
     try {
@@ -60,6 +62,21 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
     const timer = setInterval(loadAsset, 5000);
     return () => clearInterval(timer);
   }, [generatingStatus, loadAsset]);
+
+  useEffect(() => {
+    if (prefilledJobUrl) return;
+    const jobUrl = searchParams.get('jobUrl');
+    if (!jobUrl) {
+      setPrefilledJobUrl(true);
+      return;
+    }
+
+    setContent((prev) => {
+      if (prev.jobDescription?.trim()) return prev;
+      return { ...prev, jobDescription: `Job URL: ${jobUrl}` };
+    });
+    setPrefilledJobUrl(true);
+  }, [prefilledJobUrl, searchParams]);
 
   // Word count
   useEffect(() => {

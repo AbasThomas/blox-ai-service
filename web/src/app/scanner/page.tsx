@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { assetsApi, scannerApi } from '@/lib/api';
@@ -17,6 +17,7 @@ interface ScanResult {
 
 export default function ScannerPage() {
   const user = useBloxStore((s) => s.user);
+  const searchParams = useSearchParams();
   const [jobDesc, setJobDesc] = useState('');
   const [assetId, setAssetId] = useState('');
   const [assets, setAssets] = useState<Array<{ id: string; title: string; type: string }>>([]);
@@ -24,11 +25,25 @@ export default function ScannerPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState('');
   const [duplicating, setDuplicating] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     assetsApi.list().then((data) => setAssets(data as typeof assets)).catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (prefilled) return;
+    const prefAsset = searchParams.get('assetId');
+    const prefJobDescription = searchParams.get('jobDescription');
+    const prefJobUrl = searchParams.get('jobUrl');
+
+    if (prefAsset) setAssetId(prefAsset);
+    if (prefJobDescription) setJobDesc(prefJobDescription);
+    else if (prefJobUrl) setJobDesc(`Job URL: ${prefJobUrl}`);
+
+    setPrefilled(true);
+  }, [prefilled, searchParams]);
 
   const handleScan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,4 +164,3 @@ export default function ScannerPage() {
     </FeaturePage>
   );
 }
-

@@ -5,9 +5,9 @@ import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { authApi, billingApi, integrationsApi } from '@/lib/api';
 import { PlanTier } from '@nextjs-blox/shared-types';
-import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, Settings } from 'lucide-react';
+import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, Settings, BriefcaseBusiness } from 'lucide-react';
 
-const TABS = ['Account', 'Security', 'Integrations', 'Subscription', 'Export'] as const;
+const TABS = ['Account', 'Security', 'Integrations', 'Subscription', 'Export', 'Career'] as const;
 type Tab = typeof TABS[number];
 
 interface Integration {
@@ -198,8 +198,8 @@ export default function SettingsPage() {
 
   return (
     <FeaturePage 
-      title="SYSTEM SETTINGS" 
-      description="Manage account protocols, security measures, external integrations, and billing cycles."
+      title="SETTINGS & CAREER"
+      description="Manage account controls, integrations, privacy, billing, and a collapsed career hub."
       headerIcon={<Settings className="h-6 w-6" />}
     >
       {/* Tabs */}
@@ -210,6 +210,7 @@ export default function SettingsPage() {
           { id: 'Integrations', icon: <LinkIcon className="h-4 w-4" /> },
           { id: 'Subscription', icon: <CreditCard className="h-4 w-4" /> },
           { id: 'Export', icon: <Download className="h-4 w-4" /> },
+          { id: 'Career', icon: <BriefcaseBusiness className="h-4 w-4" /> },
         ].map((tab) => (
           <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id as Tab)}
             className={`group flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold tracking-wider uppercase transition-all duration-300 focus:outline-none ${
@@ -566,6 +567,55 @@ export default function SettingsPage() {
             <button className="rounded-xl border border-red-500 bg-red-500/10 px-6 py-3 text-xs font-bold tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-[0_0_15px_rgba(239,68,68,0.2)]">
               INITIATE PURGE
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Career Hub */}
+      {activeTab === 'Career' && (
+        <div className="max-w-3xl space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-6">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-[#1ECEFA]">
+              <BriefcaseBusiness className="h-4 w-4" />
+              Career Hub (Collapsed)
+            </h2>
+            <p className="text-sm text-slate-400">
+              Keep career tools in one section so the main dashboard navigation stays focused.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              {
+                title: 'Career Coach',
+                desc: 'Personalized coaching guidance and progress tracking.',
+                href: '/coach',
+              },
+              {
+                title: 'Job Matching',
+                desc: 'Find opportunities and align assets to openings.',
+                href: '/jobs',
+              },
+              {
+                title: 'Mock Interview',
+                desc: 'Practice interview rounds with instant feedback.',
+                href: '/interview',
+              },
+              {
+                title: 'Networking',
+                desc: 'Build outreach messages and manage connections.',
+                href: '/network',
+              },
+            ].map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="rounded-xl border border-white/10 bg-black/20 p-4 transition-colors hover:border-[#1ECEFA]/40 hover:bg-[#1ECEFA]/5"
+              >
+                <p className="text-sm font-bold text-white">{item.title}</p>
+                <p className="mt-1 text-xs text-slate-400">{item.desc}</p>
+              </a>
+            ))}
           </div>
         </div>
       )}
