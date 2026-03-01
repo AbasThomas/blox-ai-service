@@ -1,0 +1,159 @@
+.button {
+  position: relative;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  background: #000;
+  padding: 0.75rem 2rem;
+  color: rgba(236, 247, 255, 0.95);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  color: #fff;
+  box-shadow: 0 0 28px -12px rgba(30, 206, 250, 0.55);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.8),
+    0 0 0 4px rgba(15, 23, 42, 0.95),
+    0 0 20px -6px rgba(30, 206, 250, 0.55);
+}
+
+.edgeLeft,
+.edgeRight,
+.edgeTop,
+.edgeBottom {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.edgeLeft,
+.edgeRight {
+  top: -40px;
+  bottom: -40px;
+  width: 2px;
+  background: linear-gradient(
+    rgba(120, 208, 255, 0),
+    rgba(120, 208, 255, 0.2) 40px,
+    rgba(120, 208, 255, 0.67) 40px,
+    rgba(197, 239, 255, 1),
+    rgba(120, 208, 255, 0.67) calc(100% - 40px),
+    rgba(120, 208, 255, 0.2) calc(100% - 40px),
+    rgba(120, 208, 255, 0)
+  );
+}
+
+.edgeLeft {
+  left: -2px;
+}
+
+.edgeRight {
+  right: -2px;
+}
+
+.edgeTop,
+.edgeBottom {
+  left: -40px;
+  right: -40px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(120, 208, 255, 0),
+    rgba(120, 208, 255, 0.2) 40px,
+    rgba(120, 208, 255, 0.67) 40px,
+    rgba(197, 239, 255, 1),
+    rgba(120, 208, 255, 0.67) calc(100% - 40px),
+    rgba(120, 208, 255, 0.2) calc(100% - 40px),
+    rgba(120, 208, 255, 0)
+  );
+}
+
+.edgeTop {
+  top: -2px;
+}
+
+.edgeBottom {
+  bottom: -2px;
+}
+
+.edgeSoft,
+.edgeHover {
+  position: absolute;
+  inset: 0;
+  background: inherit;
+}
+
+.edgeSoft {
+  filter: blur(4px);
+  z-index: -1;
+}
+
+.edgeHover {
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  z-index: -1;
+}
+
+.button:hover .edgeHover {
+  opacity: 1;
+  filter: blur(14px);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+  background:
+    radial-gradient(circle, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 20%, rgba(5, 9, 18, 0.75) 50%) 0 0 / 3px 3px,
+    radial-gradient(100% 100%, rgba(166, 231, 255, 0.8), rgba(166, 231, 255, 0)) 0 0 / auto;
+}
+
+.button:hover .overlay {
+  opacity: 0.3;
+}
+
+.radialGlow {
+  position: absolute;
+  inset: -20px;
+  opacity: 0;
+  z-index: -1;
+  filter: blur(20px);
+  transition: opacity 0.3s ease;
+  background: radial-gradient(circle, rgba(30, 206, 250, 0.28), transparent 60%);
+}
+
+.button:hover .radialGlow {
+  opacity: 1;
+}
+
+.label {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .edgeHover,
+  .overlay,
+  .radialGlow {
+    transition: none;
+  }
+}

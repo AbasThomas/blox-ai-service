@@ -114,6 +114,7 @@
     "bullmq": "^5.70.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.34.3",
     "graphql": "^16.13.0",
     "helmet": "^8.1.0",
@@ -142,6 +143,7 @@
     "sharp": "^0.34.5",
     "socket.io-client": "^4.8.3",
     "swagger-ui-express": "^5.0.1",
+    "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   }
