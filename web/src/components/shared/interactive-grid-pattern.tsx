@@ -169,6 +169,22 @@ export function InteractiveGridPattern({
         }}
       />
 
+      {/* Top blur fade */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-32"
+        style={{
+          background: "linear-gradient(to bottom, #020612 0%, transparent 100%)",
+        }}
+      />
+
+      {/* Bottom blur fade */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-32"
+        style={{
+          background: "linear-gradient(to top, #020612 0%, transparent 100%)",
+        }}
+      />
+
       {/* Content layer */}
       {children && <div className="relative z-10 h-full w-full">{children}</div>}
     </div>

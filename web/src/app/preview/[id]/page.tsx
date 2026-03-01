@@ -6,9 +6,67 @@ import { assetsApi, publishApi, scannerApi } from '@/lib/api';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 
+interface SeoAuditCheck {
+  label: string;
+  passed: boolean;
+  suggestion?: string;
+}
+
 interface SeoAudit {
   score: number;
-  checks: Array<{ label: string; passed: boolean; suggestion?: string }>;
+  checks: SeoAuditCheck[];
+}
+
+/** Run a fully client-side SEO pre-flight against the current form values. */
+function runLocalSeoAudit(form: SeoForm): SeoAudit {
+  const checks: SeoAuditCheck[] = [];
+
+  // Title
+  const titleLen = form.title.trim().length;
+  checks.push({
+    label: `Title length: ${titleLen} chars (ideal 50–60)`,
+    passed: titleLen >= 50 && titleLen <= 60,
+    suggestion: titleLen < 50
+      ? 'Title is too short — add your role or location (e.g. "Thomas – React Developer | Lagos").'
+      : titleLen > 60
+      ? 'Title is too long — Google truncates after 60 chars. Trim it.'
+      : undefined,
+  });
+
+  // Description
+  const descLen = form.description.trim().length;
+  checks.push({
+    label: `Description length: ${descLen} chars (ideal 150–160)`,
+    passed: descLen >= 150 && descLen <= 160,
+    suggestion: descLen < 150
+      ? 'Description is too short — add skills, location, and a call to action.'
+      : descLen > 160
+      ? 'Description is too long — Google truncates after 160 chars. Tighten it.'
+      : undefined,
+  });
+
+  // Keywords
+  const kwCount = form.keywords.split(',').map((k) => k.trim()).filter(Boolean).length;
+  checks.push({
+    label: `Keywords: ${kwCount} entered (aim for 5–10)`,
+    passed: kwCount >= 3,
+    suggestion: kwCount < 3
+      ? 'Add at least 5 keywords — include your role, tech stack, and location.'
+      : undefined,
+  });
+
+  // OG image
+  const hasOg = form.ogImage.trim().startsWith('http');
+  checks.push({
+    label: 'Open Graph image URL set',
+    passed: hasOg,
+    suggestion: hasOg ? undefined : 'Generate an OG image above — it dramatically improves click-through on social.',
+  });
+
+  const passed = checks.filter((c) => c.passed).length;
+  const score = Math.round((passed / checks.length) * 100);
+
+  return { score, checks };
 }
 
 interface SeoForm {
@@ -138,12 +196,24 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
   };
 
   const handleSeoAudit = async () => {
+    // Run instant local checks immediately so the user always gets feedback
+    const localResult = runLocalSeoAudit(seoForm);
+    setSeoAudit(localResult);
+
+    // Also try the backend for deeper ATS/content checks
     setAuditing(true);
     try {
       const data = await scannerApi.atsScore({ assetId: params.id }) as SeoAudit;
-      setSeoAudit(data);
+      // Merge: keep local checks, append any extra backend checks
+      const backendChecks = data?.checks ?? [];
+      const mergedChecks = [
+        ...localResult.checks,
+        ...backendChecks.filter((bc) => !localResult.checks.some((lc) => lc.label === bc.label)),
+      ];
+      const passed = mergedChecks.filter((c) => c.passed).length;
+      setSeoAudit({ score: Math.round((passed / mergedChecks.length) * 100), checks: mergedChecks });
     } catch {
-      setSeoMsg('SEO audit endpoint is currently unavailable.');
+      // Backend unavailable — local result is still shown
     } finally {
       setAuditing(false);
     }
@@ -315,7 +385,15 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
             <h3 className="mb-3 text-sm font-bold text-slate-900">SEO metadata</h3>
             <div className="space-y-2">
               <label className="block text-xs font-medium text-slate-700">
-                SEO title
+                <span className="flex items-center justify-between">
+                  SEO title
+                  <span className={`font-mono text-[10px] tabular-nums ${
+                    seoForm.title.length > 60 ? 'text-red-500' :
+                    seoForm.title.length >= 50 ? 'text-green-600' : 'text-slate-400'
+                  }`}>
+                    {seoForm.title.length}/60
+                  </span>
+                </span>
                 <input
                   value={seoForm.title}
                   onChange={(e) => setSeoForm((prev) => ({ ...prev, title: e.target.value }))}
@@ -323,7 +401,15 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                 />
               </label>
               <label className="block text-xs font-medium text-slate-700">
-                Description
+                <span className="flex items-center justify-between">
+                  Description
+                  <span className={`font-mono text-[10px] tabular-nums ${
+                    seoForm.description.length > 160 ? 'text-red-500' :
+                    seoForm.description.length >= 150 ? 'text-green-600' : 'text-slate-400'
+                  }`}>
+                    {seoForm.description.length}/160
+                  </span>
+                </span>
                 <textarea
                   rows={3}
                   value={seoForm.description}
@@ -394,13 +480,18 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                   </p>
                   <p className="text-xs text-slate-500">SEO score</p>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {seoAudit.checks.map((check, index) => (
-                    <li key={index} className="flex items-start gap-1.5 text-xs">
-                      <span className={check.passed ? 'text-green-500' : 'text-red-500'}>
-                        {check.passed ? 'OK' : 'ISSUE'}
-                      </span>
-                      <span className={check.passed ? 'text-slate-600' : 'text-slate-900'}>{check.label}</span>
+                    <li key={index} className="text-xs">
+                      <div className="flex items-start gap-1.5">
+                        <span className={`mt-px shrink-0 font-bold ${check.passed ? 'text-green-500' : 'text-red-500'}`}>
+                          {check.passed ? '✓' : '✗'}
+                        </span>
+                        <span className={check.passed ? 'text-slate-600' : 'text-slate-900 font-medium'}>{check.label}</span>
+                      </div>
+                      {!check.passed && check.suggestion ? (
+                        <p className="ml-4 mt-0.5 text-[10px] leading-relaxed text-slate-500">{check.suggestion}</p>
+                      ) : null}
                     </li>
                   ))}
                 </ul>

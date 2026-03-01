@@ -5,6 +5,8 @@ import { isReservedSubdomain } from '@/lib/subdomains';
 
 export const revalidate = 300;
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'https://blox.app';
+
 interface SubdomainPageProps {
   params: { subdomain: string };
 }
@@ -16,12 +18,26 @@ function absoluteUrl(url: string): string | null {
   return null;
 }
 
+/** Returns a guaranteed-absolute OG image URL, falling back to our /og generator. */
+function resolveOgImage(
+  ogImageUrl: string | undefined | null,
+  title: string,
+  subtitle?: string,
+  domain?: string,
+): string {
+  if (ogImageUrl && (ogImageUrl.startsWith('http://') || ogImageUrl.startsWith('https://'))) {
+    return ogImageUrl;
+  }
+  const params = new URLSearchParams({ title });
+  if (subtitle) params.set('subtitle', subtitle);
+  if (domain) params.set('domain', domain);
+  return `${BASE_URL}/og?${params.toString()}`;
+}
+
 export async function generateMetadata({ params }: SubdomainPageProps): Promise<Metadata> {
   const subdomain = params.subdomain.toLowerCase();
   if (isReservedSubdomain(subdomain)) {
-    return {
-      robots: { index: false, follow: false },
-    };
+    return { robots: { index: false, follow: false } };
   }
 
   const profile = await fetchPublicProfile(subdomain);
@@ -33,25 +49,31 @@ export async function generateMetadata({ params }: SubdomainPageProps): Promise<
     };
   }
 
+  const subdomainDomain = `${subdomain}.${BASE_URL.replace(/^https?:\/\//, '')}`;
+  const canonical = profile.canonicalUrl ?? `https://${subdomainDomain}`;
+  const heroRole = profile.sections.experience?.[0]?.role;
+  const ogSubtitle = heroRole ?? profile.sections.hero.body?.slice(0, 60) ?? undefined;
+  const ogImage = resolveOgImage(profile.seo.ogImageUrl, profile.seo.title, ogSubtitle, subdomainDomain);
+
   return {
     title: profile.seo.title,
     description: profile.seo.description,
     keywords: profile.seo.keywords,
-    alternates: {
-      canonical: profile.canonicalUrl,
-    },
+    alternates: { canonical },
     robots: profile.seo.noindex
       ? { index: false, follow: false }
-      : { index: true, follow: true },
+      : { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },
     openGraph: {
       title: profile.seo.title,
       description: profile.seo.description,
-      url: profile.canonicalUrl,
+      url: canonical,
       type: 'profile',
       images: [
         {
-          url: profile.seo.ogImageUrl,
-          alt: profile.seo.imageAltMap?.hero ?? `${profile.user.fullName} profile image`,
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: profile.seo.imageAltMap?.hero ?? `${profile.user.fullName} – portfolio cover`,
         },
       ],
     },
@@ -59,45 +81,93 @@ export async function generateMetadata({ params }: SubdomainPageProps): Promise<
       card: 'summary_large_image',
       title: profile.seo.title,
       description: profile.seo.description,
-      images: [profile.seo.ogImageUrl],
+      images: [ogImage],
     },
   };
 }
 
 export default async function SubdomainProfilePage({ params }: SubdomainPageProps) {
   const subdomain = params.subdomain.toLowerCase();
-  if (isReservedSubdomain(subdomain)) {
-    notFound();
-  }
+  if (isReservedSubdomain(subdomain)) notFound();
 
   const profile = await fetchPublicProfile(subdomain);
-  if (!profile) {
-    notFound();
-  }
+  if (!profile) notFound();
 
+  const domain = `${subdomain}.${BASE_URL.replace(/^https?:\/\//, '')}`;
+  const canonical = profile.canonicalUrl ?? `https://${domain}`;
+  const jobTitle = profile.sections.experience?.[0]?.role ?? undefined;
+  const ogSubtitle = jobTitle ?? profile.sections.hero.body?.slice(0, 60) ?? undefined;
+  const ogImage = resolveOgImage(profile.seo.ogImageUrl, profile.seo.title, ogSubtitle, domain);
+
+  const sameAsLinks = profile.sections.links
+    .map((link) => absoluteUrl(link.url))
+    .filter((url): url is string => !!url && url.startsWith('http'));
+
+  // Person + ProfilePage schema
   const profileJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
+    url: canonical,
+    dateModified: profile.updatedAt,
     mainEntity: {
       '@type': 'Person',
       name: profile.user.fullName,
+      ...(jobTitle ? { jobTitle } : {}),
       description: profile.sections.about || profile.sections.hero.body,
-      url: profile.canonicalUrl,
-      image: profile.seo.ogImageUrl,
-      sameAs: profile.sections.links
-        .map((link) => absoluteUrl(link.url))
-        .filter((url): url is string => !!url && url.startsWith('http')),
+      url: canonical,
+      image: {
+        '@type': 'ImageObject',
+        url: ogImage,
+        width: 1200,
+        height: 630,
+      },
+      sameAs: sameAsLinks,
     },
-    url: profile.canonicalUrl,
-    dateModified: profile.updatedAt,
   };
+
+  // CreativeWork entries for every project
+  const projectsJsonLd =
+    profile.sections.projects.length > 0
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: `${profile.user.fullName} – Projects`,
+          url: canonical,
+          itemListElement: profile.sections.projects.map((project, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+              '@type': 'CreativeWork',
+              name: project.title,
+              ...(project.description ? { description: project.description } : {}),
+              ...(project.url ? { url: project.url } : {}),
+              author: {
+                '@type': 'Person',
+                name: profile.user.fullName,
+                url: canonical,
+              },
+            },
+          })),
+        }
+      : null;
 
   return (
     <article className="mx-auto w-full max-w-4xl space-y-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
+      />
+      {projectsJsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(projectsJsonLd) }}
+        />
+      ) : null}
 
       <header className="space-y-3 border-b border-slate-100 pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{subdomain}.blox.app</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          {subdomain}.blox.app
+        </p>
         <h1 className="text-4xl font-black text-slate-900">{profile.sections.hero.heading}</h1>
         <p className="max-w-3xl text-base text-slate-600">{profile.sections.hero.body}</p>
       </header>
@@ -122,10 +192,12 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
       ) : null}
 
       <main className="space-y-8">
-        <section aria-labelledby="about-heading" className="space-y-2">
-          <h2 id="about-heading" className="text-xl font-bold text-slate-900">About</h2>
-          <p className="text-sm leading-7 text-slate-700">{profile.sections.about}</p>
-        </section>
+        {profile.sections.about ? (
+          <section aria-labelledby="about-heading" className="space-y-2">
+            <h2 id="about-heading" className="text-xl font-bold text-slate-900">About</h2>
+            <p className="text-sm leading-7 text-slate-700">{profile.sections.about}</p>
+          </section>
+        ) : null}
 
         {profile.sections.experience.length > 0 ? (
           <section aria-labelledby="experience-heading" className="space-y-3">
@@ -149,7 +221,9 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
               {profile.sections.projects.map((project, index) => (
                 <li key={`${project.title}-${index}`} className="rounded-lg border border-slate-200 p-4">
                   <h3 className="text-sm font-semibold text-slate-900">{project.title}</h3>
-                  {project.description ? <p className="mt-2 text-sm text-slate-700">{project.description}</p> : null}
+                  {project.description ? (
+                    <p className="mt-2 text-sm text-slate-700">{project.description}</p>
+                  ) : null}
                   {project.url ? (
                     <p className="mt-2">
                       <a
@@ -173,7 +247,10 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
             <h2 id="skills-heading" className="text-xl font-bold text-slate-900">Skills</h2>
             <ul className="flex flex-wrap gap-2">
               {profile.sections.skills.map((skill) => (
-                <li key={skill} className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700">
+                <li
+                  key={skill}
+                  className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
+                >
                   {skill}
                 </li>
               ))}
@@ -191,4 +268,3 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
     </article>
   );
 }
-
