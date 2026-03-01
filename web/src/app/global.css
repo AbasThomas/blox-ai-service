@@ -37,3 +37,86 @@ h4 {
   font-weight: 400;
   font-style: normal;
 }
+
+@keyframes hero-btn-shine {
+  0% {
+    transform: translateX(-180%) skewX(-24deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.7;
+  }
+  60% {
+    transform: translateX(220%) skewX(-24deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(220%) skewX(-24deg);
+    opacity: 0;
+  }
+}
+
+@keyframes hero-btn-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(120, 180, 255, 0.35),
+      0 0 16px rgba(80, 140, 255, 0.18),
+      inset 0 0 12px rgba(120, 180, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(140, 205, 255, 0.65),
+      0 0 24px rgba(80, 140, 255, 0.35),
+      inset 0 0 16px rgba(120, 180, 255, 0.16);
+  }
+}
+
+.hero-spotlight-btn {
+  border-color: rgba(120, 180, 255, 0.55) !important;
+  animation: hero-btn-glow 2.6s ease-in-out infinite;
+}
+
+.hero-spotlight-btn:hover {
+  border-color: rgba(160, 215, 255, 0.9) !important;
+}
+
+.hero-spotlight-btn-primary {
+  border-color: rgba(90, 175, 255, 0.95) !important;
+  box-shadow:
+    0 0 0 1px rgba(120, 185, 255, 0.9),
+    0 0 22px rgba(70, 145, 255, 0.38),
+    inset 0 0 14px rgba(120, 180, 255, 0.2);
+}
+
+.hero-spotlight-btn-primary:hover {
+  border-color: rgba(170, 220, 255, 1) !important;
+  box-shadow:
+    0 0 0 1px rgba(170, 220, 255, 1),
+    0 0 30px rgba(70, 145, 255, 0.52),
+    inset 0 0 18px rgba(130, 190, 255, 0.28);
+}
+
+.hero-spotlight-btn-shine {
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  width: 32%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(205, 233, 255, 0.15) 30%,
+    rgba(205, 233, 255, 0.92) 50%,
+    rgba(205, 233, 255, 0.15) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  filter: blur(2px);
+  animation: hero-btn-shine 3.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-spotlight-btn,
+  .hero-spotlight-btn-shine {
+    animation: none;
+  }
+}

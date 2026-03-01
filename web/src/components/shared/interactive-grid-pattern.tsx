@@ -8,6 +8,8 @@ export interface InteractiveGridPatternProps {
   children?: React.ReactNode
   /** Size of each grid cell in pixels */
   cellSize?: number
+  /** Whether to scale the grid based on viewport size */
+  responsiveScale?: boolean
   /** Glow color on hover */
   glowColor?: string
   /** Border color of grid lines */
@@ -20,6 +22,7 @@ export function InteractiveGridPattern({
   className,
   children,
   cellSize = 50,
+  responsiveScale = true,
   glowColor = "rgba(34, 211, 238, 0.4)",
   borderColor = "rgba(63, 63, 70, 0.4)",
   proximity = 100,
@@ -33,14 +36,14 @@ export function InteractiveGridPattern({
     if (!container) return
 
     const { width, height } = container.getBoundingClientRect()
-    const scale = Math.max(1, Math.min(width, height) / 800)
+    const scale = responsiveScale ? Math.max(1, Math.min(width, height) / 800) : 1
     const scaledCellSize = cellSize * scale
 
     const cols = Math.ceil(width / scaledCellSize) + 1
     const rows = Math.ceil(height / scaledCellSize) + 1
 
     setGrid({ rows, cols, scale })
-  }, [cellSize])
+  }, [cellSize, responsiveScale])
 
   useEffect(() => {
     updateGrid()
@@ -103,7 +106,7 @@ export function InteractiveGridPattern({
   return (
     <div
       ref={containerRef}
-      className={cn("absolute inset-0 overflow-hidden bg-neutral-950", className)}
+      className={cn("absolute inset-0 overflow-hidden bg-[#0C0F13]", className)}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >

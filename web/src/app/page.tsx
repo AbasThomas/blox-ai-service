@@ -23,13 +23,13 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { InteractiveGridPattern } from '../components/shared/interactive-grid-pattern';
-import { SpotlightButton } from '../components/shared/spotlight-button';
-import { GridShineButton } from '../components/shared/grid-shine-button';
 
 // ── brand token ──────────────────────────────────────────────────────────────
 const CYAN = '#1ECEFA';
 const OBSIDIAN = '#0C0F13';
 const SURFACE = '#161B22';
+const HERO_GRID_CELL = 50;
+const HERO_GRID_BORDER = 'rgba(63, 63, 70, 0.4)';
 
 // ── spring presets ────────────────────────────────────────────────────────────
 const SPRING_GOD_MODE = { type: 'spring', stiffness: 400, damping: 30, mass: 1 } as const;
@@ -246,6 +246,14 @@ export default function HomePage() {
     }, 28);
   }, [demoPhase, DEMO_TEXT]);
 
+  const handleSpotlightMove = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--x', `${x}px`);
+    e.currentTarget.style.setProperty('--y', `${y}px`);
+  }, []);
+
 
   return (
     <div
@@ -257,10 +265,15 @@ export default function HomePage() {
           HERO
       ══════════════════════════════════════════════════════════════════════ */}
       <section className="relative flex min-h-[100vh] flex-col items-center justify-center overflow-hidden px-6 py-24">
-        <InteractiveGridPattern className="absolute inset-0" />
+        <InteractiveGridPattern
+          className="absolute inset-0"
+          cellSize={HERO_GRID_CELL}
+          borderColor={HERO_GRID_BORDER}
+          responsiveScale={false}
+        />
 
         {/* Hero copy */}
-        <div className="relative z-10 max-w-4xl text-center">
+        <div className="relative z-10 max-w-4xl text-center translate-y-12">
           <motion.h1
             className="font-display font-hero-title text-6xl font-black leading-[0.9] tracking-tighter text-white md:text-8xl"
             initial={{ opacity: 0, y: 40 }}
@@ -283,184 +296,47 @@ export default function HomePage() {
           </motion.p>
 
           <motion.div
-            className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2"
+            className="mt-12 flex flex-wrap items-center justify-center gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, ...SPRING_GOD_MODE }}
           >
-            <div className="w-[200px]">
-              <SpotlightButton href="/signup" className="w-full">Get Started</SpotlightButton>
+            <div className="w-full max-w-[260px]">
+              <Link
+                href="/signup"
+                onMouseMove={handleSpotlightMove}
+                className="hero-spotlight-btn hero-spotlight-btn-primary group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                style={{ fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
+              >
+                <span className="hero-spotlight-btn-shine" />
+                <span
+                  className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  style={{
+                    background:
+                      'radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(135,200,255,0.5) 0%, rgba(80,145,255,0.28) 22%, rgba(0,0,0,0) 55%)',
+                  }}
+                />
+                <span className="relative pointer-events-none">Get Started</span>
+              </Link>
             </div>
-            <GridShineButton href="/pricing" className="w-[200px]">Book Your Call</GridShineButton>
+
+           
           </motion.div>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
           STATS
-      ══════════════════════════════════════════════════════════════════════ */}
-      <section className="border-y px-6 py-14" style={{ borderColor: `${CYAN}15`, background: '#0b0f1a' }}>
-        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 md:grid-cols-4">
-          {[
-            { n: 25, suffix: '+', label: 'Integrations' },
-            { n: 5000, suffix: '+', label: 'Templates' },
-            { n: 98, suffix: '%', label: 'ATS pass rate' },
-            { n: 2, suffix: ' min', label: 'Avg. setup time' },
-          ].map(({ n, suffix, label }) => (
-            <div key={label} className="text-center">
-              <p className="font-display text-4xl font-black" style={{ color: CYAN }}>
-                <Counter target={n} suffix={suffix} />
-              </p>
-              <p className="mt-1 text-sm text-slate-500">{label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
+  
       {/* ══════════════════════════════════════════════════════════════════════
           AI AUTO-SNAP DEMO
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={sec1 as React.RefObject<HTMLElement>} className="px-6 py-24">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            className="mb-12 text-center"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={SPRING_GOD_MODE}
-          >
-            <p className="mb-3 text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>
-              See it in action
-            </p>
-            <h2 className="font-display text-3xl font-black text-white md:text-5xl">
-              Paste chaos. Get <span style={{ color: CYAN }}>structure.</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg text-sm text-slate-400">
-              Drop in a raw LinkedIn bio, resume dump, or freeform text. Blox AI extracts, classifies, and snaps every piece into a clean block layout — instantly.
-            </p>
-          </motion.div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Input pane */}
-            <motion.div
-              className="relative overflow-hidden rounded-2xl border p-5"
-              style={{ borderColor: '#1e2535', background: '#0d1120' }}
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1, ...SPRING_GOD_MODE }}
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500/70" />
-                <div className="h-3 w-3 rounded-full bg-yellow-500/70" />
-                <div className="h-3 w-3 rounded-full bg-green-500/70" />
-                <span className="ml-2 text-xs text-slate-600">raw_input.txt</span>
-              </div>
-              <div className="min-h-[140px] font-mono text-sm leading-relaxed text-slate-300">
-                {typedText}
-                {(demoPhase === 'typing') && (
-                  <motion.span
-                    className="inline-block h-4 w-0.5 align-middle"
-                    style={{ background: CYAN }}
-                    animate={{ opacity: [1, 0] }}
-                    transition={{ duration: 0.5, repeat: Infinity }}
-                  />
-                )}
-                {demoPhase === 'idle' || demoPhase === 'done' ? (
-                  <span className="text-slate-600">{'// your freeform text here...'}</span>
-                ) : null}
-              </div>
-              <motion.button
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-black"
-                style={{ background: CYAN }}
-                onClick={runDemo}
-                whileHover={{ scale: 1.03, boxShadow: `0 0 24px ${CYAN}70` }}
-                whileTap={{ scale: 0.97 }}
-                transition={SPRING_GOD_MODE}
-                disabled={demoPhase === 'typing' || demoPhase === 'snapping'}
-              >
-                <Sparkles size={14} />
-                {demoPhase === 'idle' ? 'Auto-Snap with AI' : demoPhase === 'typing' ? 'Processing…' : demoPhase === 'snapping' ? 'Snapping blocks…' : 'Run again'}
-              </motion.button>
-            </motion.div>
-
-            {/* Blocks pane */}
-            <motion.div
-              className="relative overflow-hidden rounded-2xl border p-5"
-              style={{ borderColor: '#1e2535', background: '#0d1120' }}
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2, ...SPRING_GOD_MODE }}
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <BloxLogo size={20} />
-                <span className="text-xs font-bold text-white/60">blox_output</span>
-                <AnimatePresence>
-                  {demoPhase === 'done' && (
-                    <motion.span
-                      className="ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold text-black"
-                      style={{ background: CYAN }}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={SPRING_GOD_MODE}
-                    >
-                      ✓ Snapped
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-              <div
-                className="grid gap-2 min-h-[160px]"
-                style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: 'repeat(3, 48px)' }}
-              >
-                <AnimatePresence>
-                  {(demoPhase === 'snapping' || demoPhase === 'done') &&
-                    DEMO_BLOCKS.map((b, i) => (
-                      <DemoBlock key={b.label} {...b} delay={i * 0.1} />
-                    ))}
-                </AnimatePresence>
-                {demoPhase === 'idle' && (
-                  <div className="col-span-2 row-span-3 flex items-center justify-center text-xs text-slate-700">
-                    blocks appear here
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+    
 
       {/* ══════════════════════════════════════════════════════════════════════
           FEATURES (Bento Grid)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={sec2 as React.RefObject<HTMLElement>} className="px-6 py-32" style={{ background: OBSIDIAN }}>
-        <div className="mx-auto max-w-7xl">
-          <motion.div
-            className="mb-20 text-center"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={SPRING_GOD_MODE}
-          >
-            <h2 className="font-display text-4xl font-black tracking-tighter text-white md:text-7xl">
-              ENGINEERED FOR <span className="text-[#1ECEFA]">PERFORMANCE.</span>
-            </h2>
-          </motion.div>
-          
-          <div className="grid gap-px bg-white/5 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((f, i) => (
-              <FeatureCard 
-                key={f.title} 
-                {...f} 
-                delay={i * 0.05} 
-                spark={sparkIndex === i}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
+    
 
       {/* ══════════════════════════════════════════════════════════════════════
           SCROLL-ASSEMBLED RESUME (Section 3)
