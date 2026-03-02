@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { authApi } from '@/lib/api';
 import { Logo } from '@/components/ui/logo';
 import { Mail, ArrowRight, CheckCircle2 } from '@/components/ui/icons';
@@ -12,6 +12,14 @@ export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleSpotlightMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--x', `${x}px`);
+    e.currentTarget.style.setProperty('--y', `${y}px`);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,10 +141,22 @@ export default function ForgotPasswordPage() {
 
                 <button
                   type="submit" disabled={loading}
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-3 text-sm font-bold text-black transition-all hover:bg-white hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                  onMouseMove={handleSpotlightMove}
+                  className="mt-8 hero-spotlight-btn hero-spotlight-btn-primary group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50"
+                  style={{ fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                 >
-                  {loading ? 'TRANSMITTING...' : 'SEND RESET LINK'}
-                  {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                  <span className="hero-spotlight-btn-shine" />
+                  <span
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{
+                      background:
+                        'radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(135,200,255,0.5) 0%, rgba(80,145,255,0.28) 22%, rgba(0,0,0,0) 55%)',
+                    }}
+                  />
+                  <span className="relative pointer-events-none flex items-center justify-center gap-2">
+                    {loading ? 'TRANSMITTING...' : 'SEND RESET LINK'}
+                    {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                  </span>
                 </button>
               </form>
 

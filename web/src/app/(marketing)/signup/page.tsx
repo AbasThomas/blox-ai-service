@@ -120,6 +120,14 @@ export default function SignupPage() {
     [form, validateStep1, validateStep2, step, login, router],
   );
 
+  const handleSpotlightMove = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--x', `${x}px`);
+    e.currentTarget.style.setProperty('--y', `${y}px`);
+  }, []);
+
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333';
 
   return (
@@ -273,10 +281,22 @@ export default function SignupPage() {
 
                 <button
                   type="submit"
-                  className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-3 text-sm font-bold text-black transition-all hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
+                  onMouseMove={handleSpotlightMove}
+                  className="mt-8 hero-spotlight-btn hero-spotlight-btn-primary group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  style={{ fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                 >
-                  CONTINUE TO ORIGIN
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <span className="hero-spotlight-btn-shine" />
+                  <span
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                    style={{
+                      background:
+                        'radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(135,200,255,0.5) 0%, rgba(80,145,255,0.28) 22%, rgba(0,0,0,0) 55%)',
+                    }}
+                  />
+                  <span className="relative pointer-events-none flex items-center justify-center gap-2">
+                    CONTINUE TO NEXT SECTION
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </button>
               </>
             ) : (
@@ -331,10 +351,22 @@ export default function SignupPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="group flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-3 text-sm font-bold text-black transition-all hover:bg-white hover:scale-[1.02] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+                    onMouseMove={handleSpotlightMove}
+                    className="hero-spotlight-btn hero-spotlight-btn-primary group relative flex-1 inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50"
+                    style={{ fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
                   >
-                    {loading ? 'Creating Account...' : 'Create Account'}
-                    {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                    <span className="hero-spotlight-btn-shine" />
+                    <span
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                      style={{
+                        background:
+                          'radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(135,200,255,0.5) 0%, rgba(80,145,255,0.28) 22%, rgba(0,0,0,0) 55%)',
+                      }}
+                    />
+                    <span className="relative pointer-events-none flex items-center justify-center gap-2">
+                      {loading ? 'Creating Account...' : 'Create Account'}
+                      {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                    </span>
                   </button>
                 </div>
               </>
