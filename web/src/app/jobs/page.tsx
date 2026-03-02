@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { PlanTier } from '@nextjs-blox/shared-types';
+import { Search, BriefcaseBusiness, Globe, Zap, ArrowUpRight, Check, MapPin, DollarSign, Filter } from '@/components/ui/icons';
 
 interface Job {
   id: string;
@@ -20,11 +21,11 @@ interface Job {
 
 // Mock data — replace with real jobsApi.search() when job board integration is ready
 const MOCK_JOBS: Job[] = [
-  { id: '1', title: 'Senior Frontend Engineer', company: 'Stripe', location: 'Remote', remote: true, salary: '$160k–$220k', matchScore: 91, postedAt: '2025-02-20', tags: ['React', 'TypeScript', 'GraphQL'] },
-  { id: '2', title: 'Full-Stack Developer', company: 'Vercel', location: 'San Francisco, CA', remote: true, salary: '$140k–$190k', matchScore: 85, postedAt: '2025-02-22', tags: ['Next.js', 'Node.js', 'PostgreSQL'] },
-  { id: '3', title: 'Staff Engineer', company: 'Linear', location: 'Remote', remote: true, salary: '$200k–$280k', matchScore: 78, postedAt: '2025-02-18', tags: ['React', 'Electron', 'Architecture'] },
-  { id: '4', title: 'Backend Engineer', company: 'Supabase', location: 'Remote', remote: true, salary: '$120k–$160k', matchScore: 72, postedAt: '2025-02-24', tags: ['Go', 'PostgreSQL', 'Rust'] },
-  { id: '5', title: 'Product Engineer', company: 'Loom', location: 'New York, NY', remote: false, salary: '$150k–$190k', matchScore: 68, postedAt: '2025-02-19', tags: ['React', 'Python', 'ML'] },
+  { id: '1', title: 'Senior Frontend Engineer', company: 'Stripe', location: 'Remote', remote: true, salary: '$160k–$220k', matchScore: 91, postedAt: '2026-02-20', tags: ['React', 'TypeScript', 'GraphQL'] },
+  { id: '2', title: 'Full-Stack Developer', company: 'Vercel', location: 'San Francisco, CA', remote: true, salary: '$140k–$190k', matchScore: 85, postedAt: '2026-02-22', tags: ['Next.js', 'Node.js', 'PostgreSQL'] },
+  { id: '3', title: 'Staff Engineer', company: 'Linear', location: 'Remote', remote: true, salary: '$200k–$280k', matchScore: 78, postedAt: '2026-02-18', tags: ['React', 'Electron', 'Architecture'] },
+  { id: '4', title: 'Backend Engineer', company: 'Supabase', location: 'Remote', remote: true, salary: '$120k–$160k', matchScore: 72, postedAt: '2026-02-24', tags: ['Go', 'PostgreSQL', 'Rust'] },
+  { id: '5', title: 'Product Engineer', company: 'Loom', location: 'New York, NY', remote: false, salary: '$150k–$190k', matchScore: 68, postedAt: '2026-02-19', tags: ['React', 'Python', 'ML'] },
 ];
 
 export default function JobsPage() {
@@ -43,8 +44,8 @@ export default function JobsPage() {
     return true;
   });
 
-  const scoreColor = (s: number) => s >= 80 ? 'text-green-600' : s >= 60 ? 'text-amber-600' : 'text-red-600';
-  const scoreBg = (s: number) => s >= 80 ? 'bg-green-100' : s >= 60 ? 'bg-amber-100' : 'bg-red-100';
+  const scoreColor = (s: number) => s >= 80 ? 'text-green-400' : s >= 60 ? 'text-amber-400' : 'text-red-400';
+  const scoreBg = (s: number) => s >= 80 ? 'bg-green-500/10 border-green-500/20' : s >= 60 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-red-500/10 border-red-500/20';
 
   const handleTrack = (jobId: string) => {
     setTracked((prev) => {
@@ -56,102 +57,145 @@ export default function JobsPage() {
 
   return (
     <FeaturePage
-      title="Job matching"
-      description="Browse AI-matched jobs. See your fit score and track applications."
+      title="Job Matching"
+      description="Advanced AI-driven alignment between your assets and open global roles."
       minTier={PlanTier.PRO}
+      headerIcon={<BriefcaseBusiness className="h-6 w-6" />}
     >
-      {/* Filters */}
-      <div className="flex flex-col gap-3 sm:flex-row mb-6">
-        <input value={query} onChange={(e) => setQuery(e.target.value)}
-          placeholder="Role, company, or skill..."
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-        <div className="flex gap-2 items-center">
-          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-            <input type="checkbox" checked={remoteOnly} onChange={(e) => setRemoteOnly(e.target.checked)}
-              className="rounded" />
-            Remote only
-          </label>
-          <select value={minScore} onChange={(e) => setMinScore(Number(e.target.value))}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-            <option value={0}>All match scores</option>
-            <option value={60}>60%+</option>
-            <option value={75}>75%+</option>
-            <option value={85}>85%+</option>
-          </select>
+      <div className="space-y-8 animate-in fade-in duration-500">
+        {/* Filters Header */}
+        <div className="flex flex-col lg:flex-row gap-4 p-6 rounded-3xl bg-black/20 border border-white/5 backdrop-blur-md">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-[#1ECEFA] transition-colors" />
+            <input 
+              value={query} 
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Filter by role, company, or technical node..."
+              className="w-full rounded-2xl border border-white/10 bg-white/5 pl-12 pr-5 py-4 text-sm text-white placeholder-slate-600 focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:border-white/20 transition-all">
+              <input 
+                type="checkbox" 
+                checked={remoteOnly} 
+                onChange={(e) => setRemoteOnly(e.target.checked)}
+                className="h-4 w-4 rounded border-white/10 bg-black text-[#1ECEFA] focus:ring-[#1ECEFA]" 
+              />
+              Remote Only
+            </label>
+            <div className="relative group">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-[#1ECEFA] transition-colors" />
+              <select 
+                value={minScore} 
+                onChange={(e) => setMinScore(Number(e.target.value))}
+                className="rounded-2xl border border-white/10 bg-white/5 pl-12 pr-10 py-4 text-xs font-black uppercase tracking-widest text-slate-400 focus:border-[#1ECEFA]/50 focus:outline-none transition-all appearance-none"
+              >
+                <option value={0}>All Alignment Levels</option>
+                <option value={60}>60%+ Match</option>
+                <option value={75}>75%+ Match</option>
+                <option value={85}>85%+ Match</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 mb-4 text-sm">
-        <span className="text-slate-500">{filtered.length} jobs found</span>
-        <span className="text-slate-300">|</span>
-        <span className="text-slate-500">{tracked.size} tracked</span>
-      </div>
+        {/* Stats Summary */}
+        <div className="flex items-center gap-6 px-4">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#1ECEFA] animate-pulse" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{filtered.length} Opportunities Identified</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{tracked.size} Strategic Targets</span>
+          </div>
+        </div>
 
-      {/* Job list */}
-      <div className="space-y-3">
-        {filtered.map((job) => (
-          <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start gap-4">
-              {/* Match score */}
-              <div className={`shrink-0 h-14 w-14 rounded-xl flex flex-col items-center justify-center ${scoreBg(job.matchScore)}`}>
-                <p className={`text-lg font-black leading-none ${scoreColor(job.matchScore)}`}>{job.matchScore}</p>
-                <p className="text-xs text-slate-400">match</p>
+        {/* Job Grid */}
+        <div className="grid gap-6">
+          {filtered.map((job) => (
+            <article 
+              key={job.id} 
+              className="group relative flex flex-col md:flex-row items-center gap-8 overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
+            >
+              {/* Match alignment score */}
+              <div className={`shrink-0 h-24 w-24 rounded-3xl border flex flex-col items-center justify-center space-y-1 transition-all group-hover:scale-105 ${scoreBg(job.matchScore)}`}>
+                <p className={`text-3xl font-black leading-none tracking-tighter ${scoreColor(job.matchScore)}`}>{job.matchScore}</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Alignment</p>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-bold text-slate-900">{job.title}</h3>
-                    <p className="text-sm text-slate-600">{job.company} · {job.location}</p>
+              <div className="flex-1 min-w-0 space-y-6">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-2xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{job.title}</h3>
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> {job.company}</span>
+                      <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {job.location}</span>
+                      {job.salary && <span className="flex items-center gap-1.5 text-slate-400"><DollarSign className="h-3.5 w-3.5" /> {job.salary}</span>}
+                    </div>
                   </div>
-                  {job.salary && (
-                    <span className="shrink-0 text-xs font-medium text-slate-600 bg-slate-100 rounded-full px-2 py-1">{job.salary}</span>
-                  )}
+                  <time className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{new Date(job.postedAt).toLocaleDateString()}</time>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mt-2">
+                <div className="flex flex-wrap gap-2">
                   {job.remote && (
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Remote</span>
+                    <span className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-green-400 flex items-center gap-1.5">
+                      <Zap className="h-3 w-3 fill-current" /> Global Remote
+                    </span>
                   )}
                   {job.tags.map((tag) => (
-                    <span key={tag} className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">{tag}</span>
+                    <span key={tag} className="rounded-lg bg-white/5 border border-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 group-hover:border-white/10 transition-colors">{tag}</span>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
-                  <button onClick={() => router.push(`/scanner?jobId=${job.id}`)}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                    Scan &amp; tailor
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <button 
+                    onClick={() => router.push(`/scanner?jobId=${job.id}`)}
+                    className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95"
+                  >
+                    Scan & Tailor <ArrowUpRight className="h-3.5 w-3.5" />
                   </button>
-                  <button onClick={() => handleTrack(job.id)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium ${
+                  <button 
+                    onClick={() => handleTrack(job.id)}
+                    className={`flex items-center gap-2 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
                       tracked.has(job.id)
-                        ? 'bg-slate-900 text-white'
-                        : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
-                    }`}>
-                    {tracked.has(job.id) ? '✓ Tracked' : 'Track'}
+                        ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)]'
+                        : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    {tracked.has(job.id) ? <Check className="h-3.5 w-3.5" /> : null}
+                    {tracked.has(job.id) ? 'Tracked' : 'Track Target'}
                   </button>
                   {user.tier === PlanTier.PREMIUM && (
-                    <button className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700">
-                      Auto-apply
+                    <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
+                      <Bot className="h-3.5 w-3.5" /> Auto-Apply Protocol
                     </button>
                   )}
-                  <span className="ml-auto text-xs text-slate-400">
-                    {new Date(job.postedAt).toLocaleDateString()}
-                  </span>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+              
+              {/* Background glow on hover */}
+              <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-[#1ECEFA]/5 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            </article>
+          ))}
 
-        {filtered.length === 0 && (
-          <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-400">
-            <p className="text-4xl mb-2">🔍</p>
-            <p className="text-sm">No jobs match your filters. Try widening your search.</p>
-          </div>
-        )}
+          {filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-20 text-center">
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 text-slate-700">
+                <Search className="h-10 w-10" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-xl font-black text-white tracking-tight uppercase">No Identical Alignment Detected</h3>
+              <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">No opportunities match your current filters. Try expanding your search nodes or decreasing alignment minimums.</p>
+              <button 
+                onClick={() => { setQuery(''); setRemoteOnly(false); setMinScore(0); }}
+                className="mt-8 rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
+              >
+                Reset Search Filters
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </FeaturePage>
   );

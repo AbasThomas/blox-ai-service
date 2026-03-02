@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Menu, X, ChevronRight, Bell } from 'lucide-react';
+import { Bot, Menu, X, ChevronRight, Bell } from '@/components/ui/icons';
 import { PlanTier } from '@nextjs-blox/shared-types';
 import { SIDEBAR_ITEMS } from '../../lib/navigation';
 import { useBloxStore } from '../../lib/store/app-store';

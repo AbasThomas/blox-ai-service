@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
-import { FileText } from 'lucide-react';
+import { FileText } from '@/components/ui/icons';
 
 export default function ResumeNewPage() {
   const router = useRouter();

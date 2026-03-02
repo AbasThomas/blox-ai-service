@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
 import { PlanTier } from '@nextjs-blox/shared-types';
-import { Bot, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Bot, Mail, Lock, ArrowRight } from '@/components/ui/icons';
 import { HexagonBackground } from '@/components/shared/hexagon-background';
 
 export default function LoginPage() {

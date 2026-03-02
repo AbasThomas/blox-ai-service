@@ -7,7 +7,7 @@ import {
   Activity,
   Receipt,
   Settings,
-} from 'lucide-react';
+} from '@/components/ui/icons';
 
 export const SIDEBAR_ITEMS = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Bot, Twitter, Github, Linkedin, Mail } from 'lucide-react';
+import { Bot, Twitter, Github, Linkedin, Mail } from '@/components/ui/icons';
 
 export function Footer() {
   return (

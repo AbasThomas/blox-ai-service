@@ -15,7 +15,7 @@ const withPWA = require('next-pwa')({
  **/
 const nextConfig = {
   nx: {},
-  transpilePackages: ['@nextjs-blox/shared-types', '@nextjs-blox/shared-config', 'framer-motion', 'lucide-react'],
+  transpilePackages: ['@nextjs-blox/shared-types', '@nextjs-blox/shared-config', 'framer-motion'],
   images: {
     remotePatterns: [
       {
@@ -32,4 +32,3 @@ const plugins = [
 ];
 
 module.exports = composePlugins(...plugins)(nextConfig);
-

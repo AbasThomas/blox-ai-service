@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
-import { Mail, PlusCircle, ArrowUpRight, History, Sparkles } from 'lucide-react';
+import { Mail, PlusCircle, ArrowUpRight, History, Sparkles } from '@/components/ui/icons';
 
 interface CoverLetterAsset {
   id: string;

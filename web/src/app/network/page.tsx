@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { PlanTier } from '@nextjs-blox/shared-types';
+import { Users, UserPlus, Mail, MessageSquare, Check, Zap, ArrowUpRight, Globe, Shield, Search, Send } from '@/components/ui/icons';
 
 interface Connection {
   id: string;
@@ -77,59 +78,87 @@ export default function NetworkPage() {
 
   return (
     <FeaturePage
-      title="Networking hub"
-      description="AI-matched professionals, intro templates, and connection tracking."
+      title="Networking Hub"
+      description="Strategically expand your professional reach through AI-matched node discovery."
       minTier={PlanTier.PRO}
+      headerIcon={<Users className="h-6 w-6" />}
     >
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        {/* Connections */}
-        <div className="space-y-5">
+      <div className="grid gap-10 lg:grid-cols-[1fr_420px] animate-in fade-in duration-500">
+        {/* Connection discovery nodes */}
+        <div className="space-y-10">
           {[
-            { label: 'Suggested connections', items: suggested, emptyMsg: 'No suggestions right now. Check back soon.' },
-            { label: `Intro sent (${sent_.length})`, items: sent_, emptyMsg: '' },
-            { label: `Connected (${connected.length})`, items: connected, emptyMsg: '' },
-          ].filter((s) => s.items.length > 0 || s.label.startsWith('Suggested')).map(({ label, items, emptyMsg }) => (
-            <section key={label}>
-              <h2 className="text-sm font-bold text-slate-900 mb-3">{label}</h2>
+            { label: 'Strategic Suggestions', items: suggested, emptyMsg: 'Discovery nodes synchronized. No new matches detected.' },
+            { label: `Active Outbound (${sent_.length})`, items: sent_, emptyMsg: '' },
+            { label: `Established Links (${connected.length})`, items: connected, emptyMsg: '' },
+          ].filter((s) => s.items.length > 0 || s.label.startsWith('Strategic')).map(({ label, items, emptyMsg }) => (
+            <section key={label} className="space-y-4">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1ECEFA] px-2">{label}</h2>
               {items.length === 0 ? (
-                <p className="text-sm text-slate-400">{emptyMsg}</p>
+                <div className="rounded-[2rem] border border-dashed border-white/5 bg-black/20 p-10 text-center">
+                  <p className="text-xs text-slate-600 uppercase tracking-widest italic">{emptyMsg}</p>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="grid gap-4">
                   {items.map((person) => (
-                    <div key={person.id} className={`rounded-xl border bg-white p-4 shadow-sm transition-colors ${
-                      selectedPerson?.id === person.id ? 'border-blue-400' : 'border-slate-200'
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
+                    <div 
+                      key={person.id} 
+                      className={`group relative overflow-hidden rounded-[2rem] border p-6 transition-all duration-300 ${
+                        selectedPerson?.id === person.id 
+                          ? 'border-[#1ECEFA] bg-[#1ECEFA]/5 shadow-xl' 
+                          : 'border-white/10 bg-black/40 hover:border-white/20 shadow-lg'
+                      }`}
+                    >
+                      <div className="relative z-10 flex items-start gap-6">
+                        <div className="h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-[#1ECEFA]/20 to-purple-500/20 border border-white/10 flex items-center justify-center text-xl font-black text-white group-hover:scale-105 transition-transform">
                           {person.name.charAt(0)}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-slate-900">{person.name}</p>
-                          <p className="text-xs text-slate-500">{person.role} at {person.company}</p>
-                          <p className="text-xs text-blue-600 mt-0.5">{person.matchReason}</p>
-                          <p className="text-xs text-slate-400">{person.mutualConnections} mutual connections</p>
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <h3 className="font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{person.name}</h3>
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                            <span>{person.role}</span>
+                            <span className="h-1 w-1 rounded-full bg-slate-800" />
+                            <span>{person.company}</span>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2">
+                            <span className="rounded-lg bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                              <Zap className="h-2.5 w-2.5 fill-current" /> {person.matchReason}
+                            </span>
+                            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">{person.mutualConnections} Mutual Nodes</span>
+                          </div>
                         </div>
-                        <div className="shrink-0 flex flex-col gap-1.5">
+                        <div className="shrink-0 flex flex-col gap-2">
                           {person.status === 'suggested' && (
                             <>
-                              <button onClick={() => handleConnect(person.id)}
-                                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700">
+                              <button 
+                                onClick={() => handleConnect(person.id)}
+                                className="rounded-xl bg-white px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_15px_rgba(30,206,250,0.4)] active:scale-95"
+                              >
                                 Connect
                               </button>
-                              <button onClick={() => handleSelectPerson(person)}
-                                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
-                                Compose intro
+                              <button 
+                                onClick={() => handleSelectPerson(person)}
+                                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-slate-400 transition-all hover:bg-white/10 hover:text-white"
+                              >
+                                Intro
                               </button>
                             </>
                           )}
                           {person.status === 'sent' && (
-                            <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">Sent</span>
+                            <div className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-amber-500 flex items-center gap-1.5">
+                              <div className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
+                              Transmitting
+                            </div>
                           )}
                           {person.status === 'connected' && (
-                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">Connected</span>
+                            <div className="rounded-full border border-green-500/20 bg-green-500/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1.5">
+                              <Check className="h-2.5 w-2.5" />
+                              Linked
+                            </div>
                           )}
                         </div>
                       </div>
+                      {/* Background glow on hover */}
+                      <div className="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-[#1ECEFA]/5 blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                     </div>
                   ))}
                 </div>
@@ -138,39 +167,70 @@ export default function NetworkPage() {
           ))}
         </div>
 
-        {/* Intro composer */}
-        <aside>
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sticky top-4">
-            <h3 className="text-sm font-bold text-slate-900 mb-3">
-              {selectedPerson ? `Intro to ${selectedPerson.name}` : 'Compose intro'}
-            </h3>
-            {!selectedPerson ? (
-              <p className="text-sm text-slate-400">Select a person to compose a personalised intro message.</p>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 mb-1">Template</label>
-                  <select value={templateKey} onChange={(e) => handleTemplateChange(e.target.value)}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="networking">Networking</option>
-                    <option value="job-inquiry">Job inquiry</option>
-                    <option value="referral-request">Referral request</option>
-                  </select>
-                </div>
-                <textarea rows={8} value={message} onChange={(e) => setMessage(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-                {sent ? (
-                  <div className="rounded-md bg-green-50 border border-green-200 px-3 py-2 text-xs text-green-700">
-                    Intro sent to {selectedPerson.name}!
-                  </div>
-                ) : (
-                  <button onClick={handleSend} disabled={sending}
-                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50">
-                    {sending ? 'Sending...' : 'Send intro'}
-                  </button>
-                )}
+        {/* Intro Composer Hub */}
+        <aside className="lg:sticky lg:top-10 h-fit">
+          <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/40 p-8 shadow-2xl backdrop-blur-xl">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1 w-24 bg-[#1ECEFA]/20 rounded-full blur-[2px]" />
+            
+            <div className="relative z-10 space-y-8">
+              <div className="space-y-1">
+                <h3 className="text-sm font-black text-white uppercase tracking-tight">
+                  {selectedPerson ? `Link to ${selectedPerson.name.split(' ')[0]}` : 'Intro Composer'}
+                </h3>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Advanced Transmission Module</p>
               </div>
-            )}
+
+              {!selectedPerson ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                  <div className="h-16 w-16 rounded-3xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-700">
+                    <MessageSquare className="h-8 w-8" />
+                  </div>
+                  <p className="text-xs text-slate-600 max-w-[200px] leading-relaxed italic uppercase tracking-wider font-bold">Select a target node to initialize message synthesis.</p>
+                </div>
+              ) : (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 px-1">Protocol Template</label>
+                    <div className="relative group">
+                      <select 
+                        value={templateKey} 
+                        onChange={(e) => handleTemplateChange(e.target.value)}
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-[11px] font-black uppercase tracking-widest text-slate-400 focus:border-[#1ECEFA]/50 focus:outline-none transition-all appearance-none"
+                      >
+                        <option value="networking">Standard Link</option>
+                        <option value="job-inquiry">Job Alignment</option>
+                        <option value="referral-request">Strategic Referral</option>
+                      </select>
+                      <ArrowUpRight className="absolute right-5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600 group-hover:text-white transition-colors" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 px-1">Message Content</label>
+                    <textarea 
+                      rows={10} 
+                      value={message} 
+                      onChange={(e) => setMessage(e.target.value)}
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-xs text-white placeholder-slate-600 focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none font-medium leading-relaxed" 
+                    />
+                  </div>
+
+                  {sent ? (
+                    <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4 text-center animate-in zoom-in-95 duration-300">
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500">Transmission Successful to {selectedPerson.name.split(' ')[0]}</p>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={handleSend} 
+                      disabled={sending}
+                      className="w-full flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95 disabled:opacity-50"
+                    >
+                      {sending ? 'Transmitting...' : 'Initiate Transmission'} <Send className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </aside>
       </div>

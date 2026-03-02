@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { authApi } from '@/lib/api';
-import { Bot, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Bot, Mail, ArrowRight, CheckCircle2 } from '@/components/ui/icons';
 import { HexagonBackground } from '@/components/shared/hexagon-background';
 
 export default function ForgotPasswordPage() {

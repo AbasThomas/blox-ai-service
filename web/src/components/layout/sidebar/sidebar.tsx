@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useBloxStore } from '@/lib/store/app-store';
 import { SIDEBAR_ITEMS } from '@/lib/navigation';
-import { LogOut, Bot, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LogOut, Bot, ChevronsLeft, ChevronsRight } from '@/components/ui/icons';
 import { PlanTier } from '@nextjs-blox/shared-types';
 
 const tierTone: Record<PlanTier, string> = {
@@ -15,31 +15,25 @@ const tierTone: Record<PlanTier, string> = {
   [PlanTier.ENTERPRISE]: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
 };
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: (collapsed: boolean) => void;
+}
+
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
   const user = useBloxStore((state) => state.user);
   const logout = useBloxStore((state) => state.logout);
   const notifications = useBloxStore((state) => state.notifications);
   const unreadCount = notifications.filter((n) => !n.read).length;
-  const [collapsed, setCollapsed] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem('blox_sidebar_collapsed');
-    if (stored) setCollapsed(stored === '1');
-  }, []);
 
   const toggleCollapsed = () => {
-    const next = !collapsed;
-    setCollapsed(next);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('blox_sidebar_collapsed', next ? '1' : '0');
-    }
+    onToggle(!collapsed);
   };
 
   return (
     <aside
-      className={`relative z-20 flex flex-col border-r border-white/10 bg-[#0a1118]/80 backdrop-blur-3xl transition-all ${
+      className={`fixed inset-y-0 left-0 z-20 flex flex-col border-r border-white/10 bg-[#0a1118]/80 backdrop-blur-3xl transition-all duration-300 ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >

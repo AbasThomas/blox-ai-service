@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { templatesApi } from '@/lib/api';
-import { LayoutTemplate, Search, GitFork, ScanSearch, ArrowUpRight } from 'lucide-react';
+import { LayoutTemplate, Search, GitFork, ScanSearch, ArrowUpRight } from '@/components/ui/icons';
 
 interface TemplateItem {
   id: string;

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { billingApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
-import { Receipt, CreditCard, CalendarClock, TrendingUp, Download } from 'lucide-react';
+import { Receipt, CreditCard, CalendarClock, TrendingUp, Download } from '@/components/ui/icons';
 
 interface BillingInvoice {
   id: string;

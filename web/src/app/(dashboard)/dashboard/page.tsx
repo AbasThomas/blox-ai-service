@@ -16,7 +16,7 @@ import {
   ArrowUpRight,
   Clock3,
   CreditCard,
-} from 'lucide-react';
+} from '@/components/ui/icons';
 
 interface DashboardAsset {
   id: string;

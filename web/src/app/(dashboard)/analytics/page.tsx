@@ -14,7 +14,7 @@ import {
   Link as LinkIcon,
   MousePointerClick,
   Users,
-} from 'lucide-react';
+} from '@/components/ui/icons';
 
 interface AssetRow {
   id: string;

@@ -21,7 +21,7 @@ import {
   Github,
   Plus,
   Minus,
-} from 'lucide-react';
+} from '@/components/ui/icons';
 import { BillingCycle, PlanTier, type PricingPlan } from '@nextjs-blox/shared-types';
 import { billingApi } from '@/lib/api';
 import { InteractiveGridPattern } from '@/components/shared/interactive-grid-pattern';

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
 import { Persona, PlanTier } from '@nextjs-blox/shared-types';
-import { Bot, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Bot, Mail, Lock, User, ArrowRight } from '@/components/ui/icons';
 import { HexagonBackground } from '@/components/shared/hexagon-background';
 
 type SignupPersona =

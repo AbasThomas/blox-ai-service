@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { FeaturePage } from '@/components/shared/feature-page';
-import { FileStack, LayoutDashboard, Search, Star, Clock, PlusCircle } from 'lucide-react';
+import { FileStack, LayoutDashboard, Search, Star, Clock, PlusCircle, ArrowRight } from '@/components/ui/icons';
 import { useBloxStore } from '@/lib/store/app-store';
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -83,10 +83,3 @@ export default function AssetsPage() {
     </FeaturePage>
   );
 }
-
-const ArrowRight = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M5 12h14"></path>
-    <path d="m12 5 7 7-7 7"></path>
-  </svg>
-);

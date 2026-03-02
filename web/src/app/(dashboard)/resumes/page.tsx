@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
-import { FileText, PlusCircle, ArrowUpRight, ScanSearch, Download } from 'lucide-react';
+import { FileText, PlusCircle, ArrowUpRight, ScanSearch, Download } from '@/components/ui/icons';
 
 interface ResumeAsset {
   id: string;
