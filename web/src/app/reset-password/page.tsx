@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authApi } from '@/lib/api';
+import { CheckCircle } from '@/components/ui/icons';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -43,9 +44,7 @@ export default function ResetPasswordPage() {
         {done ? (
           <div className="text-center space-y-4">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+              <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-black text-slate-900">Password reset!</h1>
             <p className="text-sm text-slate-600">Your password has been updated. Redirecting to login...</p>

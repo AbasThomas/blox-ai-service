@@ -28,6 +28,7 @@ import {
   Files01Icon,
   GitForkIcon,
   GithubIcon,
+  GoogleIcon,
   GlobeIcon,
   LayoutGridIcon,
   Link01Icon,
@@ -56,7 +57,10 @@ import {
   Search01Icon,
   Send as SendIcon,
   Settings02Icon,
+  ShieldCheck as ShieldCheckIcon,
   Shield02Icon,
+  SidebarLeftIcon,
+  SidebarRightIcon,
   SparklesIcon,
   StarIcon,
   TransactionHistoryIcon,
@@ -112,6 +116,7 @@ export const FileStack = createIcon(Files01Icon);
 export const FileText = createIcon(File01Icon);
 export const GitFork = createIcon(GitForkIcon);
 export const Github = createIcon(GithubIcon);
+export const Google = createIcon(GoogleIcon);
 export const Globe = createIcon(GlobeIcon);
 export const History = createIcon(TransactionHistoryIcon);
 export const LayoutDashboard = createIcon(DashboardSquare01Icon);
@@ -143,7 +148,10 @@ export const ScanSearch = createIcon(ScanIcon);
 export const Search = createIcon(Search01Icon);
 export const Send = createIcon(SendIcon);
 export const Settings = createIcon(Settings02Icon);
+export const ShieldCheck = createIcon(ShieldCheckIcon);
 export const Shield = createIcon(Shield02Icon);
+export const SidebarLeft = createIcon(SidebarLeftIcon);
+export const SidebarRight = createIcon(SidebarRightIcon);
 export const Sparkles = createIcon(SparklesIcon);
 export const Star = createIcon(StarIcon);
 export const TrendingUp = createIcon(ChartUpIcon);

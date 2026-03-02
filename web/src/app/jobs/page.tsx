@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { PlanTier } from '@nextjs-blox/shared-types';
-import { Search, BriefcaseBusiness, Globe, Zap, ArrowUpRight, Check, MapPin, DollarSign, Filter } from '@/components/ui/icons';
+import { Search, BriefcaseBusiness, Globe, Zap, ArrowUpRight, Check, MapPin, DollarSign, Filter, Bot } from '@/components/ui/icons';
 
 interface Job {
   id: string;

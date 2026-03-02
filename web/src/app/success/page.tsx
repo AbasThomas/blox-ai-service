@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { billingApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
 import { PlanTier } from '@nextjs-blox/shared-types';
+import { CheckCircle } from '@/components/ui/icons';
 
 export default function SuccessPage() {
   const params = useSearchParams();
@@ -63,9 +64,7 @@ export default function SuccessPage() {
       <section className="rounded-2xl border border-emerald-300 bg-gradient-to-br from-emerald-50 to-green-50 p-10 text-center shadow-sm">
         {/* Icon */}
         <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-          <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <CheckCircle className="h-10 w-10 text-green-600" />
         </div>
 
         <h1 className="text-3xl font-black text-emerald-900">

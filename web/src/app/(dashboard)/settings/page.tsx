@@ -5,7 +5,7 @@ import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { authApi, billingApi, integrationsApi } from '@/lib/api';
 import { PlanTier } from '@nextjs-blox/shared-types';
-import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, Settings, BriefcaseBusiness } from '@/components/ui/icons';
+import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, Settings, BriefcaseBusiness, ArrowUpRight } from '@/components/ui/icons';
 
 const TABS = ['Account', 'Security', 'Integrations', 'Subscription', 'Export', 'Career'] as const;
 type Tab = typeof TABS[number];
