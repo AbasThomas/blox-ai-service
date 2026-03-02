@@ -131,84 +131,36 @@ export default function DashboardPage() {
 
   return (
     <FeaturePage
-      title="System Overview"
-      description="Real-time performance metrics and professional asset synchronization."
-      headerIcon={<LayoutDashboard className="h-6 w-6" />}
+      title="Overview"
+      description={`Good day, welcome back, ${user.name.split(' ')[0]}!`}
+      headerIcon={<LayoutDashboard className="h-5 w-5" />}
     >
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Sharp Command Center Hero */}
-        <section className="relative overflow-hidden rounded-[2rem] border-2 border-white/10 bg-[#0C0F13] p-12">
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-12">
-            <div className="space-y-6 max-w-2xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#1ECEFA]/30 bg-[#1ECEFA]/5 px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">
-                <ShieldCheck className="h-3.5 w-3.5" /> Identity Synchronized
-              </div>
-              <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-[0.9]">
-                System <span className="text-[#1ECEFA]">Online</span>,<br />
-                {user.name.split(' ')[0]}
-              </h2>
-              <p className="text-slate-400 text-xl leading-relaxed font-medium border-l-2 border-white/10 pl-6">
-                Your professional identity is distributed across <span className="text-white font-bold">{stats.total} nodes</span>. 
-                Network stability is verified at <span className="text-white font-bold">98.4%</span>.
-              </p>
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Link
-                  href="/portfolios/new"
-                  className="flex items-center gap-3 rounded-xl bg-[#1ECEFA] px-8 py-4 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-white active:scale-95"
-                >
-                  <PlusCircle className="h-4 w-4" /> New Archive
-                </Link>
-                <Link
-                  href="/coach"
-                  className="flex items-center gap-3 rounded-xl border-2 border-white/10 bg-transparent px-8 py-4 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white hover:text-black active:scale-95"
-                >
-                  <TrendingUp className="h-4 w-4" /> Trajectory
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4 w-full lg:w-72">
-              <div className="rounded-2xl border-2 border-white/10 bg-white/5 p-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Total Outreach</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-5xl font-black text-white tracking-tighter">{stats.recentViews}</p>
-                  <span className="text-xs font-black text-[#1ECEFA]">UNIT</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border-2 border-[#1ECEFA]/20 bg-[#1ECEFA]/5 p-8">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#1ECEFA]/60 mb-2">Health Index</p>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-5xl font-black text-[#1ECEFA] tracking-tighter">98</p>
-                  <span className="text-xs font-black text-[#1ECEFA]/60">%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* High-Contrast Metrics Grid */}
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
+        {/* Professional Stats Grid */}
+        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Total Nodes', value: stats.total, icon: LayoutDashboard, color: 'text-white' },
-            { label: 'Portfolios', value: stats.portfolios, icon: BriefcaseBusiness, color: 'text-[#1ECEFA]' },
-            { label: 'Resumes', value: stats.resumes, icon: FileText, color: 'text-white' },
-            { label: 'Transmissions', value: stats.coverLetters, icon: Mail, color: 'text-white' },
-          ].map((item) => {
+            { label: 'Total Assets', value: stats.total, icon: LayoutDashboard, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'hover:border-blue-500/30' },
+            { label: 'Portfolios', value: stats.portfolios, icon: BriefcaseBusiness, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'hover:border-purple-500/30' },
+            { label: 'Resumes', value: stats.resumes, icon: FileText, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'hover:border-emerald-500/30' },
+            { label: 'Cover Letters', value: stats.coverLetters, icon: Mail, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'hover:border-amber-500/30' },
+          ].map((item, i) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.label}
-                className="group relative rounded-2xl border-2 border-white/5 bg-white/5 p-6 transition-all hover:border-white/20"
+                className={`group relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 ${item.border} hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-black/50`}
+                style={{ animationDelay: `${i * 100}ms` }}
               >
+                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-white/5 to-transparent blur-2xl group-hover:from-white/10 transition-all duration-500" />
                 <div className="mb-8 flex items-center justify-between">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-black/60 border border-white/10 ${item.color}`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.bg} ${item.color} shadow-inner`}>
                     <Icon className="h-6 w-6" />
                   </div>
-                  <ArrowUpRight className="h-5 w-5 text-slate-700 group-hover:text-white transition-colors" />
+                  <ArrowUpRight className="h-5 w-5 text-slate-600 transition-colors duration-300 group-hover:text-white" />
                 </div>
                 <div>
-                  <p className="text-4xl font-black text-white tracking-tighter">{item.value.toString().padStart(2, '0')}</p>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-1">{item.label}</p>
+                  <p className="text-4xl font-bold text-white tracking-tight">{item.value}</p>
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">{item.label}</p>
                 </div>
               </div>
             );
@@ -216,133 +168,181 @@ export default function DashboardPage() {
         </section>
 
         <div className="grid gap-8 lg:grid-cols-12">
-          {/* Detailed Node Status */}
-          <section className="lg:col-span-8 space-y-6">
-            <div className="flex items-center justify-between border-b-2 border-white/5 pb-4">
-              <h2 className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.3em] text-white">
-                <Activity className="h-4 w-4 text-[#1ECEFA]" /> Active Archive Status
-              </h2>
-              <Link href="/portfolios" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-[#1ECEFA] transition-colors">
-                Registry Access
-              </Link>
-            </div>
+          {/* Recent Activity */}
+          <section className="lg:col-span-8">
+            <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-white/5 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                    <Activity className="h-4 w-4" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-white tracking-wide">Recent Activity</h2>
+                </div>
+                <Link href="/portfolios" className="group flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-white transition-colors">
+                  View All <ArrowUpRight className="h-3 w-3 opacity-50 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </div>
 
-            <div className="grid gap-3">
-              {loading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-20 rounded-xl bg-white/5 border border-white/5" />
-                ))
-              ) : assets.length > 0 ? (
-                sortedByUpdated.slice(0, 5).map((asset) => (
-                  <div
-                    key={asset.id}
-                    className="group flex items-center justify-between rounded-xl border-2 border-white/5 bg-black/40 p-5 transition-all hover:border-[#1ECEFA]/40 hover:bg-black/60"
-                  >
-                    <div className="flex items-center gap-6 min-w-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-500 group-hover:text-[#1ECEFA] transition-colors">
-                        {asset.type === AssetType.PORTFOLIO ? <Globe className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="truncate text-base font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{asset.title}</h3>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 border border-white/10 rounded">
-                            {asset.type.replace('_', ' ')}
-                          </span>
-                          <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">
-                            Sync: {formatDate(asset.updatedAt)}
-                          </span>
+              <div className="flex-1 p-3">
+                {loading ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="h-20 animate-pulse rounded-2xl bg-white/5" />
+                    ))}
+                  </div>
+                ) : assets.length > 0 ? (
+                  <div className="space-y-2">
+                    {sortedByUpdated.slice(0, 5).map((asset) => (
+                      <div
+                        key={asset.id}
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-transparent p-4 transition-all duration-300 hover:border-white/5 hover:bg-white/[0.04]"
+                      >
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/40 border border-white/5 transition-colors duration-300 group-hover:bg-white/10 ${
+                            asset.type === AssetType.PORTFOLIO ? 'text-blue-400' : 
+                            asset.type === AssetType.RESUME ? 'text-emerald-400' : 'text-amber-400'
+                          }`}>
+                            {asset.type === AssetType.PORTFOLIO ? <Globe className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-base font-semibold text-slate-200 group-hover:text-white transition-colors">{asset.title}</h3>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                                {asset.type.replace('_', ' ')}
+                              </span>
+                              <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                                <Clock3 className="h-3 w-3" /> {formatDate(asset.updatedAt)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                          {asset.publishedUrl && (
+                            <Link 
+                              href={asset.publishedUrl} 
+                              target="_blank" 
+                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                              title="View Live"
+                            >
+                              <Globe className="h-4 w-4" />
+                            </Link>
+                          )}
+                          <Link
+                            href={
+                              asset.type === AssetType.PORTFOLIO
+                                ? `/portfolios/${asset.id}/edit`
+                                : asset.type === AssetType.RESUME
+                                ? `/resumes/${asset.id}/edit`
+                                : `/cover-letters/${asset.id}/edit`
+                            }
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white hover:text-black transition-all shadow-sm"
+                            title="Edit"
+                          >
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Link>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {asset.publishedUrl && (
-                        <Link 
-                          href={asset.publishedUrl} 
-                          target="_blank" 
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-500 hover:bg-white hover:text-black transition-all"
-                        >
-                          <Globe className="h-4 w-4" />
-                        </Link>
-                      )}
-                      <Link
-                        href={
-                          asset.type === AssetType.PORTFOLIO
-                            ? `/portfolios/${asset.id}/edit`
-                            : asset.type === AssetType.RESUME
-                            ? `/resumes/${asset.id}/edit`
-                            : `/cover-letters/${asset.id}/edit`
-                        }
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 text-[#1ECEFA] hover:bg-[#1ECEFA] hover:text-black transition-all"
-                      >
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Link>
-                    </div>
+                    ))}
                   </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border-2 border-dashed border-white/10 p-20 text-center">
-                  <p className="text-xs font-black text-slate-600 uppercase tracking-[0.3em]">Registry Empty</p>
-                  <Link href="/portfolios/new" className="mt-6 inline-flex rounded-lg bg-white px-8 py-3 text-[10px] font-black uppercase tracking-widest text-black hover:bg-[#1ECEFA] transition-all">
-                    Initialize Registry
-                  </Link>
-                </div>
-              )}
+                ) : (
+                  <div className="flex h-[300px] flex-col items-center justify-center space-y-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.02]">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-slate-400">
+                      <FileText className="h-8 w-8" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-slate-300">No assets created yet</p>
+                      <p className="mt-1 text-xs text-slate-500">Start building your professional presence</p>
+                    </div>
+                    <Link href="/portfolios/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-bold text-black hover:bg-blue-400 hover:text-white transition-all">
+                      <PlusCircle className="h-4 w-4" /> Create First Asset
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
 
-          {/* Operation Sidebar */}
-          <aside className="lg:col-span-4 space-y-8">
-            <div className="rounded-2xl border-2 border-white/10 bg-white/5 p-8 space-y-8">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Fast Actions</h2>
-              <div className="grid gap-2">
+          {/* Quick Actions & Subscription Sidebar */}
+          <aside className="lg:col-span-4 space-y-6">
+            <div className="overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+                  <Zap className="h-4 w-4" />
+                </div>
+                <h2 className="text-sm font-semibold text-white tracking-wide">Quick Actions</h2>
+              </div>
+              <div className="grid gap-3">
                 {[
-                  { href: '/resumes/new', label: 'New Resume', icon: FileText },
-                  { href: '/portfolios/new', label: 'New Portfolio', icon: Globe },
-                  { href: '/cover-letters/new', label: 'New Transmission', icon: Mail },
-                  { href: '/coach', label: 'Career Protocol', icon: Zap },
+                  { href: '/resumes/new', label: 'Create Resume', desc: 'Build an ATS-friendly resume', icon: FileText, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+                  { href: '/portfolios/new', label: 'Create Portfolio', desc: 'Design a stunning website', icon: Globe, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                  { href: '/cover-letters/new', label: 'Write Cover Letter', desc: 'Craft a tailored letter', icon: Mail, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+                  { href: '/coach', label: 'AI Career Coach', desc: 'Get personalized guidance', icon: Zap, color: 'text-purple-400', bg: 'bg-purple-400/10' },
                 ].map((action) => {
                   const Icon = action.icon;
                   return (
                     <Link
                       key={action.href}
                       href={action.href}
-                      className="group flex items-center justify-between rounded-xl border border-white/5 bg-black/40 px-5 py-4 transition-all hover:border-white/20 hover:bg-black/60"
+                      className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-black/20 p-4 transition-all duration-300 hover:bg-white/10 hover:border-white/10"
                     >
-                      <div className="flex items-center gap-4">
-                        <Icon className="h-4 w-4 text-slate-500 group-hover:text-[#1ECEFA] transition-colors" />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:text-white transition-colors">{action.label}</span>
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${action.bg} ${action.color} transition-transform duration-300 group-hover:scale-110`}>
+                        <Icon className="h-5 w-5" />
                       </div>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-slate-700 group-hover:text-[#1ECEFA] transition-all" />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{action.label}</p>
+                        <p className="truncate text-xs text-slate-500">{action.desc}</p>
+                      </div>
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/5 text-slate-400 opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:bg-white/10 group-hover:text-white">
+                        <PlusCircle className="h-4 w-4" />
+                      </div>
                     </Link>
                   );
                 })}
               </div>
             </div>
 
-            <div className="rounded-2xl border-2 border-[#1ECEFA]/20 bg-[#1ECEFA]/5 p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#1ECEFA]/60">Account Tier</p>
-                <ShieldCheck className="h-4 w-4 text-[#1ECEFA]" />
-              </div>
-              <div className="space-y-1">
-                <p className="text-4xl font-black text-white tracking-tighter uppercase">{paymentTier}</p>
-                <p className="text-[9px] font-black text-[#1ECEFA]/60 uppercase tracking-widest flex items-center gap-2">
-                  Status: {paymentStatus} <span className="h-1 w-1 rounded-full bg-[#1ECEFA]" />
-                </p>
-              </div>
-              <div className="pt-6 border-t border-[#1ECEFA]/10 space-y-3">
-                <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                  <span className="text-slate-500">Next Sync</span>
-                  <span className="text-white">{nextBillingDate ? formatDate(nextBillingDate) : 'MANUAL'}</span>
+            <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent p-6">
+              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <p className="text-sm font-semibold text-white tracking-wide">Subscription</p>
+                  </div>
+                  <ShieldCheck className="h-5 w-5 text-blue-400" />
+                </div>
+                
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-bold text-white tracking-tight uppercase">{paymentTier}</p>
+                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/20">
+                      {paymentStatus}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-xl bg-black/40 p-4 border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <History className="h-4 w-4 text-slate-400" />
+                      <span className="text-xs font-medium text-slate-300">Next Billing</span>
+                    </div>
+                    <span className="text-xs font-bold text-white tracking-wide">
+                      {nextBillingDate ? formatDate(nextBillingDate) : 'N/A'}
+                    </span>
+                  </div>
+                  
+                  <Link
+                    href="/pricing"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-xs font-bold text-black transition-all hover:bg-blue-400 hover:text-white active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                  >
+                    Manage Plan <ArrowUpRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </div>
-              <Link
-                href="/pricing"
-                className="flex items-center justify-center rounded-xl bg-white px-6 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA]"
-              >
-                Elevate Access
-              </Link>
             </div>
           </aside>
         </div>

@@ -4,12 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Menu, X, ChevronRight, Bell } from '@/components/ui/icons';
+import { Menu, X, ChevronRight, Bell } from '@/components/ui/icons';
+import { Logo } from '@/components/ui/logo';
 import { PlanTier } from '@nextjs-blox/shared-types';
 import { SIDEBAR_ITEMS } from '../../lib/navigation';
 import { useBloxStore } from '../../lib/store/app-store';
-
-const CYAN = '#1ECEFA';
 
 const tierTone: Record<PlanTier, string> = {
   [PlanTier.FREE]: 'bg-slate-800 text-slate-300 border-white/5',
@@ -19,10 +18,10 @@ const tierTone: Record<PlanTier, string> = {
 };
 
 const LANDING_LINKS = [
-  { href: '#product', label: 'Product' },
-  { href: '#features', label: 'Features' },
-  { href: '#pricing', label: 'Pricing' },
-  { href: '#faq', label: 'FAQ' },
+  { href: '/#product', label: 'Product' },
+  { href: '/#features', label: 'Features' },
+  { href: '/#pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'FAQ' },
 ];
 
 export function Header() {
@@ -54,21 +53,20 @@ export function Header() {
     router.push('/');
   }
 
-  const navLinks = pathname === '/' && !isAuthenticated ? LANDING_LINKS : SIDEBAR_ITEMS;
+  // Keep marketing navbar consistent across landing/auth pages when logged out.
+  const navLinks = !isAuthenticated ? LANDING_LINKS : SIDEBAR_ITEMS;
+
+  if (['/login', '/signup', '/forgot-password'].includes(pathname)) {
+    return null;
+  }
 
   return (
     <header className="fixed left-1/2 top-4 z-50 w-full max-w-6xl -translate-x-1/2 px-6">
       <div className="rounded-full border border-white/10 bg-slate-900/40 backdrop-blur-xl shadow-2xl">
         <div className="flex items-center justify-between py-2.5 pl-6 pr-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity translate-y-[1px]">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 ring-1 ring-white/10 shadow-lg" style={{ background: `linear-gradient(135deg, ${CYAN}20, rgba(15,23,42,0.8))` }}>
-              <Bot size={20} className="text-[#1ECEFA]" strokeWidth={2} />
-            </span>
-            <div className="flex flex-col leading-none">
-              <span className="text-base font-black tracking-tight text-white uppercase italic">Blox</span>
-              <span className="text-[10px] font-medium tracking-wider text-slate-400 uppercase">AI Engine</span>
-            </div>
+          <Link href="/" className="flex items-center hover:opacity-90 transition-opacity translate-y-[1px]">
+            <Logo size="lg" />
           </Link>
 
           {/* Desktop Nav */}

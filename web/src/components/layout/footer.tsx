@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Bot, Twitter, Github, Linkedin, Mail } from '@/components/ui/icons';
+import { Twitter, Github, Linkedin, Mail } from '@/components/ui/icons';
+import { Logo } from '@/components/ui/logo';
 
 export function Footer() {
   return (
@@ -15,13 +16,8 @@ export function Footer() {
           
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link href="/" className="flex items-center gap-3 mb-6 hover:opacity-90 transition-opacity">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-[#1ECEFA] backdrop-blur-md shadow-[0_0_15px_rgba(30,206,250,0.2)]">
-                <Bot size={22} />
-              </span>
-              <span className="font-display font-black text-2xl tracking-tighter text-white">
-                BLOX<span className="text-[#1ECEFA]">.</span>
-              </span>
+            <Link href="/" className="inline-block mb-6 hover:opacity-90 transition-opacity">
+              <Logo size="lg" />
             </Link>
             <p className="max-w-xs text-sm leading-relaxed text-slate-400 mb-8">
               The AI-driven portfolio builder for the modern professional. Build, snap, and deploy your professional identity with physical weight and digital precision.

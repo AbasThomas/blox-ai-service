@@ -429,7 +429,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           FEATURES (Bento Grid)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={sec2 as React.RefObject<HTMLElement>} className="relative overflow-hidden px-6 py-32">
+      <section id="features" ref={sec2 as React.RefObject<HTMLElement>} className="relative overflow-hidden px-6 py-32">
         <WaveGridBackground className="absolute inset-0" gridSize={32} waveHeight={34} waveSpeed={1.05} color={CYAN} />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(3,7,18,0.62)_0%,rgba(3,7,18,0.38)_40%,rgba(3,7,18,0.75)_100%)]" />
 
@@ -477,7 +477,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           HOW IT WORKS (Process Flow)
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
+      <section id="product" className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
         <div className="absolute inset-0">
           <HexagonBackground 
             hexagonSize={45} 
@@ -622,7 +622,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           PRICING PREVIEW
       ══════════════════════════════════════════════════════════════════════ */}
-      <section ref={sec4 as React.RefObject<HTMLElement>} className="px-6 py-24">
+      <section id="pricing" ref={sec4 as React.RefObject<HTMLElement>} className="px-6 py-24">
         <div className="mx-auto max-w-5xl text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -756,7 +756,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           FAQ SECTION
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
+      <section id="faq" className="relative overflow-hidden px-6 py-32" style={{ background: '#0C0F13' }}>
         {/* Interactive Grid Background */}
         <InteractiveGridPattern
           className="absolute inset-0 opacity-60"

@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { authApi } from '@/lib/api';
-import { Bot, Mail, ArrowRight, CheckCircle2 } from '@/components/ui/icons';
+import { Logo } from '@/components/ui/logo';
+import { Mail, ArrowRight, CheckCircle2 } from '@/components/ui/icons';
 import { HexagonBackground } from '@/components/shared/hexagon-background';
 
 export default function ForgotPasswordPage() {
@@ -28,27 +29,65 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-80px)] items-center justify-center overflow-hidden px-6 py-12" style={{ background: '#0C0F13' }}>
-      {/* Background layer */}
-      <div className="absolute inset-0">
+    <div className="flex min-h-screen bg-[#0C0F13] relative overflow-hidden">
+      {/* Global Background layer */}
+      <div className="absolute inset-0 z-0">
         <HexagonBackground 
-          hexagonSize={50} 
+          hexagonSize={60} 
           hexagonMargin={2} 
-          glowColor="rgba(30, 206, 250, 0.45)" 
-          className="opacity-70"
-          proximity={350}
+          glowColor="rgba(30, 206, 250, 0.15)" 
+          className="opacity-50"
+          proximity={400}
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Brand Icon */}
-        <div className="mb-8 flex justify-center">
-          <Link href="/" className="group flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#1ECEFA] backdrop-blur-xl transition-all hover:scale-110 hover:border-[#1ECEFA]/50 hover:bg-[#1ECEFA]/10 hover:shadow-[0_0_30px_rgba(30,206,250,0.3)]">
-            <Bot size={28} />
+      {/* Left panel */}
+      <div className="relative hidden w-1/2 flex-col justify-between border-r border-white/10 p-12 lg:flex lg:p-16 z-10">
+        
+        {/* Branding */}
+        <div className="relative z-10">
+          <Link href="/" className="inline-block transition-transform hover:scale-105">
+            <Logo size="xl" layout="horizontal" />
           </Link>
         </div>
 
-        <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+        {/* Bullet Points */}
+        <div className="relative z-10 max-w-lg">
+          <h2 className="mb-8 font-display text-4xl font-black tracking-tight text-white leading-tight">
+            Deploy your professional identity.
+          </h2>
+          <ul className="space-y-5 text-slate-300 ml-1">
+            <li className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-[#1ECEFA]" />
+              <span className="font-medium text-lg">AI-powered layout generation.</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-[#1ECEFA]" />
+              <span className="font-medium text-lg">Magnetic micro-interactions.</span>
+            </li>
+            <li className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-[#1ECEFA]" />
+              <span className="font-medium text-lg">Detailed visitor analytics.</span>
+            </li>
+          </ul>
+        </div>
+        
+        <div className="relative z-10 flex items-center gap-4 text-sm text-slate-500">
+          <p>© {new Date().getFullYear()} Blox, Inc. All rights reserved.</p>
+        </div>
+      </div>
+
+      {/* Right panel (Form) */}
+      <div className="flex w-full items-center justify-center p-6 lg:w-1/2 overflow-y-auto">
+        <div className="w-full max-w-md relative z-10 pt-16 pb-12 lg:py-12">
+          {/* Show vertical logo on mobile only */}
+          <div className="mb-8 flex justify-center lg:hidden relative z-10">
+            <Link href="/" className="group inline-block transition-transform hover:scale-105">
+              <Logo size="xl" layout="vertical" />
+            </Link>
+          </div>
+
+          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-xl relative z-10">
           {sent ? (
             <div className="text-center space-y-6">
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-[0_0_30px_rgba(30,206,250,0.2)]">
@@ -109,6 +148,7 @@ export default function ForgotPasswordPage() {
             </>
           )}
         </section>
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useBloxStore } from '@/lib/store/app-store';
 import { SIDEBAR_ITEMS } from '@/lib/navigation';
-import { LogOut, Bot, ChevronsLeft, ChevronsRight } from '@/components/ui/icons';
+import { Logo } from '@/components/ui/logo';
+import { LogOut, ChevronsLeft, ChevronsRight } from '@/components/ui/icons';
 import { PlanTier } from '@nextjs-blox/shared-types';
 
 const tierTone: Record<PlanTier, string> = {
@@ -37,16 +38,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         }`}
       >
         <div className="flex h-16 items-center px-4 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1ECEFA] to-blue-600">
-              <Bot className="h-5 w-5 text-black" strokeWidth={2.5} />
-            </div>
-            <Link href="/dashboard" className={`group ${collapsed ? 'lg:hidden' : 'block'}`}>
-            <span className="font-display text-lg font-black tracking-tight text-white group-hover:text-[#1ECEFA] transition-colors">
-              BLOX
-            </span>
-          </Link>
-        </div>
+          <div className="flex items-center ml-1">
+            <Link href="/dashboard" className="block hover:opacity-90 transition-opacity">
+              <Logo size="md" iconOnly={collapsed} />
+            </Link>
+          </div>
       </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6 custom-scrollbar">
