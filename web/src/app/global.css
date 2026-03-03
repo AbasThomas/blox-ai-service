@@ -118,4 +118,101 @@ h4 {
   .hero-spotlight-btn-shine {
     animation: none;
   }
+
+  .blox-loader-orbit,
+  .blox-loader-float,
+  .blox-loader-scan,
+  .blox-loader-dot {
+    animation: none !important;
+  }
+}
+
+@keyframes blox-loader-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes blox-loader-ring {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes blox-loader-float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes blox-loader-scan {
+  0% {
+    transform: translate(-50%, -16px);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 108px);
+    opacity: 0;
+  }
+}
+
+@keyframes blox-loader-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.7);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.blox-loader-orbit {
+  animation: blox-loader-orbit 6s linear infinite;
+}
+
+.blox-loader-orbit-delayed {
+  animation-delay: -3s;
+}
+
+.blox-loader-ring {
+  animation: blox-loader-ring 2.8s ease-in-out infinite;
+}
+
+.blox-loader-float {
+  animation: blox-loader-float 2.4s ease-in-out infinite;
+}
+
+.blox-loader-scan {
+  animation: blox-loader-scan 2.2s ease-in-out infinite;
+}
+
+.blox-loader-dot {
+  animation: blox-loader-dot 1.5s ease-in-out infinite;
+}
+
+.blox-loader-dot-delay-1 {
+  animation-delay: 0.2s;
+}
+
+.blox-loader-dot-delay-2 {
+  animation-delay: 0.4s;
 }
