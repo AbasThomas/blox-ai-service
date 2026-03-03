@@ -18,6 +18,7 @@ interface ProviderDefinition {
   scopes: string[];
   priority: 'primary' | 'secondary' | 'optional';
   oauthEnvKeys?: string[];
+  setupDocsUrl?: string;
 }
 
 const OAUTH_BASE = '/v1/auth/oauth';
@@ -32,6 +33,8 @@ const PROVIDERS: ProviderDefinition[] = [
     scopes: ['r_liteprofile', 'r_emailaddress'],
     priority: 'primary',
     oauthEnvKeys: ['LINKEDIN_CLIENT_ID', 'LINKEDIN_CLIENT_SECRET'],
+    setupDocsUrl:
+      'https://learn.microsoft.com/en-us/linkedin/shared/authentication/authorization-code-flow',
   },
   {
     id: 'github',
@@ -42,6 +45,8 @@ const PROVIDERS: ProviderDefinition[] = [
     scopes: ['read:user', 'user:email', 'repo'],
     priority: 'secondary',
     oauthEnvKeys: ['GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET'],
+    setupDocsUrl:
+      'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   },
   {
     id: 'upwork',
@@ -52,6 +57,7 @@ const PROVIDERS: ProviderDefinition[] = [
     scopes: ['freelancer.profile.read', 'graphql'],
     priority: 'secondary',
     oauthEnvKeys: ['UPWORK_CLIENT_ID', 'UPWORK_CLIENT_SECRET'],
+    setupDocsUrl: 'https://www.upwork.com/developer/documentation/graphql/api/docs/index.html',
   },
   {
     id: 'fiverr',
@@ -89,6 +95,7 @@ const PROVIDERS: ProviderDefinition[] = [
     scopes: ['file_read'],
     priority: 'optional',
     oauthEnvKeys: ['FIGMA_CLIENT_ID', 'FIGMA_CLIENT_SECRET'],
+    setupDocsUrl: 'https://developers.figma.com/docs/rest-api/authentication/',
   },
   {
     id: 'coursera',
@@ -123,11 +130,13 @@ export class IntegrationsService {
 
     return PROVIDERS.map((provider) => {
       const connection = index.get(provider.id);
+      const oauthConfigState = this.oauthConfigState(provider);
       return {
         ...provider,
         connected: !!connection,
         connectedAt: connection?.createdAt ?? null,
         updatedAt: connection?.updatedAt ?? null,
+        ...oauthConfigState,
       };
     });
   }
@@ -143,9 +152,10 @@ export class IntegrationsService {
       select: { id: true, createdAt: true },
     });
 
-    const oauthConfigured = this.hasOauthConfig(providerDef);
+    const oauthConfigState = this.oauthConfigState(providerDef);
     const forceLocalMode = this.isLocalIntegrationMode();
-    const shouldUseOAuth = providerDef.mode === 'oauth' && oauthConfigured && !forceLocalMode;
+    const shouldUseOAuth =
+      providerDef.mode === 'oauth' && oauthConfigState.oauthConfigured && !forceLocalMode;
 
     if (!existing && !shouldUseOAuth) {
       await this.prisma.oAuthConnection.create({
@@ -167,6 +177,7 @@ export class IntegrationsService {
       connected: existing ? true : !shouldUseOAuth,
       fallbackMode: !shouldUseOAuth,
       localMode: forceLocalMode,
+      ...oauthConfigState,
       message: shouldUseOAuth
         ? 'Continue with OAuth to import live data.'
         : forceLocalMode
@@ -198,10 +209,27 @@ export class IntegrationsService {
     return { provider, connected: false };
   }
 
-  private hasOauthConfig(provider: ProviderDefinition) {
+  private oauthConfigState(provider: ProviderDefinition) {
+    if (provider.mode !== 'oauth') {
+      return {
+        oauthConfigured: true,
+        missingOauthEnvKeys: [] as string[],
+      };
+    }
+
     const keys = provider.oauthEnvKeys ?? [];
-    if (keys.length === 0) return true;
-    return keys.every((key) => !!process.env[key]);
+    if (keys.length === 0) {
+      return {
+        oauthConfigured: true,
+        missingOauthEnvKeys: [] as string[],
+      };
+    }
+
+    const missingOauthEnvKeys = keys.filter((key) => !process.env[key]);
+    return {
+      oauthConfigured: missingOauthEnvKeys.length === 0,
+      missingOauthEnvKeys,
+    };
   }
 
   private isLocalIntegrationMode() {

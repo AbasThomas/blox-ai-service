@@ -31,6 +31,7 @@
 - Import generation runs asynchronously via BullMQ queue `import-unify` (worker service).
 - Manual fallback fields in step 1 can provide LinkedIn/Upwork headline, summary/overview, and skills when OAuth is skipped.
 - Step 3 provides merge-conflict review before confirmation and draft finalization.
+- Credential setup guide for all frontend providers: `docs/INTEGRATION_KEYS.md`.
 
 ### Integration Smoke Test
 - Start API + databases first.

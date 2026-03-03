@@ -16,8 +16,8 @@ interface FeaturePageProps {
 export function FeaturePage({ title, description, minTier, children, className, headerIcon }: FeaturePageProps) {
   return (
     <TierGate minTier={minTier}>
-      <section className={`mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 ${className || ''}`}>
-        <div className="flex items-start gap-4 pb-6 border-b border-white/10">
+      <section className={`mx-auto max-w-7xl space-y-8 ${className || ''}`}>
+        <div className="flex items-start gap-4 pb-4 border-b border-white/10">
           {headerIcon && (
             <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-sm text-[#1ECEFA]">
               {headerIcon}
@@ -29,7 +29,7 @@ export function FeaturePage({ title, description, minTier, children, className, 
           </div>
         </div>
         
-        <div className="rounded-3xl border border-white/10 bg-[#161B22]/60 p-6 md:p-8 shadow-sm backdrop-blur-xl">
+        <div className="">
           {children}
         </div>
       </section>

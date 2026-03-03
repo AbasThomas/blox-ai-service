@@ -191,13 +191,21 @@ export default function ResumesPage() {
               </button>
             ))}
           </div>
-          <Link
-            href="/resumes/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-white"
-          >
-            <PlusCircle className="h-4 w-4" />
-            New Resume
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/resumes/drafts"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-200 transition-colors hover:border-[#1ECEFA]/40 hover:bg-[#1ECEFA]/10 hover:text-white"
+            >
+              Resume Drafts
+            </Link>
+            <Link
+              href="/resumes/new"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-white"
+            >
+              <PlusCircle className="h-4 w-4" />
+              New Resume
+            </Link>
+          </div>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-black/20 p-4">

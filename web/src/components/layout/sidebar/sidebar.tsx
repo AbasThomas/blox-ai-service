@@ -1,12 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useBloxStore } from '@/lib/store/app-store';
 import { SIDEBAR_ITEMS } from '@/lib/navigation';
 import { Logo } from '@/components/ui/logo';
-import { LogOut, ChevronsLeft, ChevronsRight } from '@/components/ui/icons';
+import { LogOut } from '@/components/ui/icons';
 import { PlanTier } from '@nextjs-blox/shared-types';
 
 const tierTone: Record<PlanTier, string> = {
@@ -26,14 +25,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const user = useBloxStore((state) => state.user);
   const logout = useBloxStore((state) => state.logout);
 
-  const toggleCollapsed = () => {
-    onToggle(!collapsed);
-  };
-
   return (
     <>
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col border-r border-white/10 bg-[#0a1118]/95 backdrop-blur-3xl transition-all duration-300 ${
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-white/10 bg-[#0a1118]/95 backdrop-blur-3xl transition-all duration-300 ${
           collapsed ? '-translate-x-full lg:translate-x-0 lg:w-20' : 'translate-x-0 w-64'
         }`}
       >
@@ -45,7 +40,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
       </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6 custom-scrollbar">
+        <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-6">
           {SIDEBAR_ITEMS.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const Icon = item.icon;
@@ -57,18 +52,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 onClick={() => {
                   if (window.innerWidth < 1024) onToggle(true);
                 }}
-                className={`group flex items-center rounded-lg px-3 py-2 transition-colors ${
+                className={`group flex min-w-0 items-center rounded-lg border transition-colors ${
+                  collapsed ? 'lg:mx-auto lg:h-11 lg:w-11 lg:justify-center lg:px-0' : 'h-11 w-full px-3'
+                } ${
                   isActive
-                    ? 'bg-white/5 text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    ? 'border-[#1ECEFA]/35 bg-[#1ECEFA]/15 text-[#1ECEFA]'
+                    : 'border-transparent text-slate-400 hover:border-white/10 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 {Icon && (
                   <Icon
-                    className={`h-5 w-5 shrink-0 ${isActive ? '' : 'opacity-80 group-hover:opacity-100'}`}
+                    className={`h-6 w-6 shrink-0 ${isActive ? '' : 'opacity-80 group-hover:opacity-100'}`}
                   />
                 )}
-                <span className={`ml-3 text-sm font-semibold ${collapsed ? 'lg:hidden' : 'block'}`}>
+                <span className={`ml-3 truncate text-[15px] font-semibold leading-none ${collapsed ? 'lg:hidden' : 'inline'}`}>
                   {item.label}
                 </span>
               </Link>

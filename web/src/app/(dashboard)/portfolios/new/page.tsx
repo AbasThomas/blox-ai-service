@@ -110,9 +110,33 @@ const PROVIDER_META: Record<Provider, { label: string; logoUrl: string }> = {
 
 const AUTH_ERROR_PATTERN = /(401|403|unauthorized|forbidden|expired token|jwt)/i;
 const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft';
+const PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX = 'blox_portfolio_ignored_runs';
 
 function portfolioDraftKey(userId: string) {
   return `${PORTFOLIO_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
+
+function portfolioIgnoredRunsKey(userId: string) {
+  return `${PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX}:${userId}`;
+}
+
+function readIgnoredRunIds(userId: string): string[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(portfolioIgnoredRunsKey(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((value): value is string => typeof value === 'string');
+  } catch {
+    return [];
+  }
+}
+
+function writeIgnoredRunIds(userId: string, runIds: string[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(portfolioIgnoredRunsKey(userId), JSON.stringify(Array.from(new Set(runIds))));
 }
 
 function sortByPriority(items: IntegrationItem[]) {
@@ -158,6 +182,7 @@ export default function PortfolioNewPage() {
   const [manualUpworkOverview, setManualUpworkOverview] = useState('');
   const [manualSkills, setManualSkills] = useState('');
   const [draftHydrated, setDraftHydrated] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState(false);
 
   const selectedProviders = useMemo(
     () => connectedProviders(integrations).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider)),
@@ -202,11 +227,81 @@ export default function PortfolioNewPage() {
     () => Array.from(new Set([...selectedProviders, ...fallbackProviders])),
     [fallbackProviders, selectedProviders],
   );
-  const hasManualFallback = fallbackProviders.length > 0;
   const clearLocalDraft = useCallback(() => {
     if (typeof window === 'undefined' || !user.id) return;
     localStorage.removeItem(portfolioDraftKey(user.id));
   }, [user.id]);
+
+  const ignoreRunId = useCallback((id: string) => {
+    if (!id || !user.id) return;
+    const existing = readIgnoredRunIds(user.id);
+    writeIgnoredRunIds(user.id, [...existing, id]);
+  }, [user.id]);
+
+  const hasDraftProgress = useMemo(() => {
+    if (status?.status === 'completed') return false;
+
+    return Boolean(
+      runId ||
+      step > 0 ||
+      personalSiteUrl.trim() ||
+      locationHint.trim() ||
+      manualLinkedinHeadline.trim() ||
+      manualLinkedinSummary.trim() ||
+      manualUpworkTitle.trim() ||
+      manualUpworkOverview.trim() ||
+      manualSkills.trim(),
+    );
+  }, [
+    locationHint,
+    manualLinkedinHeadline,
+    manualLinkedinSummary,
+    manualSkills,
+    manualUpworkOverview,
+    manualUpworkTitle,
+    personalSiteUrl,
+    runId,
+    status?.status,
+    step,
+  ]);
+
+  const resetDraftState = useCallback(() => {
+    setRunId('');
+    setStatus(null);
+    setConflicts([]);
+    setOverrides({});
+    setIntegrations([]);
+    setStep(0);
+    setStatusError('');
+    setPersona((user.persona as Persona | `${Persona}`) ?? Persona.JOB_SEEKER);
+    setPersonalSiteUrl('');
+    setLocationHint('');
+    setManualLinkedinHeadline('');
+    setManualLinkedinSummary('');
+    setManualUpworkTitle('');
+    setManualUpworkOverview('');
+    setManualSkills('');
+  }, [user.persona]);
+
+  const handleCancel = useCallback(() => {
+    router.push('/portfolios');
+  }, [router]);
+
+  const handleDeleteDraft = useCallback(async () => {
+    if (!hasDraftProgress || deletingDraft) return;
+
+    setDeletingDraft(true);
+    try {
+      if (runId) {
+        ignoreRunId(runId);
+      }
+      clearLocalDraft();
+      resetDraftState();
+      setStatusNote('Draft deleted.');
+    } finally {
+      setDeletingDraft(false);
+    }
+  }, [clearLocalDraft, deletingDraft, hasDraftProgress, ignoreRunId, resetDraftState, runId]);
 
   const requireSession = useCallback(
     (reason: string) => {
@@ -240,6 +335,10 @@ export default function PortfolioNewPage() {
         const latest = (await onboardingApi.getLatestImport()) as LatestUnfinishedImport | null;
         if (cancelled) return;
         if (latest?.runId) {
+          const ignoredRunIds = user.id ? readIgnoredRunIds(user.id) : [];
+          if (ignoredRunIds.includes(latest.runId)) {
+            // user explicitly discarded this unfinished run
+          } else {
           if (latest.persona) {
             setPersona(latest.persona as Persona | `${Persona}`);
           }
@@ -275,6 +374,7 @@ export default function PortfolioNewPage() {
           setStatusNote('Recovered your unfinished portfolio draft.');
           setDraftHydrated(true);
           return;
+        }
         }
       } catch {
         // fall back to local draft restore
@@ -546,6 +646,24 @@ export default function PortfolioNewPage() {
         description="Choose your profile angle, connect your real accounts, and let AI generate a clean first draft."
       >
       <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-500">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-slate-300 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteDraft}
+            disabled={!hasDraftProgress || deletingDraft}
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-red-300 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deletingDraft ? 'Deleting...' : 'Delete Draft'}
+          </button>
+        </div>
+
         {/* Modern Stepper */}
         <div className="relative flex justify-between items-center px-2">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2 z-0" />

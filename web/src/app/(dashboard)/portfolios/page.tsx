@@ -26,9 +26,33 @@ interface LatestUnfinishedImport {
 }
 
 const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft';
+const PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX = 'blox_portfolio_ignored_runs';
 
 function portfolioDraftKey(userId: string) {
   return `${PORTFOLIO_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
+
+function portfolioIgnoredRunsKey(userId: string) {
+  return `${PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX}:${userId}`;
+}
+
+function readIgnoredRunIds(userId: string): string[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(portfolioIgnoredRunsKey(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((value): value is string => typeof value === 'string');
+  } catch {
+    return [];
+  }
+}
+
+function writeIgnoredRunIds(userId: string, runIds: string[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(portfolioIgnoredRunsKey(userId), JSON.stringify(Array.from(new Set(runIds))));
 }
 
 function formatDate(value: string) {
@@ -43,6 +67,7 @@ export default function PortfoliosPage() {
   const [loading, setLoading] = useState(true);
   const [latestUnfinishedRun, setLatestUnfinishedRun] = useState<LatestUnfinishedImport | null>(null);
   const [hasLocalDraft, setHasLocalDraft] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState(false);
 
   const loadPortfolios = useCallback(async () => {
     setLoading(true);
@@ -66,7 +91,14 @@ export default function PortfoliosPage() {
     const loadDraftState = async () => {
       try {
         const latest = (await onboardingApi.getLatestImport()) as LatestUnfinishedImport | null;
-        if (!cancelled) setLatestUnfinishedRun(latest);
+        if (!cancelled) {
+          if (latest?.runId && userId) {
+            const ignoredRunIds = readIgnoredRunIds(userId);
+            setLatestUnfinishedRun(ignoredRunIds.includes(latest.runId) ? null : latest);
+          } else {
+            setLatestUnfinishedRun(latest);
+          }
+        }
       } catch {
         if (!cancelled) setLatestUnfinishedRun(null);
       }
@@ -82,6 +114,25 @@ export default function PortfoliosPage() {
       cancelled = true;
     };
   }, [userId]);
+
+  const handleDeleteDraft = useCallback(() => {
+    if (!userId || deletingDraft) return;
+
+    setDeletingDraft(true);
+    try {
+      localStorage.removeItem(portfolioDraftKey(userId));
+      setHasLocalDraft(false);
+
+      if (latestUnfinishedRun?.runId) {
+        const ignoredRunIds = readIgnoredRunIds(userId);
+        writeIgnoredRunIds(userId, [...ignoredRunIds, latestUnfinishedRun.runId]);
+      }
+
+      setLatestUnfinishedRun(null);
+    } finally {
+      setDeletingDraft(false);
+    }
+  }, [deletingDraft, latestUnfinishedRun?.runId, userId]);
 
   return (
     <FeaturePage
@@ -100,28 +151,38 @@ export default function PortfoliosPage() {
                   : 'Recovered local progress is available.'}
               </p>
             </div>
-            <Link
-              href="/portfolios/new"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA]"
-            >
-              Resume Draft <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/portfolios/new"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-semibold text-black transition-all hover:bg-[#1ECEFA]"
+              >
+                Open Draft <ArrowUpRight className="h-4 w-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={handleDeleteDraft}
+                disabled={deletingDraft}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-3 text-xs font-semibold text-red-300 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingDraft ? 'Deleting...' : 'Delete Draft'}
+              </button>
+            </div>
           </div>
         )}
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-6 pb-6 border-b border-white/5">
           <div className="space-y-1 text-center sm:text-left">
-            <h2 className="text-base md:text-lg font-black text-white uppercase tracking-widest flex items-center gap-2 justify-center sm:justify-start">
-              Active Archives <Sparkles className="h-4 w-4 text-[#1ECEFA]" />
+            <h2 className="text-base md:text-lg font-black text-white  flex items-center gap-2 justify-center sm:justify-start">
+             All Portfolios <Sparkles className="h-4 w-4 text-[#1ECEFA]" />
             </h2>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{portfolios.length} portfolio records stored in the cloud.</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">{portfolios.length} portfolio stored in the cloud.</p>
           </div>
           <Link
             href="/portfolios/new"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-[#1ECEFA] px-5 py-3 md:px-6 md:py-4 text-xs font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-white hover:scale-[1.02] shadow-sm hover:shadow-md"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-[#1ECEFA] px-5 py-3 md:px-6 md:py-4 text-xs font-bold  text-[#0C0F13] transition-all hover:bg-white hover:scale-[1.02] shadow-sm hover:shadow-md"
           >
             <PlusCircle className="h-4 w-4" />
-            Initialize New Portfolio
+            Create New Portfolio
           </Link>
         </div>
 
@@ -136,9 +197,9 @@ export default function PortfoliosPage() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="flex flex-col items-center justify-center overflow-hidden relative rounded-2xl md:rounded-[3rem] border border-white/5 bg-[#161B22]/40 p-10 md:p-20 text-center backdrop-blur-xl shadow-2xl"
+            className="flex flex-col items-center justify-center overflow-hidden relative rounded-2xl md:rounded-[3rem] border border-white/5 bg-[#161B22]/40 p-10 md:p-20 text-center"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,206,250,0.08),transparent_50%)]" />
+            <div className="absolute inset-0 b" />
             
             <motion.div 
               initial={{ rotate: -10, scale: 0.8 }}
@@ -149,12 +210,12 @@ export default function PortfoliosPage() {
               <BriefcaseBusiness className="h-10 w-10 md:h-12 md:w-12" strokeWidth={1.5} />
             </motion.div>
             
-            <h3 className="text-xl md:text-2xl font-black text-white tracking-tight uppercase z-10">No Portfolios Detected</h3>
+            <h3 className="text-xl md:text-2xl font-black text-white  z-10">No Portfolios Detected</h3>
             <p className="mt-4 text-sm font-medium text-slate-400 max-w-sm leading-relaxed z-10">Your professional node is currently empty. Initialize your first digital instance to deploy your identity.</p>
             
             <Link 
               href="/portfolios/new" 
-              className="group mt-10 relative inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 py-3 md:px-8 md:py-4 text-sm font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-[#1ECEFA] hover:scale-[1.05] z-10 shadow-sm hover:shadow-md"
+              className="group mt-6 relative inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 py-3 md:px-8 md:py-4 text-sm font-black text-[#0C0F13] transition-all hover:bg-[#1ECEFA] hover:scale-[1.05] z-10 shadow-sm hover:shadow-md"
             >
               START BUILDING
               <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
@@ -261,4 +322,3 @@ export default function PortfoliosPage() {
     </FeaturePage>
   );
 }
-

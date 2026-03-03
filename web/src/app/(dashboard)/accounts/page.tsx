@@ -6,6 +6,7 @@ import { integrationsApi } from '@/lib/api';
 import {
   ArrowUpRight,
   CheckCircle2,
+  ExternalLink,
   Link as LinkIcon,
   ShieldCheck,
   X,
@@ -21,6 +22,10 @@ interface ConnectedAccount {
   priority: 'primary' | 'secondary' | 'optional';
   connected: boolean;
   authUrl: string | null;
+  oauthConfigured?: boolean;
+  oauthEnvKeys?: string[];
+  missingOauthEnvKeys?: string[];
+  setupDocsUrl?: string | null;
   connectedAt?: string | null;
   updatedAt?: string | null;
 }
@@ -55,6 +60,11 @@ function formatDate(value?: string | null) {
     month: 'short',
     day: 'numeric',
   });
+}
+
+function callbackUrlFor(provider: string) {
+  const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333').replace(/\/$/, '');
+  return `${apiBase}/v1/auth/oauth/${provider}/callback`;
 }
 
 export default function ConnectedAccountsPage() {
@@ -274,6 +284,53 @@ export default function ConnectedAccountsPage() {
                     </p>
                   ) : (
                     <p className="mt-3 text-[11px] text-slate-500">No scopes required for this provider.</p>
+                  )}
+
+                  {account.mode === 'oauth' ? (
+                    <div className="mt-3 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                        OAuth App Fields
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {(account.oauthEnvKeys ?? []).map((key) => (
+                          <span
+                            key={`${account.id}-${key}`}
+                            className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200"
+                          >
+                            {key}
+                          </span>
+                        ))}
+                      </div>
+                      {account.oauthConfigured === false ? (
+                        <p className="mt-2 text-[11px] text-amber-200/90">
+                          Missing: {(account.missingOauthEnvKeys ?? []).join(', ')}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-[11px] text-emerald-300/90">
+                          Credentials configured in backend environment.
+                        </p>
+                      )}
+                      <p className="mt-2 break-all text-[11px] text-slate-400">
+                        Callback URL: {callbackUrlFor(account.id)}
+                      </p>
+                      {account.setupDocsUrl ? (
+                        <a
+                          href={account.setupDocsUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[#1ECEFA] hover:text-white"
+                        >
+                          Open provider setup guide
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] text-slate-400">
+                        No client ID/secret needed. Use fallback profile details in the portfolio import flow.
+                      </p>
+                    </div>
                   )}
 
                   <button

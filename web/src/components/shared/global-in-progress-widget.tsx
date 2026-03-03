@@ -40,11 +40,30 @@ interface WidgetPosition {
 }
 
 const WIDGET_STORAGE_KEY = 'blox_in_progress_widget_position_v1';
+const PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX = 'blox_portfolio_ignored_runs';
 const POLL_MS = 10_000;
 const WIDGET_WIDTH = 220;
 const WIDGET_HEIGHT = 128;
 const VIEWPORT_GAP = 12;
 const IN_PROGRESS_IMPORT_STATUSES = new Set<ImportStatus>(['queued', 'running', 'awaiting_review', 'partial']);
+
+function portfolioIgnoredRunsKey(userId: string) {
+  return `${PORTFOLIO_IGNORED_RUNS_STORAGE_PREFIX}:${userId}`;
+}
+
+function readIgnoredRunIds(userId: string): string[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const raw = localStorage.getItem(portfolioIgnoredRunsKey(userId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((value): value is string => typeof value === 'string');
+  } catch {
+    return [];
+  }
+}
 
 function toTimestamp(value?: string) {
   if (!value) return Date.now();
@@ -93,6 +112,7 @@ function importSubtitle(status: ImportStatus, progressPct: number) {
 export function GlobalInProgressWidget() {
   const isAuthenticated = useBloxStore((state) => state.isAuthenticated);
   const accessToken = useBloxStore((state) => state.accessToken);
+  const userId = useBloxStore((state) => state.user.id);
 
   const [position, setPosition] = useState<WidgetPosition | null>(null);
   const [tasks, setTasks] = useState<WidgetTask[]>([]);
@@ -156,7 +176,12 @@ export function GlobalInProgressWidget() {
 
       const nextTasks: WidgetTask[] = [];
       const importRun = latestImport as LatestUnfinishedImport | null;
-      if (importRun && IN_PROGRESS_IMPORT_STATUSES.has(importRun.status)) {
+      const ignoredRunIds = userId ? readIgnoredRunIds(userId) : [];
+      if (
+        importRun &&
+        IN_PROGRESS_IMPORT_STATUSES.has(importRun.status) &&
+        !ignoredRunIds.includes(importRun.runId)
+      ) {
         nextTasks.push({
           id: `import:${importRun.runId}`,
           href: '/portfolios/new',
@@ -187,7 +212,7 @@ export function GlobalInProgressWidget() {
     } catch {
       // keep current tasks on transient failures
     }
-  }, [hasSession]);
+  }, [hasSession, userId]);
 
   useEffect(() => {
     void loadTasks();

@@ -23,6 +23,8 @@ import {
   History,
   ShieldCheck,
   TrendingUp,
+  CheckCircle2,
+  X,
 } from '@/components/ui/icons';
 
 interface DashboardAsset {
@@ -64,6 +66,25 @@ function formatDate(value?: string | null) {
 function getNextBillingDate(subscription: SubscriptionSummary | null) {
   if (!subscription) return null;
   return subscription.periodEndAt ?? subscription.currentPeriodEnd ?? null;
+}
+
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return 'Just now';
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+  return `${Math.floor(diffInMonths / 12)}y ago`;
 }
 
 export default function DashboardPage() {
@@ -148,23 +169,138 @@ export default function DashboardPage() {
             return (
               <div
                 key={item.label}
-                className={`group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-white/[0.02] p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 ${item.border} hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-black/50`}
+                className={`group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-white/[0.02] p-3 md:p-3 transition-all duration-300 hover:-translate-y-1 ${item.border} hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-black/50`}
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-white/5 to-transparent blur-2xl group-hover:from-white/10 transition-all duration-500" />
-                <div className="mb-6 flex items-center justify-between">
-                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl ${item.bg} ${item.color} shadow-inner`}>
+                <div className="absolute -right-6 -top-6  w-24 rounded-full bg-gradient-to-br from-white/5 to-transparent blur-2xl group-hover:from-white/10 transition-all duration-500" />
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-10 w-20 md:h-16 md:w-16 items-center justify-center rounded-xl md:rounded-2xl ${item.bg} ${item.color} shadow-inner`}>
                     <Icon className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
-                  <ArrowUpRight className="h-4 w-4 md:h-5 md:w-5 text-slate-600 transition-colors duration-300 group-hover:text-white" />
-                </div>
-                <div>
-                  <p className="text-3xl md:text-4xl font-bold text-white tracking-tight">{item.value}</p>
-                  <p className="mt-2 text-[10px] md:text-xs font-semibold uppercase tracking-widest text-slate-400">{item.label}</p>
+                  <div>
+                    <p className="mt-2 text-[10px] md:text-xs font-semibold uppercase tracking-widest text-slate-400">{item.label}</p>
+                    <div>
+                      <p className="text-2xl md:text-2xl font-bold text-white tracking-tight">{item.value}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
           })}
+        </section>
+
+        {/* Recently Deployed Portfolios */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h2 className="text-xl md:text-2xl font-semibold text-white flex items-center gap-2">
+                Recently Deployed 
+              </h2>
+              <p className="text-xs font-semibold text-slate-500 ">Your recent portfolios</p>
+            </div>
+            <Link href="/portfolios" className="text-xs font-bold text-slate-400 hover:text-[#1ECEFA] transition-colors border-b border-transparent hover:border-[#1ECEFA]/50 pb-0.5">
+              View All Portfolios 
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-64 animate-pulse rounded-[2.5rem] bg-white/5 border border-white/5" />
+              ))}
+            </div>
+          ) : assets.filter((a) => a.type === AssetType.PORTFOLIO).length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {assets
+                .filter((a) => a.type === AssetType.PORTFOLIO)
+                .slice(0, 3)
+                .map((portfolio) => (
+                  <div
+                    key={portfolio.id}
+                    className="group relative aspect-[1.4/1] overflow-hidden rounded-[2rem] md:rounded-[2.5rem] border border-white/5 bg-[#0C0F13] transition-all duration-700 hover:border-[#1ECEFA]/30 hover:-translate-y-2 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,1)]"
+                  >
+                    {/* Background Visual */}
+                    <div className="absolute inset-0 z-0">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#1ECEFA]/10 via-transparent to-purple-500/10 opacity-40 transition-opacity duration-700 group-hover:opacity-60" />
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(30,206,250,0.1),transparent_50%)]" />
+                      {/* Grid Pattern overlay */}
+                      <div className="absolute inset-0 opacity-[0.03] transition-opacity duration-700 group-hover:opacity-[0.05]" 
+                           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="absolute left-6 top-6 z-20">
+                      <div
+                        className={`flex items-center gap-2 rounded-full border px-4 py-2 backdrop-blur-xl transition-all duration-500 group-hover:scale-105 ${
+                          portfolio.publishedUrl
+                            ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+                            : 'border-red-500/20 bg-red-500/10 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]'
+                        }`}
+                      >
+                        {portfolio.publishedUrl ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <X className="h-4 w-4" />
+                        )}
+                        <span className="text-[10px] font-black uppercase tracking-[0.1em]">
+                          {portfolio.publishedUrl ? `Deployed ${formatRelativeTime(portfolio.updatedAt)}` : 'Draft State'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Desktop/Site Preview Mockup */}
+                    <div className="absolute inset-x-8 top-16 bottom-24 rounded-t-xl border border-white/10 bg-black/40 backdrop-blur-sm transform transition-all duration-700 group-hover:translate-y-[-8px] group-hover:scale-[1.02] shadow-2xl overflow-hidden">
+                       <div className="h-6 border-b border-white/5 bg-white/5 flex items-center gap-1.5 px-3">
+                          <div className="h-1.5 w-1.5 rounded-full bg-red-500/50" />
+                          <div className="h-1.5 w-1.5 rounded-full bg-amber-500/50" />
+                          <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
+                       </div>
+                       <div className="flex h-full items-center justify-center p-8 opacity-20 transition-opacity duration-700 group-hover:opacity-40">
+                          <Globe className="h-24 w-24 text-white" strokeWidth={0.5} />
+                       </div>
+                    </div>
+
+                    {/* Footer Details */}
+                    <div className="absolute inset-x-0 bottom-0 z-20 p-6 md:p-8 pt-0 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-xl border border-white/10 transition-transform duration-500 group-hover:scale-110">
+                          <Globe className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-black text-white uppercase tracking-tight">{portfolio.title}</h3>
+                          <p className="truncate text-[10px] font-bold text-slate-400 uppercase tracking-widest group-hover:text-[#1ECEFA] transition-colors">
+                            {portfolio.publishedUrl ? (portfolio.publishedUrl.replace(/^https?:\/\//, '')) : 'offline_mode.prot'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl px-3 py-1.5 transition-all duration-500 group-hover:bg-[#1ECEFA]/10 group-hover:border-[#1ECEFA]/20 group-hover:translate-x-1">
+                        <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white transition-transform duration-700 group-hover:rotate-12">
+                          <div className="h-2.5 w-2.5 bg-black rounded-full" />
+                        </div>
+                        <span className="text-[9px] font-black text-white uppercase tracking-widest group-hover:text-[#1ECEFA]">Next.js</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="flex h-64 flex-col items-center justify-center space-y-4 rounded-[2.5rem] border border-dashed border-white/10 bg-white/[0.02] backdrop-blur-sm">
+              <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white/5 text-slate-500">
+                <Globe className="h-8 w-8" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">No Active Portfolios</p>
+                <p className="mt-1 text-xs text-slate-500">Deploy your first portfolio to see it here.</p>
+              </div>
+              <Link
+                href="/portfolios/new"
+                className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[13px] font-semibold   text-[#0C0F13] transition-all hover:bg-[#1ECEFA] hover:scale-105"
+              >
+                <PlusCircle className="h-4 w-4" />Ship a Portfolio
+              </Link>
+            </div>
+          )}
         </section>
 
         <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
