@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
-import { assetsApi } from '@/lib/api';
+import { assetsApi, onboardingApi } from '@/lib/api';
+import { useBloxStore } from '@/lib/store/app-store';
 import { BriefcaseBusiness, PlusCircle, ArrowUpRight, BarChart3, Globe, Sparkles } from '@/components/ui/icons';
 
 interface PortfolioAsset {
@@ -17,6 +18,19 @@ interface PortfolioAsset {
   updatedAt: string;
 }
 
+interface LatestUnfinishedImport {
+  runId: string;
+  status: 'queued' | 'running' | 'awaiting_review' | 'partial' | 'failed' | 'completed';
+  progressPct: number;
+  updatedAt?: string;
+}
+
+const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft';
+
+function portfolioDraftKey(userId: string) {
+  return `${PORTFOLIO_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
+
 function formatDate(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'N/A';
@@ -24,8 +38,11 @@ function formatDate(value: string) {
 }
 
 export default function PortfoliosPage() {
+  const userId = useBloxStore((state) => state.user.id);
   const [portfolios, setPortfolios] = useState<PortfolioAsset[]>([]);
   const [loading, setLoading] = useState(true);
+  const [latestUnfinishedRun, setLatestUnfinishedRun] = useState<LatestUnfinishedImport | null>(null);
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
 
   const loadPortfolios = useCallback(async () => {
     setLoading(true);
@@ -43,6 +60,29 @@ export default function PortfoliosPage() {
     loadPortfolios();
   }, [loadPortfolios]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDraftState = async () => {
+      try {
+        const latest = (await onboardingApi.getLatestImport()) as LatestUnfinishedImport | null;
+        if (!cancelled) setLatestUnfinishedRun(latest);
+      } catch {
+        if (!cancelled) setLatestUnfinishedRun(null);
+      }
+
+      if (typeof window !== 'undefined' && userId && !cancelled) {
+        setHasLocalDraft(!!localStorage.getItem(portfolioDraftKey(userId)));
+      }
+    };
+
+    void loadDraftState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
   return (
     <FeaturePage
       title="Portfolios"
@@ -50,6 +90,25 @@ export default function PortfoliosPage() {
       headerIcon={<BriefcaseBusiness className="h-6 w-6" />}
     >
       <div className="space-y-8">
+        {(latestUnfinishedRun || hasLocalDraft) && (
+          <div className="rounded-2xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-[#1ECEFA]">Unfinished Portfolio Draft</p>
+              <p className="mt-1 text-sm text-slate-200">
+                {latestUnfinishedRun
+                  ? `Last run status: ${latestUnfinishedRun.status.toUpperCase()} (${latestUnfinishedRun.progressPct}%).`
+                  : 'Recovered local progress is available.'}
+              </p>
+            </div>
+            <Link
+              href="/portfolios/new"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA]"
+            >
+              Resume Draft <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 md:gap-6 pb-6 border-b border-white/5">
           <div className="space-y-1 text-center sm:text-left">
             <h2 className="text-base md:text-lg font-black text-white uppercase tracking-widest flex items-center gap-2 justify-center sm:justify-start">

@@ -52,6 +52,29 @@ interface ConnectResponse {
   message?: string;
 }
 
+interface LatestUnfinishedImport {
+  runId: string;
+  status: ImportStatus['status'];
+  progressPct: number;
+  message?: string | null;
+  draftAssetId?: string | null;
+  persona?: string;
+  personalSiteUrl?: string | null;
+}
+
+interface LocalPortfolioDraft {
+  savedAt: string;
+  step: 0 | 1;
+  persona: Persona | `${Persona}`;
+  personalSiteUrl: string;
+  locationHint: string;
+  manualLinkedinHeadline: string;
+  manualLinkedinSummary: string;
+  manualUpworkTitle: string;
+  manualUpworkOverview: string;
+  manualSkills: string;
+}
+
 const PERSONA_OPTIONS = [
   { value: Persona.FREELANCER, label: 'Freelancer', desc: 'Service and client-result focused story' },
   { value: Persona.JOB_SEEKER, label: 'Job Seeker', desc: 'Recruiter-friendly narrative and outcomes' },
@@ -86,6 +109,11 @@ const PROVIDER_META: Record<Provider, { label: string; logoUrl: string }> = {
 };
 
 const AUTH_ERROR_PATTERN = /(401|403|unauthorized|forbidden|expired token|jwt)/i;
+const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft';
+
+function portfolioDraftKey(userId: string) {
+  return `${PORTFOLIO_DRAFT_STORAGE_PREFIX}:${userId}`;
+}
 
 function sortByPriority(items: IntegrationItem[]) {
   const rank = { primary: 0, secondary: 1, optional: 2 };
@@ -129,6 +157,7 @@ export default function PortfolioNewPage() {
   const [manualUpworkTitle, setManualUpworkTitle] = useState('');
   const [manualUpworkOverview, setManualUpworkOverview] = useState('');
   const [manualSkills, setManualSkills] = useState('');
+  const [draftHydrated, setDraftHydrated] = useState(false);
 
   const selectedProviders = useMemo(
     () => connectedProviders(integrations).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider)),
@@ -174,6 +203,10 @@ export default function PortfolioNewPage() {
     [fallbackProviders, selectedProviders],
   );
   const hasManualFallback = fallbackProviders.length > 0;
+  const clearLocalDraft = useCallback(() => {
+    if (typeof window === 'undefined' || !user.id) return;
+    localStorage.removeItem(portfolioDraftKey(user.id));
+  }, [user.id]);
 
   const requireSession = useCallback(
     (reason: string) => {
@@ -197,6 +230,125 @@ export default function PortfolioNewPage() {
     },
     [router],
   );
+
+  useEffect(() => {
+    if (!isAuthenticated || !accessToken || draftHydrated) return;
+    let cancelled = false;
+
+    const hydrateDraft = async () => {
+      try {
+        const latest = (await onboardingApi.getLatestImport()) as LatestUnfinishedImport | null;
+        if (cancelled) return;
+        if (latest?.runId) {
+          if (latest.persona) {
+            setPersona(latest.persona as Persona | `${Persona}`);
+          }
+          if (latest.personalSiteUrl) {
+            setPersonalSiteUrl(latest.personalSiteUrl);
+          }
+
+          setRunId(latest.runId);
+          setStatus({
+            runId: latest.runId,
+            status: latest.status,
+            progressPct: latest.progressPct,
+            message: latest.message ?? undefined,
+            draftAssetId: latest.draftAssetId ?? undefined,
+          });
+
+          if (latest.status === 'awaiting_review' || latest.status === 'partial') {
+            try {
+              const previewRes = (await onboardingApi.getImportPreview(latest.runId)) as {
+                preview?: Record<string, unknown>;
+              };
+              if (cancelled) return;
+              const preview = (previewRes.preview ?? null) as { conflicts?: ImportConflict[] } | null;
+              setConflicts(Array.isArray(preview?.conflicts) ? preview.conflicts : []);
+              setStep(3);
+            } catch {
+              setStep(2);
+            }
+          } else {
+            setStep(2);
+          }
+
+          setStatusNote('Recovered your unfinished portfolio draft.');
+          setDraftHydrated(true);
+          return;
+        }
+      } catch {
+        // fall back to local draft restore
+      }
+
+      if (typeof window !== 'undefined' && user.id) {
+        try {
+          const rawDraft = localStorage.getItem(portfolioDraftKey(user.id));
+          if (rawDraft) {
+            const parsed = JSON.parse(rawDraft) as LocalPortfolioDraft;
+            setPersona(parsed.persona);
+            setPersonalSiteUrl(parsed.personalSiteUrl ?? '');
+            setLocationHint(parsed.locationHint ?? '');
+            setManualLinkedinHeadline(parsed.manualLinkedinHeadline ?? '');
+            setManualLinkedinSummary(parsed.manualLinkedinSummary ?? '');
+            setManualUpworkTitle(parsed.manualUpworkTitle ?? '');
+            setManualUpworkOverview(parsed.manualUpworkOverview ?? '');
+            setManualSkills(parsed.manualSkills ?? '');
+            setStep(parsed.step === 1 ? 1 : 0);
+            setStatusNote('Recovered your saved local draft.');
+          }
+        } catch {
+          // ignore malformed local draft
+        }
+      }
+
+      setDraftHydrated(true);
+    };
+
+    void hydrateDraft();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, draftHydrated, isAuthenticated, user.id]);
+
+  useEffect(() => {
+    if (!draftHydrated || !isAuthenticated || !accessToken || !user.id) return;
+    if (runId || step > 1) return;
+
+    const snapshot: LocalPortfolioDraft = {
+      savedAt: new Date().toISOString(),
+      step: step === 1 ? 1 : 0,
+      persona,
+      personalSiteUrl,
+      locationHint,
+      manualLinkedinHeadline,
+      manualLinkedinSummary,
+      manualUpworkTitle,
+      manualUpworkOverview,
+      manualSkills,
+    };
+
+    try {
+      localStorage.setItem(portfolioDraftKey(user.id), JSON.stringify(snapshot));
+    } catch {
+      // ignore storage write failure
+    }
+  }, [
+    accessToken,
+    draftHydrated,
+    isAuthenticated,
+    locationHint,
+    manualLinkedinHeadline,
+    manualLinkedinSummary,
+    manualSkills,
+    manualUpworkOverview,
+    manualUpworkTitle,
+    persona,
+    personalSiteUrl,
+    runId,
+    step,
+    user.id,
+  ]);
 
   const loadIntegrations = useCallback(async () => {
     if (!requireSession('load accounts')) return;
@@ -340,6 +492,7 @@ export default function PortfolioNewPage() {
       setRunId(res.runId);
       setStatus(res);
       setStatusNote('AI draft started. We are processing your connected sources.');
+      clearLocalDraft();
       setStep(2);
     } catch (error) {
       handleApiError(error, 'Failed to start import.');
@@ -372,6 +525,7 @@ export default function PortfolioNewPage() {
       })) as { draftAssetId?: string | null };
 
       setStep(4);
+      clearLocalDraft();
       const assetId = res.draftAssetId ?? status?.draftAssetId;
       if (assetId) {
         router.push(`/portfolios/${assetId}/edit`);
@@ -425,6 +579,7 @@ export default function PortfolioNewPage() {
               <div className="space-y-2 text-center">
                 <h2 className="text-3xl font-black text-white tracking-tight uppercase">Pick Your Portfolio Angle</h2>
                 <p className="text-sm text-slate-400">This controls how AI frames your experience, skills, and value.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Draft progress autosaves while you work.</p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

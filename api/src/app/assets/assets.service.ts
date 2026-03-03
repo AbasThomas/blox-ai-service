@@ -34,6 +34,35 @@ export class AssetsService {
     });
   }
 
+  async listInProgress(userId: string) {
+    const assets = await this.prisma.asset.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        updatedAt: true,
+        content: true,
+      },
+    });
+
+    return assets.flatMap((asset) => {
+      const generatingStatus = this.extractGeneratingStatus(asset.content);
+      if (generatingStatus !== 'queued' && generatingStatus !== 'processing') {
+        return [];
+      }
+
+      return [{
+        id: asset.id,
+        type: asset.type,
+        title: asset.title,
+        updatedAt: asset.updatedAt,
+        generatingStatus,
+      }];
+    });
+  }
+
   async create(userId: string, type: PrismaAssetType | AssetType, title: string, templateId?: string) {
     const normalizedType = String(type ?? '');
     if (!Object.values(PrismaAssetType).includes(normalizedType as PrismaAssetType)) {
@@ -370,6 +399,19 @@ export class AssetsService {
       return existing.trim();
     }
     return fallback;
+  }
+
+  private extractGeneratingStatus(content: unknown): string | null {
+    if (!content || typeof content !== 'object' || Array.isArray(content)) {
+      return null;
+    }
+
+    const rawStatus = (content as Record<string, unknown>).generatingStatus;
+    if (typeof rawStatus !== 'string') {
+      return null;
+    }
+
+    return rawStatus;
   }
 
   private async tryAiSeoSuggestion(input: {

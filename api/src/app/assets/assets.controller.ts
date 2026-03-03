@@ -30,6 +30,11 @@ export class AssetsController {
     return this.assetsService.tierLimits();
   }
 
+  @Get('in-progress')
+  listInProgress(@CurrentUser() user: User) {
+    return this.assetsService.listInProgress(user.id);
+  }
+
   @Get(':id')
   getById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.assetsService.getById(user.id, id);
@@ -107,4 +112,3 @@ export class AssetsController {
     return this.assetsService.restoreVersion(user.id, id, versionId);
   }
 }
-

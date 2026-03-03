@@ -97,6 +97,7 @@ export const authApi = {
 // Assets
 export const assetsApi = {
   list: (type?: string) => get(`/assets${type ? `?type=${type}` : ''}`),
+  listInProgress: () => get('/assets/in-progress'),
   create: (data: unknown) => post('/assets', data),
   getById: (id: string) => get(`/assets/${id}`),
   update: (id: string, data: unknown) => patch(`/assets/${id}`, data),
@@ -170,6 +171,7 @@ export const integrationsApi = {
 // Onboarding import flow
 export const onboardingApi = {
   startImport: (data: unknown) => post('/onboarding/import/start', data),
+  getLatestImport: () => get('/onboarding/import/latest'),
   getImportStatus: (runId: string) => get(`/onboarding/import/${runId}/status`),
   getImportPreview: (runId: string) => get(`/onboarding/import/${runId}/preview`),
   confirmImport: (runId: string, data: unknown) => post(`/onboarding/import/${runId}/confirm`, data),

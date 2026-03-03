@@ -20,6 +20,11 @@ export class OnboardingController {
     return this.onboardingService.getImportStatus(user.id, runId);
   }
 
+  @Get('import/latest')
+  getLatest(@CurrentUser() user: User) {
+    return this.onboardingService.getLatestUnfinishedImport(user.id);
+  }
+
   @Get('import/:runId/preview')
   getPreview(@CurrentUser() user: User, @Param('runId') runId: string) {
     return this.onboardingService.getImportPreview(user.id, runId);

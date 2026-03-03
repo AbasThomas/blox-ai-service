@@ -108,6 +108,42 @@ export class OnboardingService {
     };
   }
 
+  async getLatestUnfinishedImport(userId: string) {
+    const run = await this.prisma.profileImportRun.findFirst({
+      where: {
+        userId,
+        status: {
+          in: ['queued', 'running', 'awaiting_review', 'partial', 'failed'],
+        },
+      },
+      include: {
+        onboardingSession: {
+          select: {
+            persona: true,
+            selectedProviders: true,
+            personalSiteUrl: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    if (!run) return null;
+
+    return {
+      runId: run.id,
+      status: run.status,
+      progressPct: run.progressPct,
+      message: run.statusMessage ?? null,
+      draftAssetId: run.draftAssetId ?? null,
+      startedAt: run.startedAt.toISOString(),
+      updatedAt: run.updatedAt.toISOString(),
+      persona: run.onboardingSession.persona,
+      selectedProviders: run.onboardingSession.selectedProviders,
+      personalSiteUrl: run.onboardingSession.personalSiteUrl,
+    };
+  }
+
   async getImportPreview(userId: string, runId: string) {
     const run = await this.prisma.profileImportRun.findFirst({
       where: { id: runId, userId },

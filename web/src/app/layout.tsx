@@ -1,7 +1,16 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Instrument_Sans } from 'next/font/google';
+import dynamic from 'next/dynamic';
 import './global.css';
 import { PosthogProvider } from '../components/layout/posthog-provider';
+
+const GlobalInProgressWidget = dynamic(
+  () =>
+    import('../components/shared/global-in-progress-widget').then(
+      (module) => module.GlobalInProgressWidget,
+    ),
+  { ssr: false },
+);
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'https://blox.app';
 
@@ -85,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="flex min-h-screen flex-col">
             {children}
           </div>
+          <GlobalInProgressWidget />
         </PosthogProvider>
       </body>
     </html>
