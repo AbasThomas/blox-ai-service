@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Prisma } from '@prisma/client';
@@ -30,8 +34,9 @@ export class OnboardingService {
   ) {}
 
   async startImport(userId: string, payload: StartOnboardingImportPayload) {
-    const providers = (payload.providers ?? []).filter((provider): provider is ImportProvider =>
-      ALLOWED_PROVIDERS.has(provider as ImportProvider),
+    const providers = (payload.providers ?? []).filter(
+      (provider): provider is ImportProvider =>
+        ALLOWED_PROVIDERS.has(provider as ImportProvider),
     );
     if (providers.length === 0) {
       throw new BadRequestException('At least one provider is required');
@@ -64,6 +69,7 @@ export class OnboardingService {
       persona: payload.persona,
       personalSiteUrl: payload.personalSiteUrl ?? null,
       locationHint: payload.locationHint ?? null,
+      focusQuestion: payload.focusQuestion ?? null,
       manualFallback: payload.manualFallback ?? null,
     });
 
@@ -80,7 +86,10 @@ export class OnboardingService {
     } satisfies ImportJobStatusResponse;
   }
 
-  async getImportStatus(userId: string, runId: string): Promise<ImportJobStatusResponse> {
+  async getImportStatus(
+    userId: string,
+    runId: string,
+  ): Promise<ImportJobStatusResponse> {
     const run = await this.prisma.profileImportRun.findFirst({
       where: { id: runId, userId },
       select: {
@@ -183,7 +192,10 @@ export class OnboardingService {
   async confirmImport(
     userId: string,
     runId: string,
-    payload: { overrides?: Partial<MergedProfileDraft>; acceptAutoMerge?: boolean },
+    payload: {
+      overrides?: Partial<MergedProfileDraft>;
+      acceptAutoMerge?: boolean;
+    },
   ) {
     const run = await this.prisma.profileImportRun.findFirst({
       where: { id: runId, userId },
@@ -197,7 +209,9 @@ export class OnboardingService {
     });
     if (!run) throw new NotFoundException('Import run not found');
 
-    const preview = run.importedSnapshots[0]?.normalizedPayload as Record<string, unknown> | undefined;
+    const preview = run.importedSnapshots[0]?.normalizedPayload as
+      | Record<string, unknown>
+      | undefined;
     if (!preview) {
       throw new BadRequestException('Import preview not ready yet');
     }

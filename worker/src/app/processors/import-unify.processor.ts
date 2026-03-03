@@ -25,6 +25,7 @@ interface ImportJobPayload {
   persona: string;
   personalSiteUrl?: string | null;
   locationHint?: string | null;
+  focusQuestion?: string | null;
   manualFallback?: Record<string, unknown> | null;
 }
 
@@ -48,6 +49,8 @@ interface ProviderImportData {
     issuer?: string;
     completedAt?: string;
     imageUrl?: string;
+    proofUrl?: string;
+    proofName?: string;
   }>;
   links: Record<string, string>;
   raw?: unknown;
@@ -81,6 +84,8 @@ interface MergedProfilePayload {
     issuer?: string;
     completedAt?: string;
     imageUrl?: string;
+    proofUrl?: string;
+    proofName?: string;
     source: ProviderId;
   }>;
   links: Record<string, string>;
@@ -101,7 +106,16 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   async process(job: Job<ImportJobPayload>) {
-    const { runId, userId, providers, persona, personalSiteUrl, locationHint, manualFallback } = job.data;
+    const {
+      runId,
+      userId,
+      providers,
+      persona,
+      personalSiteUrl,
+      locationHint,
+      focusQuestion,
+      manualFallback,
+    } = job.data;
     await this.updateRun(runId, {
       status: 'running',
       progressPct: 10,
@@ -116,22 +130,52 @@ export class ImportUnifyProcessor extends WorkerHost {
 
       for (const provider of providers) {
         try {
-          const data = await this.fetchProvider(provider, tokens[provider], manualFallback ?? {});
+          const data = await this.fetchProvider(
+            provider,
+            tokens[provider],
+            manualFallback ?? {},
+          );
           imported.push(data);
           await this.saveSnapshot(runId, userId, provider, data.raw, data);
         } catch (error) {
           failed.push(provider);
-          imported.push({ provider, skills: [], projects: [], certifications: [], links: {} });
-          this.logger.warn(`[import-unify] ${provider} failed: ${this.toErr(error)}`);
+          imported.push({
+            provider,
+            skills: [],
+            projects: [],
+            certifications: [],
+            links: {},
+          });
+          this.logger.warn(
+            `[import-unify] ${provider} failed: ${this.toErr(error)}`,
+          );
         }
       }
 
-      await this.updateRun(runId, { progressPct: 45, statusMessage: 'Merging imported profiles' });
-      const merged = await this.mergeAndGenerateAbout(imported, persona, locationHint ?? undefined);
-      merged.faviconUrl = await this.extractFaviconUrl(personalSiteUrl ?? undefined);
+      await this.updateRun(runId, {
+        progressPct: 45,
+        statusMessage: 'Merging imported profiles',
+      });
+      const merged = await this.mergeAndGenerateAbout(
+        imported,
+        persona,
+        locationHint ?? undefined,
+        focusQuestion ?? undefined,
+      );
+      merged.faviconUrl = await this.extractFaviconUrl(
+        personalSiteUrl ?? undefined,
+      );
 
-      await this.updateRun(runId, { progressPct: 75, statusMessage: 'Creating draft portfolio' });
-      const asset = await this.createDraftAsset(userId, runId, providers, merged);
+      await this.updateRun(runId, {
+        progressPct: 75,
+        statusMessage: 'Creating draft portfolio',
+      });
+      const asset = await this.createDraftAsset(
+        userId,
+        runId,
+        providers,
+        merged,
+      );
 
       await this.saveSnapshot(runId, userId, 'merged_preview', merged, merged);
 
@@ -139,7 +183,10 @@ export class ImportUnifyProcessor extends WorkerHost {
       await this.updateRun(runId, {
         status,
         progressPct: 95,
-        statusMessage: failed.length > 0 ? `Partial import: ${failed.join(', ')}` : 'Ready for review',
+        statusMessage:
+          failed.length > 0
+            ? `Partial import: ${failed.join(', ')}`
+            : 'Ready for review',
         draftAssetId: asset.id,
         metrics: {
           failedProviders: failed,
@@ -151,7 +198,10 @@ export class ImportUnifyProcessor extends WorkerHost {
         data: {
           userId,
           type: 'import_completed',
-          title: failed.length > 0 ? 'Import completed with partial data' : 'Import completed',
+          title:
+            failed.length > 0
+              ? 'Import completed with partial data'
+              : 'Import completed',
           payload: {
             runId,
             draftAssetId: asset.id,
@@ -177,10 +227,16 @@ export class ImportUnifyProcessor extends WorkerHost {
       where: { userId, provider: { in: providers } },
       select: { provider: true, accessToken: true },
     });
-    return Object.fromEntries(rows.map((row) => [row.provider, row.accessToken ?? ''])) as Record<ProviderId, string>;
+    return Object.fromEntries(
+      rows.map((row) => [row.provider, row.accessToken ?? '']),
+    ) as Record<ProviderId, string>;
   }
 
-  private async fetchProvider(provider: ProviderId, token: string, fallback: Record<string, unknown>) {
+  private async fetchProvider(
+    provider: ProviderId,
+    token: string,
+    fallback: Record<string, unknown>,
+  ) {
     if (provider === 'linkedin' && token) {
       const profile = await axios.get('https://api.linkedin.com/v2/me', {
         headers: { Authorization: `Bearer ${token}` },
@@ -188,55 +244,169 @@ export class ImportUnifyProcessor extends WorkerHost {
       });
       return {
         provider,
-        name: `${profile.data.localizedFirstName ?? ''} ${profile.data.localizedLastName ?? ''}`.trim() || undefined,
+        name:
+          `${profile.data.localizedFirstName ?? ''} ${profile.data.localizedLastName ?? ''}`.trim() ||
+          undefined,
         headline: profile.data.localizedHeadline ?? undefined,
         summary: profile.data.summary ?? undefined,
         profileImageUrl: profile.data.profilePicture?.displayImage ?? undefined,
         skills: [],
         projects: [],
         certifications: [],
-        links: profile.data.id ? { linkedin: `https://www.linkedin.com/in/${profile.data.id}` } : {},
+        links: profile.data.id
+          ? { linkedin: `https://www.linkedin.com/in/${profile.data.id}` }
+          : {},
         raw: profile.data,
       } satisfies ProviderImportData;
     }
 
     if (provider === 'github' && token) {
-      const [userRes, reposRes] = await Promise.all([
+      const [userRes, reposRes, eventsRes] = await Promise.all([
         axios.get('https://api.github.com/user', {
           headers: { Authorization: `token ${token}` },
           timeout: 15_000,
         }),
-        axios.get('https://api.github.com/user/repos?sort=updated&per_page=12', {
+        axios.get(
+          'https://api.github.com/user/repos?sort=updated&per_page=12',
+          {
+            headers: { Authorization: `token ${token}` },
+            timeout: 15_000,
+          },
+        ),
+        axios.get('https://api.github.com/user/events/public?per_page=50', {
           headers: { Authorization: `token ${token}` },
           timeout: 15_000,
+          validateStatus: () => true,
         }),
       ]);
 
+      let pinnedRepos: Array<Record<string, unknown>> = [];
+      let totalContributions = 0;
+      try {
+        const graphRes = await axios.post(
+          'https://api.github.com/graphql',
+          {
+            query: `
+              query ImportPinned {
+                viewer {
+                  contributionsCollection {
+                    contributionCalendar { totalContributions }
+                  }
+                  pinnedItems(first: 6, types: REPOSITORY) {
+                    nodes {
+                      ... on Repository {
+                        name
+                        description
+                        url
+                        primaryLanguage { name }
+                      }
+                    }
+                  }
+                }
+              }
+            `,
+          },
+          {
+            headers: { Authorization: `bearer ${token}` },
+            timeout: 15_000,
+          },
+        );
+        const viewer = graphRes.data?.data?.viewer;
+        totalContributions = Number(
+          viewer?.contributionsCollection?.contributionCalendar
+            ?.totalContributions ?? 0,
+        );
+        const nodes = viewer?.pinnedItems?.nodes;
+        if (Array.isArray(nodes)) {
+          pinnedRepos = nodes.filter((node: unknown) => !!node) as Array<
+            Record<string, unknown>
+          >;
+        }
+      } catch {
+        // pinned repo enrichment is optional
+      }
+
       const repos = reposRes.data as Array<Record<string, unknown>>;
-      const projects = repos.slice(0, 8).map((repo) => ({
-        name: this.text(repo.name) || 'Project',
-        description: this.text(repo.description) || 'Open-source project',
-        url: this.text(repo.html_url) || undefined,
+      const events = Array.isArray(eventsRes.data)
+        ? (eventsRes.data as Array<Record<string, unknown>>)
+        : [];
+      const contributionsByRepo = new Map<string, number>();
+      for (const event of events) {
+        if (this.text(event.type) !== 'PushEvent') continue;
+        const repo = this.asRecord(event.repo);
+        const repoName = this.text(repo.name).split('/').pop() ?? '';
+        if (!repoName) continue;
+        contributionsByRepo.set(
+          repoName,
+          (contributionsByRepo.get(repoName) ?? 0) + 1,
+        );
+      }
+
+      const pinnedProjects = pinnedRepos.map((repo) => ({
+        name: this.text(repo.name) || 'Pinned Repository',
+        description: this.text(repo.description) || 'Pinned repository',
+        url: this.text(repo.url) || undefined,
       }));
-      const skills = [...new Set(repos.map((repo) => this.text(repo.language)).filter(Boolean))];
+      const repoProjects = repos.slice(0, 10).map((repo) => {
+        const repoName = this.text(repo.name) || 'Repository';
+        const pushes = contributionsByRepo.get(repoName) ?? 0;
+        const contributionHint =
+          pushes > 0 ? ` - ${pushes} recent push events` : '';
+        return {
+          name: repoName,
+          description: `${this.text(repo.description) || 'Open-source project'}${contributionHint}`,
+          url: this.text(repo.html_url) || undefined,
+        };
+      });
+      const projects = [...pinnedProjects, ...repoProjects]
+        .filter(
+          (project, index, list) =>
+            list.findIndex((item) => item.name === project.name) === index,
+        )
+        .slice(0, 12);
+
+      const languagesFromRepos = repos
+        .map((repo) => this.text(repo.language))
+        .filter(Boolean);
+      const languagesFromPinned = pinnedRepos
+        .map((repo) => this.text(this.asRecord(repo.primaryLanguage).name))
+        .filter(Boolean);
+      const skills = [
+        ...new Set([...languagesFromRepos, ...languagesFromPinned]),
+      ];
+      const summary = [
+        this.text(userRes.data.bio),
+        totalContributions > 0
+          ? `${totalContributions} contributions in the past year`
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' - ');
 
       return {
         provider,
         name: userRes.data.name ?? userRes.data.login ?? undefined,
-        summary: userRes.data.bio ?? undefined,
+        summary: summary || undefined,
         profileImageUrl: userRes.data.avatar_url ?? undefined,
         skills,
         projects,
         certifications: [],
         links: userRes.data.html_url ? { github: userRes.data.html_url } : {},
-        raw: { user: userRes.data, repos: reposRes.data },
+        raw: {
+          user: userRes.data,
+          repos: reposRes.data,
+          events,
+          pinnedRepos,
+          totalContributions,
+        },
       } satisfies ProviderImportData;
     }
 
     if (provider === 'upwork' && token) {
       const query = `query ImportProfile { profile { identity { fullName title overview picture location { city country } } skills { nodes { name } } profileRate { amount } } }`;
       const res = await axios.post(
-        process.env.UPWORK_GRAPHQL_URL ?? 'https://www.upwork.com/api/graphql/v1',
+        process.env.UPWORK_GRAPHQL_URL ??
+          'https://www.upwork.com/api/graphql/v1',
         { query },
         { headers: { Authorization: `Bearer ${token}` }, timeout: 20_000 },
       );
@@ -244,7 +414,9 @@ export class ImportUnifyProcessor extends WorkerHost {
       const name = profile?.identity?.fullName ?? undefined;
       const headline = profile?.identity?.title ?? undefined;
       const summary = profile?.identity?.overview ?? undefined;
-      const skills = ((profile?.skills?.nodes ?? []) as Array<Record<string, unknown>>)
+      const skills = (
+        (profile?.skills?.nodes ?? []) as Array<Record<string, unknown>>
+      )
         .map((row) => this.text(row.name))
         .filter(Boolean)
         .slice(0, 15);
@@ -264,15 +436,14 @@ export class ImportUnifyProcessor extends WorkerHost {
 
     const fromFallback = this.asRecord(fallback[provider]);
     const linksFromRecord = this.asRecord(fromFallback.links);
-    const normalizedLinks = Object.entries(linksFromRecord).reduce<Record<string, string>>(
-      (acc, [key, value]) => {
-        const normalized = this.text(value);
-        if (!normalized) return acc;
-        acc[key] = normalized;
-        return acc;
-      },
-      {},
-    );
+    const normalizedLinks = Object.entries(linksFromRecord).reduce<
+      Record<string, string>
+    >((acc, [key, value]) => {
+      const normalized = this.text(value);
+      if (!normalized) return acc;
+      acc[key] = normalized;
+      return acc;
+    }, {});
     const profileUrl = this.text(fromFallback.publicUrl);
     if (profileUrl && !normalizedLinks[provider]) {
       normalizedLinks[provider] = profileUrl;
@@ -296,6 +467,7 @@ export class ImportUnifyProcessor extends WorkerHost {
     imported: ProviderImportData[],
     persona: string,
     location?: string,
+    focusQuestion?: string,
   ): Promise<MergedProfilePayload> {
     const linkedin = imported.find((item) => item.provider === 'linkedin');
     const upwork = imported.find((item) => item.provider === 'upwork');
@@ -307,15 +479,35 @@ export class ImportUnifyProcessor extends WorkerHost {
       .filter((value): value is string => !!value && value.trim().length > 0);
     const skills = [
       ...new Set(
-        imported.flatMap((item) => item.skills.map((skill) => skill.trim()).filter(Boolean)),
+        imported.flatMap((item) =>
+          item.skills.map((skill) => skill.trim()).filter(Boolean),
+        ),
       ),
     ].slice(0, 20);
-    const name = linkedin?.name || upwork?.name || github?.name || firstNamed || 'Portfolio Owner';
+    const name =
+      linkedin?.name ||
+      upwork?.name ||
+      github?.name ||
+      firstNamed ||
+      'Portfolio Owner';
     const headline =
-      linkedin?.headline || upwork?.headline || github?.headline || firstHeadline || `${persona} portfolio`;
-    const whatTheyDo = [headline, upwork?.headline].filter(Boolean).join(' | ') || headline;
+      linkedin?.headline ||
+      upwork?.headline ||
+      github?.headline ||
+      firstHeadline ||
+      `${persona} portfolio`;
+    const whatTheyDo =
+      [headline, upwork?.headline].filter(Boolean).join(' | ') || headline;
     const projects = imported
-      .flatMap((item) => item.projects.map((project) => ({ ...project, source: item.provider })))
+      .flatMap((item) =>
+        item.projects.map((project) => ({ ...project, source: item.provider })),
+      )
+      .filter(
+        (project) =>
+          project.source === 'github' ||
+          project.source === 'behance' ||
+          project.source === 'figma',
+      )
       .slice(0, 12);
     const certifications = imported
       .flatMap((item) =>
@@ -325,8 +517,13 @@ export class ImportUnifyProcessor extends WorkerHost {
         })),
       )
       .slice(0, 12);
-    const links = imported.reduce<Record<string, string>>((acc, item) => ({ ...acc, ...item.links }), {});
-    const summaryText = [...summaryFromProviders, skills.join(', ')].filter(Boolean).join('\n');
+    const links = imported.reduce<Record<string, string>>(
+      (acc, item) => ({ ...acc, ...item.links }),
+      {},
+    );
+    const summaryText = [...summaryFromProviders, skills.join(', ')]
+      .filter(Boolean)
+      .join('\n');
 
     const prompt = [
       'Refine this user professional bio into a compelling, SEO-optimized About section for a portfolio (150-300 words).',
@@ -340,12 +537,18 @@ export class ImportUnifyProcessor extends WorkerHost {
       `Certifications: ${certifications.map((item) => item.title).join(', ')}`,
       `What they do: ${whatTheyDo}`,
       `Location: ${location ?? ''}`,
+      `Focus Question: ${focusQuestion ?? ''}`,
       `Fallback source: ${summaryText}`,
       'Output only final text.',
     ].join('\n');
 
     const about = await this.generateAbout(prompt, name, headline, skills);
-    const seoKeywords = this.seoKeywords(headline, skills, location);
+    const seoKeywords = this.seoKeywords(
+      headline,
+      skills,
+      location,
+      focusQuestion,
+    );
     const conflicts = this.conflicts({ linkedin, upwork, github });
 
     return {
@@ -399,12 +602,24 @@ export class ImportUnifyProcessor extends WorkerHost {
           issuer: item.issuer,
           date: item.completedAt,
           imageUrl: item.imageUrl,
+          proofUrl: item.proofUrl,
+          proofName: item.proofName,
         })),
       },
       skills: { items: merged.skills },
-      contact: { body: Object.entries(merged.links).map(([k, v]) => `${k}: ${v}`).join(' | ') },
-      links: Object.entries(merged.links).map(([label, url]) => ({ label, url })),
-      profile: { avatarUrl: merged.profileImageUrl, faviconUrl: merged.faviconUrl ?? undefined },
+      contact: {
+        body: Object.entries(merged.links)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' | '),
+      },
+      links: Object.entries(merged.links).map(([label, url]) => ({
+        label,
+        url,
+      })),
+      profile: {
+        avatarUrl: merged.profileImageUrl,
+        faviconUrl: merged.faviconUrl ?? undefined,
+      },
       importMeta: {
         runId,
         sourceProviders: providers,
@@ -441,7 +656,12 @@ export class ImportUnifyProcessor extends WorkerHost {
     return asset;
   }
 
-  private async generateAbout(prompt: string, name: string, headline: string, skills: string[]) {
+  private async generateAbout(
+    prompt: string,
+    name: string,
+    headline: string,
+    skills: string[],
+  ) {
     try {
       const res = await axios.post(
         `${AI_SERVICE_URL}/v1/ai/generate`,
@@ -466,13 +686,20 @@ export class ImportUnifyProcessor extends WorkerHost {
   private async extractFaviconUrl(personalSiteUrl?: string) {
     if (!personalSiteUrl) return undefined;
     try {
-      const normalized = personalSiteUrl.startsWith('http') ? personalSiteUrl : `https://${personalSiteUrl}`;
+      const normalized = personalSiteUrl.startsWith('http')
+        ? personalSiteUrl
+        : `https://${personalSiteUrl}`;
       const direct = new URL('/favicon.ico', normalized).toString();
-      const headRes = await axios.get(direct, { timeout: 5_000, validateStatus: () => true });
+      const headRes = await axios.get(direct, {
+        timeout: 5_000,
+        validateStatus: () => true,
+      });
       if (headRes.status >= 200 && headRes.status < 400) return direct;
       const page = await axios.get(normalized, { timeout: 8_000 });
       const html = typeof page.data === 'string' ? page.data : '';
-      const match = html.match(/<link[^>]+rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i);
+      const match = html.match(
+        /<link[^>]+rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i,
+      );
       if (match?.[1]) return new URL(match[1], normalized).toString();
       return `https://www.google.com/s2/favicons?domain=${new URL(normalized).host}&sz=128`;
     } catch {
@@ -480,7 +707,13 @@ export class ImportUnifyProcessor extends WorkerHost {
     }
   }
 
-  private async saveSnapshot(runId: string, userId: string, provider: string, raw: unknown, normalized: unknown) {
+  private async saveSnapshot(
+    runId: string,
+    userId: string,
+    provider: string,
+    raw: unknown,
+    normalized: unknown,
+  ) {
     await this.prisma.importedProfileSnapshot.create({
       data: {
         runId,
@@ -493,7 +726,10 @@ export class ImportUnifyProcessor extends WorkerHost {
     });
   }
 
-  private async updateRun(runId: string, patch: Prisma.ProfileImportRunUpdateInput) {
+  private async updateRun(
+    runId: string,
+    patch: Prisma.ProfileImportRunUpdateInput,
+  ) {
     await this.prisma.profileImportRun.update({
       where: { id: runId },
       data: patch,
@@ -533,8 +769,18 @@ export class ImportUnifyProcessor extends WorkerHost {
     return 'portfolio-modern-001';
   }
 
-  private seoKeywords(headline: string, skills: string[], location?: string) {
-    const tokens = [...headline.split(/\s+/), ...skills, location ?? '']
+  private seoKeywords(
+    headline: string,
+    skills: string[],
+    location?: string,
+    focusQuestion?: string,
+  ) {
+    const tokens = [
+      ...headline.split(/\s+/),
+      ...skills,
+      location ?? '',
+      focusQuestion ?? '',
+    ]
       .map((item) => item.trim().toLowerCase())
       .filter((item) => item.length > 2);
     const unique: string[] = [];
@@ -543,7 +789,8 @@ export class ImportUnifyProcessor extends WorkerHost {
       unique.push(token);
       if (unique.length >= 14) break;
     }
-    if (location && skills[0]) unique.push(`${skills[0].toLowerCase()} ${location.toLowerCase()}`);
+    if (location && skills[0])
+      unique.push(`${skills[0].toLowerCase()} ${location.toLowerCase()}`);
     return unique.slice(0, 16);
   }
 
@@ -558,7 +805,9 @@ export class ImportUnifyProcessor extends WorkerHost {
       { provider: 'upwork', value: input.upwork?.name ?? '' },
       { provider: 'github', value: input.github?.name ?? '' },
     ].filter((item) => item.value);
-    if (new Set(nameCandidates.map((item) => item.value.toLowerCase())).size > 1) {
+    if (
+      new Set(nameCandidates.map((item) => item.value.toLowerCase())).size > 1
+    ) {
       out.push({
         field: 'name',
         recommendedProvider: nameCandidates[0].provider,
@@ -572,7 +821,10 @@ export class ImportUnifyProcessor extends WorkerHost {
       { provider: 'upwork', value: input.upwork?.headline ?? '' },
       { provider: 'github', value: input.github?.headline ?? '' },
     ].filter((item) => item.value);
-    if (new Set(headlineCandidates.map((item) => item.value.toLowerCase())).size > 1) {
+    if (
+      new Set(headlineCandidates.map((item) => item.value.toLowerCase())).size >
+      1
+    ) {
       out.push({
         field: 'headline',
         recommendedProvider: headlineCandidates[0].provider,
@@ -584,7 +836,8 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   private asRecord(value: unknown) {
-    if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+    if (value && typeof value === 'object' && !Array.isArray(value))
+      return value as Record<string, unknown>;
     return {};
   }
 
@@ -593,8 +846,13 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   private array(value: unknown) {
-    if (Array.isArray(value)) return value.map((item) => this.text(item)).filter(Boolean);
-    if (typeof value === 'string') return value.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean);
+    if (Array.isArray(value))
+      return value.map((item) => this.text(item)).filter(Boolean);
+    if (typeof value === 'string')
+      return value
+        .split(/[\\n,]+/)
+        .map((item) => item.trim())
+        .filter(Boolean);
     return [] as string[];
   }
 
@@ -609,7 +867,9 @@ export class ImportUnifyProcessor extends WorkerHost {
         return {
           name,
           description:
-            this.text(row.description) || this.text(row.summary) || 'Project contribution',
+            this.text(row.description) ||
+            this.text(row.summary) ||
+            'Project contribution',
           url: this.text(row.url) || undefined,
           imageUrl: this.text(row.imageUrl) || undefined,
           tags: this.array(row.tags).slice(0, 8),
@@ -621,7 +881,8 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   private certificationArray(value: unknown) {
-    if (!Array.isArray(value)) return [] as ProviderImportData['certifications'];
+    if (!Array.isArray(value))
+      return [] as ProviderImportData['certifications'];
 
     return value
       .map((item) => this.asRecord(item))
@@ -631,8 +892,11 @@ export class ImportUnifyProcessor extends WorkerHost {
         return {
           title,
           issuer: this.text(row.issuer) || undefined,
-          completedAt: this.text(row.completedAt) || this.text(row.date) || undefined,
+          completedAt:
+            this.text(row.completedAt) || this.text(row.date) || undefined,
           imageUrl: this.text(row.imageUrl) || undefined,
+          proofUrl: this.text(row.proofUrl) || undefined,
+          proofName: this.text(row.proofName) || undefined,
         };
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
@@ -646,6 +910,10 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   private slugify(title: string) {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60);
   }
 }

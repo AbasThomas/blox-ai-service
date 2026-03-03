@@ -42,6 +42,8 @@ export interface ProviderImportPayload {
     issuer?: string;
     completedAt?: string;
     imageUrl?: string;
+    proofUrl?: string;
+    proofName?: string;
   }>;
   links?: Record<string, string>;
 }
@@ -77,6 +79,8 @@ export interface MergedProfileDraft {
     issuer?: string;
     completedAt?: string;
     imageUrl?: string;
+    proofUrl?: string;
+    proofName?: string;
     source: ImportProvider;
   }>;
   profileImageUrl?: string;
@@ -91,13 +95,20 @@ export interface StartOnboardingImportPayload {
   providers: ImportProvider[];
   personalSiteUrl?: string;
   locationHint?: string;
+  focusQuestion?: string;
   manualFallback?: Record<string, unknown>;
 }
 
 export interface ImportJobStatusResponse {
   runId: string;
   queueJobId?: string;
-  status: 'queued' | 'running' | 'awaiting_review' | 'completed' | 'failed' | 'partial';
+  status:
+    | 'queued'
+    | 'running'
+    | 'awaiting_review'
+    | 'completed'
+    | 'failed'
+    | 'partial';
   progressPct: number;
   startedAt?: string;
   completedAt?: string;
