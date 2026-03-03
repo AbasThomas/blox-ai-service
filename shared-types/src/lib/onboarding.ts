@@ -8,7 +8,8 @@ export type ImportProvider =
   | 'behance'
   | 'dribbble'
   | 'figma'
-  | 'coursera';
+  | 'coursera'
+  | 'udemy';
 
 export interface ProviderImportPayload {
   provider: ImportProvider;
@@ -33,6 +34,14 @@ export interface ProviderImportPayload {
     forks?: number;
     language?: string;
     screenshotUrl?: string;
+    tags?: string[];
+    caseStudy?: string;
+  }>;
+  certifications?: Array<{
+    title: string;
+    issuer?: string;
+    completedAt?: string;
+    imageUrl?: string;
   }>;
   links?: Record<string, string>;
 }
@@ -58,6 +67,16 @@ export interface MergedProfileDraft {
     name: string;
     description: string;
     url?: string;
+    source: ImportProvider;
+    imageUrl?: string;
+    tags?: string[];
+    caseStudy?: string;
+  }>;
+  certifications: Array<{
+    title: string;
+    issuer?: string;
+    completedAt?: string;
+    imageUrl?: string;
     source: ImportProvider;
   }>;
   profileImageUrl?: string;

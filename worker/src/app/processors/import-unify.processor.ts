@@ -15,7 +15,8 @@ type ProviderId =
   | 'behance'
   | 'dribbble'
   | 'figma'
-  | 'coursera';
+  | 'coursera'
+  | 'udemy';
 
 interface ImportJobPayload {
   runId: string;
@@ -34,7 +35,20 @@ interface ProviderImportData {
   summary?: string;
   profileImageUrl?: string;
   skills: string[];
-  projects: Array<{ name: string; description: string; url?: string }>;
+  projects: Array<{
+    name: string;
+    description: string;
+    url?: string;
+    imageUrl?: string;
+    tags?: string[];
+    caseStudy?: string;
+  }>;
+  certifications: Array<{
+    title: string;
+    issuer?: string;
+    completedAt?: string;
+    imageUrl?: string;
+  }>;
   links: Record<string, string>;
   raw?: unknown;
 }
@@ -53,7 +67,22 @@ interface MergedProfilePayload {
   about: string;
   bio: string;
   skills: string[];
-  projects: Array<{ name: string; description: string; url?: string; source: ProviderId }>;
+  projects: Array<{
+    name: string;
+    description: string;
+    url?: string;
+    imageUrl?: string;
+    tags?: string[];
+    caseStudy?: string;
+    source: ProviderId;
+  }>;
+  certifications: Array<{
+    title: string;
+    issuer?: string;
+    completedAt?: string;
+    imageUrl?: string;
+    source: ProviderId;
+  }>;
   links: Record<string, string>;
   location?: string;
   persona: string;
@@ -92,7 +121,7 @@ export class ImportUnifyProcessor extends WorkerHost {
           await this.saveSnapshot(runId, userId, provider, data.raw, data);
         } catch (error) {
           failed.push(provider);
-          imported.push({ provider, skills: [], projects: [], links: {} });
+          imported.push({ provider, skills: [], projects: [], certifications: [], links: {} });
           this.logger.warn(`[import-unify] ${provider} failed: ${this.toErr(error)}`);
         }
       }
@@ -165,6 +194,7 @@ export class ImportUnifyProcessor extends WorkerHost {
         profileImageUrl: profile.data.profilePicture?.displayImage ?? undefined,
         skills: [],
         projects: [],
+        certifications: [],
         links: profile.data.id ? { linkedin: `https://www.linkedin.com/in/${profile.data.id}` } : {},
         raw: profile.data,
       } satisfies ProviderImportData;
@@ -197,6 +227,7 @@ export class ImportUnifyProcessor extends WorkerHost {
         profileImageUrl: userRes.data.avatar_url ?? undefined,
         skills,
         projects,
+        certifications: [],
         links: userRes.data.html_url ? { github: userRes.data.html_url } : {},
         raw: { user: userRes.data, repos: reposRes.data },
       } satisfies ProviderImportData;
@@ -225,12 +256,28 @@ export class ImportUnifyProcessor extends WorkerHost {
         profileImageUrl: profile?.identity?.picture ?? undefined,
         skills,
         projects: [],
+        certifications: [],
         links: {},
         raw: res.data,
       } satisfies ProviderImportData;
     }
 
     const fromFallback = this.asRecord(fallback[provider]);
+    const linksFromRecord = this.asRecord(fromFallback.links);
+    const normalizedLinks = Object.entries(linksFromRecord).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        const normalized = this.text(value);
+        if (!normalized) return acc;
+        acc[key] = normalized;
+        return acc;
+      },
+      {},
+    );
+    const profileUrl = this.text(fromFallback.publicUrl);
+    if (profileUrl && !normalizedLinks[provider]) {
+      normalizedLinks[provider] = profileUrl;
+    }
+
     return {
       provider,
       name: this.text(fromFallback.name),
@@ -238,8 +285,9 @@ export class ImportUnifyProcessor extends WorkerHost {
       summary: this.text(fromFallback.summary),
       profileImageUrl: this.text(fromFallback.profileImageUrl),
       skills: this.array(fromFallback.skills),
-      projects: [],
-      links: {},
+      projects: this.projectArray(fromFallback.projects),
+      certifications: this.certificationArray(fromFallback.certifications),
+      links: normalizedLinks,
       raw: fromFallback,
     } satisfies ProviderImportData;
   }
@@ -252,13 +300,33 @@ export class ImportUnifyProcessor extends WorkerHost {
     const linkedin = imported.find((item) => item.provider === 'linkedin');
     const upwork = imported.find((item) => item.provider === 'upwork');
     const github = imported.find((item) => item.provider === 'github');
-    const skills = [...new Set([...(upwork?.skills ?? []), ...(github?.skills ?? []), ...(linkedin?.skills ?? [])])].slice(0, 20);
-    const name = linkedin?.name || upwork?.name || github?.name || 'Portfolio Owner';
-    const headline = linkedin?.headline || upwork?.headline || github?.headline || `${persona} portfolio`;
+    const firstNamed = imported.find((item) => !!item.name)?.name;
+    const firstHeadline = imported.find((item) => !!item.headline)?.headline;
+    const summaryFromProviders = imported
+      .map((item) => item.summary)
+      .filter((value): value is string => !!value && value.trim().length > 0);
+    const skills = [
+      ...new Set(
+        imported.flatMap((item) => item.skills.map((skill) => skill.trim()).filter(Boolean)),
+      ),
+    ].slice(0, 20);
+    const name = linkedin?.name || upwork?.name || github?.name || firstNamed || 'Portfolio Owner';
+    const headline =
+      linkedin?.headline || upwork?.headline || github?.headline || firstHeadline || `${persona} portfolio`;
     const whatTheyDo = [headline, upwork?.headline].filter(Boolean).join(' | ') || headline;
-    const projects = imported.flatMap((item) => item.projects.map((project) => ({ ...project, source: item.provider }))).slice(0, 10);
+    const projects = imported
+      .flatMap((item) => item.projects.map((project) => ({ ...project, source: item.provider })))
+      .slice(0, 12);
+    const certifications = imported
+      .flatMap((item) =>
+        item.certifications.map((certification) => ({
+          ...certification,
+          source: item.provider,
+        })),
+      )
+      .slice(0, 12);
     const links = imported.reduce<Record<string, string>>((acc, item) => ({ ...acc, ...item.links }), {});
-    const summaryText = [linkedin?.summary, linkedin?.headline, upwork?.summary, skills.join(', ')].filter(Boolean).join('\n');
+    const summaryText = [...summaryFromProviders, skills.join(', ')].filter(Boolean).join('\n');
 
     const prompt = [
       'Refine this user professional bio into a compelling, SEO-optimized About section for a portfolio (150-300 words).',
@@ -269,6 +337,7 @@ export class ImportUnifyProcessor extends WorkerHost {
       `LinkedIn Summary: ${linkedin?.summary ?? ''}`,
       `Upwork Overview: ${upwork?.summary ?? ''}`,
       `Skills: ${skills.join(', ')}`,
+      `Certifications: ${certifications.map((item) => item.title).join(', ')}`,
       `What they do: ${whatTheyDo}`,
       `Location: ${location ?? ''}`,
       `Fallback source: ${summaryText}`,
@@ -287,10 +356,16 @@ export class ImportUnifyProcessor extends WorkerHost {
       bio: about,
       skills,
       projects,
+      certifications,
       links,
       location,
       persona,
-      profileImageUrl: linkedin?.profileImageUrl || github?.profileImageUrl || upwork?.profileImageUrl || undefined,
+      profileImageUrl:
+        linkedin?.profileImageUrl ||
+        github?.profileImageUrl ||
+        upwork?.profileImageUrl ||
+        imported.find((item) => !!item.profileImageUrl)?.profileImageUrl ||
+        undefined,
       conflicts,
       seoKeywords,
     };
@@ -308,7 +383,24 @@ export class ImportUnifyProcessor extends WorkerHost {
       templateId: this.personaTemplate(merged.persona),
       hero: { heading: merged.name, body: merged.headline },
       about: { body: merged.about },
-      projects: { items: merged.projects.map((project) => `${project.name} - ${project.description}`) },
+      projects: {
+        items: merged.projects.map((project) => ({
+          title: project.name,
+          description: project.description,
+          url: project.url,
+          imageUrl: project.imageUrl,
+          tags: project.tags,
+          caseStudy: project.caseStudy,
+        })),
+      },
+      certifications: {
+        items: merged.certifications.map((item) => ({
+          title: item.title,
+          issuer: item.issuer,
+          date: item.completedAt,
+          imageUrl: item.imageUrl,
+        })),
+      },
       skills: { items: merged.skills },
       contact: { body: Object.entries(merged.links).map(([k, v]) => `${k}: ${v}`).join(' | ') },
       links: Object.entries(merged.links).map(([label, url]) => ({ label, url })),
@@ -409,12 +501,14 @@ export class ImportUnifyProcessor extends WorkerHost {
   }
 
   private autoFillScore(merged: MergedProfilePayload) {
+    const hasProjects = (merged.projects ?? []).length >= 2;
+    const hasCertifications = (merged.certifications ?? []).length > 0;
     const checks = [
       !!merged.name,
       !!merged.headline,
       !!merged.about && merged.about.length > 120,
       (merged.skills ?? []).length >= 6,
-      (merged.projects ?? []).length >= 2,
+      hasProjects || hasCertifications,
       Object.keys(merged.links ?? {}).length > 0,
       !!merged.profileImageUrl,
     ];
@@ -502,6 +596,47 @@ export class ImportUnifyProcessor extends WorkerHost {
     if (Array.isArray(value)) return value.map((item) => this.text(item)).filter(Boolean);
     if (typeof value === 'string') return value.split(/[\\n,]+/).map((item) => item.trim()).filter(Boolean);
     return [] as string[];
+  }
+
+  private projectArray(value: unknown) {
+    if (!Array.isArray(value)) return [] as ProviderImportData['projects'];
+
+    return value
+      .map((item) => this.asRecord(item))
+      .map((row) => {
+        const name = this.text(row.name) || this.text(row.title);
+        if (!name) return null;
+        return {
+          name,
+          description:
+            this.text(row.description) || this.text(row.summary) || 'Project contribution',
+          url: this.text(row.url) || undefined,
+          imageUrl: this.text(row.imageUrl) || undefined,
+          tags: this.array(row.tags).slice(0, 8),
+          caseStudy: this.text(row.caseStudy) || undefined,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => !!item)
+      .slice(0, 12);
+  }
+
+  private certificationArray(value: unknown) {
+    if (!Array.isArray(value)) return [] as ProviderImportData['certifications'];
+
+    return value
+      .map((item) => this.asRecord(item))
+      .map((row) => {
+        const title = this.text(row.title) || this.text(row.name);
+        if (!title) return null;
+        return {
+          title,
+          issuer: this.text(row.issuer) || undefined,
+          completedAt: this.text(row.completedAt) || this.text(row.date) || undefined,
+          imageUrl: this.text(row.imageUrl) || undefined,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => !!item)
+      .slice(0, 12);
   }
 
   private toErr(value: unknown) {

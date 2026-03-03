@@ -8,21 +8,27 @@ export const CORE_TEMPLATE_REGISTRY: TemplateDefinition[] = [
     industry: 'general',
     sections: [
       { id: 'hero', title: 'Hero', required: true, sourceKeys: ['headline', 'summary'] },
-      { id: 'about', title: 'About', required: true, sourceKeys: ['bio', 'about'] },
+      { id: 'about', title: 'About', required: false, sourceKeys: ['bio', 'about'] },
       {
         id: 'work',
         title: 'Work Experience',
-        required: true,
+        required: false,
         sourceKeys: ['experience', 'workHistory'],
       },
       {
         id: 'projects',
         title: 'Projects',
-        required: true,
+        required: false,
         sourceKeys: ['projects', 'githubRepos'],
       },
-      { id: 'skills', title: 'Skills', required: true, sourceKeys: ['skills'] },
-      { id: 'contact', title: 'Contact', required: true, sourceKeys: ['contact'] },
+      {
+        id: 'certifications',
+        title: 'Certifications & Badges',
+        required: false,
+        sourceKeys: ['certifications', 'badges'],
+      },
+      { id: 'skills', title: 'Skills', required: false, sourceKeys: ['skills'] },
+      { id: 'contact', title: 'Contact', required: false, sourceKeys: ['contact', 'links'] },
     ],
   },
   {

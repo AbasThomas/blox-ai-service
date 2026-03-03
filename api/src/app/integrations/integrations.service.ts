@@ -106,6 +106,15 @@ const PROVIDERS: ProviderDefinition[] = [
     scopes: [],
     priority: 'optional',
   },
+  {
+    id: 'udemy',
+    name: 'Udemy',
+    category: 'education',
+    mode: 'manual',
+    authUrl: null,
+    scopes: [],
+    priority: 'optional',
+  },
 ];
 
 @Injectable()

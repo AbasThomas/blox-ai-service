@@ -12,6 +12,7 @@ const PROVIDERS = [
   'dribbble',
   'figma',
   'coursera',
+  'udemy',
 ];
 
 function parseBoolean(value) {

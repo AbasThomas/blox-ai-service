@@ -1,15 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Persona } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { AuthGuard } from '@/components/shared/auth-guard';
 import { integrationsApi, onboardingApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
-import { Check, Zap, Bot, User, ArrowUpRight, Shield } from '@/components/ui/icons';
+import { Check, Zap, Bot, User, ArrowUpRight, Shield, Plus, Sparkles } from '@/components/ui/icons';
 
 type Step = 0 | 1 | 2 | 3 | 4;
+type BuilderStage = 'projects' | 'certifications' | 'optimize';
+type SetupMethod = 'social' | 'manual';
 type Provider =
   | 'linkedin'
   | 'github'
@@ -18,7 +20,8 @@ type Provider =
   | 'behance'
   | 'dribbble'
   | 'figma'
-  | 'coursera';
+  | 'coursera'
+  | 'udemy';
 
 interface IntegrationItem {
   id: Provider;
@@ -62,17 +65,42 @@ interface LatestUnfinishedImport {
   personalSiteUrl?: string | null;
 }
 
+interface ManualProjectEntry {
+  id: string;
+  title: string;
+  description: string;
+  tools: string;
+  link: string;
+  imageUrl: string;
+  caseStudy: string;
+}
+
+interface ManualCertificationEntry {
+  id: string;
+  title: string;
+  issuer: string;
+  date: string;
+  imageUrl: string;
+}
+
 interface LocalPortfolioDraft {
   savedAt: string;
   step: 0 | 1;
+  builderStage: BuilderStage;
   persona: Persona | `${Persona}`;
+  profileSetupMethod: SetupMethod;
+  projectSetupMethod: SetupMethod;
+  certificationSetupMethod: SetupMethod;
   personalSiteUrl: string;
   locationHint: string;
-  manualLinkedinHeadline: string;
-  manualLinkedinSummary: string;
-  manualUpworkTitle: string;
-  manualUpworkOverview: string;
+  manualFullName: string;
+  manualProfessionalTitle: string;
+  manualBio: string;
   manualSkills: string;
+  manualContactEmail: string;
+  manualProfileImageUrl: string;
+  manualProjects: ManualProjectEntry[];
+  manualCertifications: ManualCertificationEntry[];
 }
 
 const PERSONA_OPTIONS = [
@@ -84,7 +112,16 @@ const PERSONA_OPTIONS = [
   { value: Persona.EXECUTIVE, label: 'Executive', desc: 'Leadership impact and strategic wins' },
 ] as const;
 
-const STEPS = ['Profile Setup', 'Connect Accounts', 'AI Draft', 'Review', 'Launch'] as const;
+const FLOW_STEPS = [
+  { id: 1, title: 'Choose Setup', subtitle: 'Social Import or Manual Setup' },
+  { id: 2, title: 'Projects', subtitle: 'Import or upload projects' },
+  { id: 3, title: 'Certifications', subtitle: 'Badges and certificates' },
+  { id: 4, title: 'AI Optimization', subtitle: 'Enhance + preview before build' },
+] as const;
+
+const PROFILE_PROVIDER_IDS: Provider[] = ['linkedin', 'upwork', 'fiverr'];
+const PROJECT_PROVIDER_IDS: Provider[] = ['behance', 'dribbble', 'figma'];
+const CERT_PROVIDER_IDS: Provider[] = ['udemy', 'coursera'];
 
 const DEFAULT_PROVIDER_ORDER: Provider[] = [
   'linkedin',
@@ -95,6 +132,7 @@ const DEFAULT_PROVIDER_ORDER: Provider[] = [
   'dribbble',
   'figma',
   'coursera',
+  'udemy',
 ];
 
 const PROVIDER_META: Record<Provider, { label: string; logoUrl: string }> = {
@@ -106,7 +144,26 @@ const PROVIDER_META: Record<Provider, { label: string; logoUrl: string }> = {
   dribbble: { label: 'Dribbble', logoUrl: 'https://cdn.simpleicons.org/dribbble/EA4C89' },
   figma: { label: 'Figma', logoUrl: 'https://cdn.simpleicons.org/figma/F24E1E' },
   coursera: { label: 'Coursera', logoUrl: 'https://cdn.simpleicons.org/coursera/0056D2' },
+  udemy: { label: 'Udemy', logoUrl: 'https://cdn.simpleicons.org/udemy/A435F0' },
 };
+
+const DEFAULT_MANUAL_PROJECT = (): ManualProjectEntry => ({
+  id: crypto.randomUUID(),
+  title: '',
+  description: '',
+  tools: '',
+  link: '',
+  imageUrl: '',
+  caseStudy: '',
+});
+
+const DEFAULT_MANUAL_CERTIFICATION = (): ManualCertificationEntry => ({
+  id: crypto.randomUUID(),
+  title: '',
+  issuer: '',
+  date: '',
+  imageUrl: '',
+});
 
 const AUTH_ERROR_PATTERN = /(401|403|unauthorized|forbidden|expired token|jwt)/i;
 const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft';
@@ -153,17 +210,69 @@ function providerLabel(provider: string) {
   return provider;
 }
 
+function toSkillList(input: string) {
+  return input
+    .split(/[\n,]+/)
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+}
+
+function aiRewrite(input: string, persona: Persona | `${Persona}`) {
+  const text = input.trim();
+  if (!text) return input;
+
+  const normalized = text
+    .replace(/\s+/g, ' ')
+    .replace(/\bi\b/g, 'I')
+    .replace(/\bjavascript\b/gi, 'JavaScript')
+    .replace(/\btypescript\b/gi, 'TypeScript')
+    .replace(/\breact\b/gi, 'React')
+    .replace(/\bnode\b/gi, 'Node.js');
+
+  if (persona === Persona.DEVELOPER) {
+    return `${normalized} I design and ship reliable software with measurable product impact.`;
+  }
+  if (persona === Persona.DESIGNER) {
+    return `${normalized} I combine user-centered design with business outcomes to create high-converting experiences.`;
+  }
+  return `${normalized} I focus on clarity, ownership, and measurable outcomes.`;
+}
+
+async function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function PortfolioNewPage() {
   const router = useRouter();
   const user = useBloxStore((state) => state.user);
   const isAuthenticated = useBloxStore((state) => state.isAuthenticated);
   const accessToken = useBloxStore((state) => state.accessToken);
   const [step, setStep] = useState<Step>(0);
+  const [builderStage, setBuilderStage] = useState<BuilderStage>('projects');
   const [persona, setPersona] = useState<Persona | `${Persona}`>(
     (user.persona as Persona | `${Persona}`) ?? Persona.JOB_SEEKER,
   );
+  const [profileSetupMethod, setProfileSetupMethod] = useState<SetupMethod>('social');
+  const [projectSetupMethod, setProjectSetupMethod] = useState<SetupMethod>('social');
+  const [certificationSetupMethod, setCertificationSetupMethod] = useState<SetupMethod>('social');
   const [personalSiteUrl, setPersonalSiteUrl] = useState('');
   const [locationHint, setLocationHint] = useState('');
+  const [manualFullName, setManualFullName] = useState('');
+  const [manualProfessionalTitle, setManualProfessionalTitle] = useState('');
+  const [manualBio, setManualBio] = useState('');
+  const [manualContactEmail, setManualContactEmail] = useState('');
+  const [manualProfileImageUrl, setManualProfileImageUrl] = useState('');
+  const [manualProjects, setManualProjects] = useState<ManualProjectEntry[]>([
+    DEFAULT_MANUAL_PROJECT(),
+  ]);
+  const [manualCertifications, setManualCertifications] = useState<ManualCertificationEntry[]>([
+    DEFAULT_MANUAL_CERTIFICATION(),
+  ]);
   const [integrations, setIntegrations] = useState<IntegrationItem[]>([]);
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   const [connectingProvider, setConnectingProvider] = useState<Provider | null>(null);
@@ -176,10 +285,6 @@ export default function PortfolioNewPage() {
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
-  const [manualLinkedinHeadline, setManualLinkedinHeadline] = useState('');
-  const [manualLinkedinSummary, setManualLinkedinSummary] = useState('');
-  const [manualUpworkTitle, setManualUpworkTitle] = useState('');
-  const [manualUpworkOverview, setManualUpworkOverview] = useState('');
   const [manualSkills, setManualSkills] = useState('');
   const [draftHydrated, setDraftHydrated] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState(false);
@@ -188,45 +293,133 @@ export default function PortfolioNewPage() {
     () => connectedProviders(integrations).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider)),
     [integrations],
   );
-  const manualSkillList = useMemo(
+  const manualSkillList = useMemo(() => toSkillList(manualSkills), [manualSkills]);
+  const normalizedManualProjects = useMemo(
     () =>
-      manualSkills
-        .split(/[\n,]+/)
-        .map((skill) => skill.trim())
-        .filter(Boolean),
-    [manualSkills],
+      manualProjects
+        .map((item) => ({
+          ...item,
+          title: item.title.trim(),
+          description: item.description.trim(),
+          tools: item.tools.trim(),
+          link: item.link.trim(),
+          imageUrl: item.imageUrl.trim(),
+          caseStudy: item.caseStudy.trim(),
+        }))
+        .filter((item) => item.title.length > 0),
+    [manualProjects],
+  );
+  const normalizedManualCertifications = useMemo(
+    () =>
+      manualCertifications
+        .map((item) => ({
+          ...item,
+          title: item.title.trim(),
+          issuer: item.issuer.trim(),
+          date: item.date.trim(),
+          imageUrl: item.imageUrl.trim(),
+        }))
+        .filter((item) => item.title.length > 0),
+    [manualCertifications],
   );
   const manualFallback = useMemo(() => {
     const next: Record<string, unknown> = {};
-    if (manualLinkedinHeadline.trim() || manualLinkedinSummary.trim()) {
-      next.linkedin = {
-        headline: manualLinkedinHeadline.trim(),
-        summary: manualLinkedinSummary.trim(),
-      };
-    }
-    if (manualUpworkTitle.trim() || manualUpworkOverview.trim() || manualSkillList.length > 0) {
-      next.upwork = {
-        headline: manualUpworkTitle.trim(),
-        summary: manualUpworkOverview.trim(),
+
+    const hasManualProfile =
+      profileSetupMethod === 'manual' &&
+      (manualFullName.trim() ||
+        manualProfessionalTitle.trim() ||
+        manualBio.trim() ||
+        manualSkills.trim() ||
+        manualContactEmail.trim() ||
+        manualProfileImageUrl.trim());
+
+    if (hasManualProfile) {
+      const payload = {
+        name: manualFullName.trim(),
+        headline: manualProfessionalTitle.trim(),
+        summary: manualBio.trim(),
         skills: manualSkillList,
+        profileImageUrl: manualProfileImageUrl.trim(),
+        publicUrl: personalSiteUrl.trim(),
+        links: manualContactEmail.trim()
+          ? { email: `mailto:${manualContactEmail.trim()}` }
+          : {},
       };
+      PROFILE_PROVIDER_IDS.forEach((provider) => {
+        next[provider] = payload;
+      });
     }
+
+    if (projectSetupMethod === 'manual' && normalizedManualProjects.length > 0) {
+      const payload = {
+        projects: normalizedManualProjects.map((item) => ({
+          name: item.title,
+          description: item.description,
+          url: item.link,
+          imageUrl: item.imageUrl,
+          tags: toSkillList(item.tools),
+          caseStudy: item.caseStudy,
+        })),
+      };
+      PROJECT_PROVIDER_IDS.forEach((provider) => {
+        next[provider] = payload;
+      });
+    }
+
+    if (certificationSetupMethod === 'manual' && normalizedManualCertifications.length > 0) {
+      const payload = {
+        certifications: normalizedManualCertifications.map((item) => ({
+          title: item.title,
+          issuer: item.issuer,
+          date: item.date,
+          imageUrl: item.imageUrl,
+        })),
+      };
+      CERT_PROVIDER_IDS.forEach((provider) => {
+        next[provider] = payload;
+      });
+    }
+
     return next;
   }, [
-    manualLinkedinHeadline,
-    manualLinkedinSummary,
+    certificationSetupMethod,
+    manualBio,
+    manualContactEmail,
+    manualFullName,
+    manualProfessionalTitle,
+    manualProfileImageUrl,
     manualSkillList,
-    manualUpworkOverview,
-    manualUpworkTitle,
+    manualSkills,
+    normalizedManualCertifications,
+    normalizedManualProjects,
+    personalSiteUrl,
+    profileSetupMethod,
+    projectSetupMethod,
   ]);
   const fallbackProviders = useMemo(
-    () => Object.keys(manualFallback).filter((provider) => DEFAULT_PROVIDER_ORDER.includes(provider as Provider)) as Provider[],
+    () =>
+      Object.keys(manualFallback).filter((provider) =>
+        DEFAULT_PROVIDER_ORDER.includes(provider as Provider),
+      ) as Provider[],
     [manualFallback],
   );
-  const importProviders = useMemo(
-    () => Array.from(new Set([...selectedProviders, ...fallbackProviders])),
-    [fallbackProviders, selectedProviders],
-  );
+  const importProviders = useMemo(() => {
+    const socialProviders = selectedProviders.filter((provider) => {
+      if (PROFILE_PROVIDER_IDS.includes(provider)) return profileSetupMethod === 'social';
+      if (PROJECT_PROVIDER_IDS.includes(provider)) return projectSetupMethod === 'social';
+      if (CERT_PROVIDER_IDS.includes(provider)) return certificationSetupMethod === 'social';
+      return false;
+    });
+
+    return Array.from(new Set([...socialProviders, ...fallbackProviders]));
+  }, [
+    certificationSetupMethod,
+    fallbackProviders,
+    profileSetupMethod,
+    projectSetupMethod,
+    selectedProviders,
+  ]);
   const clearLocalDraft = useCallback(() => {
     if (typeof window === 'undefined' || !user.id) return;
     localStorage.removeItem(portfolioDraftKey(user.id));
@@ -244,21 +437,29 @@ export default function PortfolioNewPage() {
     return Boolean(
       runId ||
       step > 0 ||
+      builderStage ||
+      manualFullName.trim() ||
+      manualProfessionalTitle.trim() ||
+      manualBio.trim() ||
       personalSiteUrl.trim() ||
       locationHint.trim() ||
-      manualLinkedinHeadline.trim() ||
-      manualLinkedinSummary.trim() ||
-      manualUpworkTitle.trim() ||
-      manualUpworkOverview.trim() ||
-      manualSkills.trim(),
+      manualSkills.trim() ||
+      manualContactEmail.trim() ||
+      manualProfileImageUrl.trim() ||
+      normalizedManualProjects.length > 0 ||
+      normalizedManualCertifications.length > 0,
     );
   }, [
+    builderStage,
     locationHint,
-    manualLinkedinHeadline,
-    manualLinkedinSummary,
+    manualBio,
+    manualContactEmail,
+    manualFullName,
+    manualProfessionalTitle,
+    manualProfileImageUrl,
     manualSkills,
-    manualUpworkOverview,
-    manualUpworkTitle,
+    normalizedManualCertifications.length,
+    normalizedManualProjects.length,
     personalSiteUrl,
     runId,
     status?.status,
@@ -272,14 +473,21 @@ export default function PortfolioNewPage() {
     setOverrides({});
     setIntegrations([]);
     setStep(0);
+    setBuilderStage('projects');
     setStatusError('');
     setPersona((user.persona as Persona | `${Persona}`) ?? Persona.JOB_SEEKER);
+    setProfileSetupMethod('social');
+    setProjectSetupMethod('social');
+    setCertificationSetupMethod('social');
     setPersonalSiteUrl('');
     setLocationHint('');
-    setManualLinkedinHeadline('');
-    setManualLinkedinSummary('');
-    setManualUpworkTitle('');
-    setManualUpworkOverview('');
+    setManualFullName('');
+    setManualProfessionalTitle('');
+    setManualBio('');
+    setManualContactEmail('');
+    setManualProfileImageUrl('');
+    setManualProjects([DEFAULT_MANUAL_PROJECT()]);
+    setManualCertifications([DEFAULT_MANUAL_CERTIFICATION()]);
     setManualSkills('');
   }, [user.persona]);
 
@@ -386,12 +594,27 @@ export default function PortfolioNewPage() {
           if (rawDraft) {
             const parsed = JSON.parse(rawDraft) as LocalPortfolioDraft;
             setPersona(parsed.persona);
+            setBuilderStage(parsed.builderStage ?? 'projects');
+            setProfileSetupMethod(parsed.profileSetupMethod ?? 'social');
+            setProjectSetupMethod(parsed.projectSetupMethod ?? 'social');
+            setCertificationSetupMethod(parsed.certificationSetupMethod ?? 'social');
             setPersonalSiteUrl(parsed.personalSiteUrl ?? '');
             setLocationHint(parsed.locationHint ?? '');
-            setManualLinkedinHeadline(parsed.manualLinkedinHeadline ?? '');
-            setManualLinkedinSummary(parsed.manualLinkedinSummary ?? '');
-            setManualUpworkTitle(parsed.manualUpworkTitle ?? '');
-            setManualUpworkOverview(parsed.manualUpworkOverview ?? '');
+            setManualFullName(parsed.manualFullName ?? '');
+            setManualProfessionalTitle(parsed.manualProfessionalTitle ?? '');
+            setManualBio(parsed.manualBio ?? '');
+            setManualContactEmail(parsed.manualContactEmail ?? '');
+            setManualProfileImageUrl(parsed.manualProfileImageUrl ?? '');
+            setManualProjects(
+              Array.isArray(parsed.manualProjects) && parsed.manualProjects.length > 0
+                ? parsed.manualProjects
+                : [DEFAULT_MANUAL_PROJECT()],
+            );
+            setManualCertifications(
+              Array.isArray(parsed.manualCertifications) && parsed.manualCertifications.length > 0
+                ? parsed.manualCertifications
+                : [DEFAULT_MANUAL_CERTIFICATION()],
+            );
             setManualSkills(parsed.manualSkills ?? '');
             setStep(parsed.step === 1 ? 1 : 0);
             setStatusNote('Recovered your saved local draft.');
@@ -418,14 +641,21 @@ export default function PortfolioNewPage() {
     const snapshot: LocalPortfolioDraft = {
       savedAt: new Date().toISOString(),
       step: step === 1 ? 1 : 0,
+      builderStage,
       persona,
+      profileSetupMethod,
+      projectSetupMethod,
+      certificationSetupMethod,
       personalSiteUrl,
       locationHint,
-      manualLinkedinHeadline,
-      manualLinkedinSummary,
-      manualUpworkTitle,
-      manualUpworkOverview,
+      manualFullName,
+      manualProfessionalTitle,
+      manualBio,
       manualSkills,
+      manualContactEmail,
+      manualProfileImageUrl,
+      manualProjects,
+      manualCertifications,
     };
 
     try {
@@ -435,16 +665,23 @@ export default function PortfolioNewPage() {
     }
   }, [
     accessToken,
+    builderStage,
+    certificationSetupMethod,
     draftHydrated,
     isAuthenticated,
     locationHint,
-    manualLinkedinHeadline,
-    manualLinkedinSummary,
+    manualBio,
+    manualCertifications,
+    manualContactEmail,
+    manualFullName,
+    manualProfessionalTitle,
+    manualProfileImageUrl,
+    manualProjects,
     manualSkills,
-    manualUpworkOverview,
-    manualUpworkTitle,
     persona,
     personalSiteUrl,
+    profileSetupMethod,
+    projectSetupMethod,
     runId,
     step,
     user.id,
@@ -465,7 +702,7 @@ export default function PortfolioNewPage() {
   }, [handleApiError, requireSession]);
 
   useEffect(() => {
-    if (step === 1) {
+    if (step === 0 || step === 1) {
       void loadIntegrations();
     }
   }, [step, loadIntegrations]);
@@ -637,478 +874,1175 @@ export default function PortfolioNewPage() {
     }
   };
 
+  const handleProfileImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setManualProfileImageUrl(dataUrl);
+    } catch {
+      setStatusError('Failed to read profile image file.');
+    }
+  };
+
+  const updateManualProject = (id: string, patch: Partial<ManualProjectEntry>) => {
+    setManualProjects((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const removeManualProject = (id: string) => {
+    setManualProjects((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      return next.length > 0 ? next : [DEFAULT_MANUAL_PROJECT()];
+    });
+  };
+
+  const handleProjectImageUpload = async (id: string, event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateManualProject(id, { imageUrl: dataUrl });
+    } catch {
+      setStatusError('Failed to read project image file.');
+    }
+  };
+
+  const updateManualCertification = (
+    id: string,
+    patch: Partial<ManualCertificationEntry>,
+  ) => {
+    setManualCertifications((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
+  };
+
+  const removeManualCertification = (id: string) => {
+    setManualCertifications((prev) => {
+      const next = prev.filter((item) => item.id !== id);
+      return next.length > 0 ? next : [DEFAULT_MANUAL_CERTIFICATION()];
+    });
+  };
+
+  const handleCertificationImageUpload = async (
+    id: string,
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      updateManualCertification(id, { imageUrl: dataUrl });
+    } catch {
+      setStatusError('Failed to read certificate image file.');
+    }
+  };
+
+  const renderProviderCards = (providers: Provider[]) => (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {providers.map((provider) => {
+        const integration = integrations.find((item) => item.id === provider);
+        const meta = PROVIDER_META[provider];
+        if (!integration) {
+          return (
+            <div key={provider} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-sm font-black text-white">{meta.label}</p>
+              <p className="mt-2 text-xs text-slate-500">Provider not available in current backend catalog.</p>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={provider}
+            className={`rounded-2xl border p-4 ${
+              integration.connected
+                ? 'border-[#1ECEFA]/35 bg-[#1ECEFA]/8'
+                : 'border-white/10 bg-black/20'
+            }`}
+          >
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <img
+                  src={meta.logoUrl}
+                  alt={`${meta.label} logo`}
+                  className="h-5 w-5 object-contain"
+                  loading="lazy"
+                />
+                <div>
+                  <p className="text-sm font-black text-white">{meta.label}</p>
+                  <p className="text-[10px] uppercase tracking-widest text-slate-500">{integration.category}</p>
+                </div>
+              </div>
+              <span
+                className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+                  integration.connected
+                    ? 'bg-emerald-500/20 text-emerald-300'
+                    : 'bg-white/10 text-slate-400'
+                }`}
+              >
+                {integration.connected ? 'Connected' : 'Not Connected'}
+              </span>
+            </div>
+            {integration.connected ? (
+              <button
+                type="button"
+                onClick={() => handleDisconnect(provider)}
+                disabled={disconnectingProvider === provider}
+                className="w-full rounded-xl border border-red-500/30 bg-red-500/10 py-2 text-[10px] font-black uppercase tracking-widest text-red-300 disabled:opacity-50"
+              >
+                {disconnectingProvider === provider ? 'Disconnecting...' : 'Disconnect'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleConnect(provider)}
+                disabled={connectingProvider === provider}
+                className="w-full rounded-xl bg-white py-2 text-[10px] font-black uppercase tracking-widest text-black disabled:opacity-50"
+              >
+                {connectingProvider === provider ? 'Connecting...' : 'Connect'}
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const aiFailed = status?.status === 'failed';
+  const activeFlowStage = useMemo(() => {
+    if (step === 0) return 1;
+    if (step === 1) {
+      if (builderStage === 'projects') return 2;
+      if (builderStage === 'certifications') return 3;
+      return 4;
+    }
+    return 4;
+  }, [builderStage, step]);
+  const flowProgressWidth = useMemo(() => {
+    return ((activeFlowStage - 1) / (FLOW_STEPS.length - 1)) * 100;
+  }, [activeFlowStage]);
+  const previewProjects = useMemo(() => {
+    if (projectSetupMethod === 'manual' && normalizedManualProjects.length > 0) {
+      return normalizedManualProjects.slice(0, 3).map((item) => ({
+        title: item.title,
+        description: item.description || 'Project description will appear here.',
+      }));
+    }
+    if (projectSetupMethod === 'social') {
+      const connected = selectedProviders.filter((provider) => PROJECT_PROVIDER_IDS.includes(provider));
+      return connected.slice(0, 3).map((provider) => ({
+        title: `${providerLabel(provider)} import`,
+        description: 'Project details will be extracted and refined by AI.',
+      }));
+    }
+    return [];
+  }, [normalizedManualProjects, projectSetupMethod, selectedProviders]);
+  const previewCertifications = useMemo(() => {
+    if (certificationSetupMethod === 'manual' && normalizedManualCertifications.length > 0) {
+      return normalizedManualCertifications.slice(0, 3).map((item) => item.title);
+    }
+    if (certificationSetupMethod === 'social') {
+      const connected = selectedProviders.filter((provider) => CERT_PROVIDER_IDS.includes(provider));
+      return connected.slice(0, 3).map((provider) => `${providerLabel(provider)} import`);
+    }
+    return [];
+  }, [certificationSetupMethod, normalizedManualCertifications, selectedProviders]);
+  const aiSuggestedSkills = useMemo(() => {
+    const existing = new Set(manualSkillList.map((item) => item.toLowerCase()));
+    const defaults: Record<string, string[]> = {
+      Developer: ['System Design', 'Testing', 'CI/CD', 'Performance'],
+      Designer: ['Design Systems', 'User Research', 'Accessibility', 'Prototyping'],
+      Freelancer: ['Client Communication', 'Project Scoping', 'Proposal Writing'],
+      JobSeeker: ['Interview Readiness', 'Storytelling', 'Personal Branding'],
+      Executive: ['Strategy', 'Operational Leadership', 'Cross-functional Alignment'],
+      Student: ['Internship Projects', 'Collaboration', 'Problem Solving'],
+    };
+    const suggestions = defaults[String(persona)] ?? [];
+    return suggestions.filter((item) => !existing.has(item.toLowerCase())).slice(0, 5);
+  }, [manualSkillList, persona]);
+  const aiHeadlineSuggestion = useMemo(() => {
+    const base = manualProfessionalTitle.trim();
+    if (base) return `${base} Portfolio`;
+    if (persona === Persona.DEVELOPER) return 'Software Developer Portfolio';
+    if (persona === Persona.DESIGNER) return 'Product Designer Portfolio';
+    if (persona === Persona.EXECUTIVE) return 'Leadership Portfolio';
+    return 'Professional Portfolio';
+  }, [manualProfessionalTitle, persona]);
+  const previewName = manualFullName.trim() || 'Your Name';
+  const previewTitle = manualProfessionalTitle.trim() || aiHeadlineSuggestion;
+  const previewBio = useMemo(
+    () => aiRewrite(manualBio.trim() || 'Add a short professional summary for your hero section.', persona),
+    [manualBio, persona],
+  );
+
+  const saveDraftNow = () => {
+    if (typeof window === 'undefined' || !user.id) return;
+    const snapshot: LocalPortfolioDraft = {
+      savedAt: new Date().toISOString(),
+      step: step === 1 ? 1 : 0,
+      builderStage,
+      persona,
+      profileSetupMethod,
+      projectSetupMethod,
+      certificationSetupMethod,
+      personalSiteUrl,
+      locationHint,
+      manualFullName,
+      manualProfessionalTitle,
+      manualBio,
+      manualSkills,
+      manualContactEmail,
+      manualProfileImageUrl,
+      manualProjects,
+      manualCertifications,
+    };
+    try {
+      localStorage.setItem(portfolioDraftKey(user.id), JSON.stringify(snapshot));
+      setStatusNote('Draft saved. You can continue later.');
+    } catch {
+      setStatusError('Unable to save local draft in this browser.');
+    }
+  };
+
+  const goToFlowStep = (target: 1 | 2 | 3 | 4) => {
+    if (step >= 2) return;
+    if (target === 1) {
+      setStep(0);
+      return;
+    }
+    setStep(1);
+    if (target === 2) {
+      setBuilderStage('projects');
+      return;
+    }
+    if (target === 3) {
+      setBuilderStage('certifications');
+      return;
+    }
+    setBuilderStage('optimize');
+  };
 
   return (
     <AuthGuard>
-      <FeaturePage 
-        title="Create New Portfolio" 
-        description="Choose your profile angle, connect your real accounts, and let AI generate a clean first draft."
+      <FeaturePage
+        title="Create New Portfolio"
+        description="Structured 4-step flow: setup profile, add projects, add certifications, and run AI optimization."
       >
-      <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-500">
-        <div className="flex flex-wrap items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-slate-300 transition-all hover:border-white/20 hover:bg-white/10 hover:text-white"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleDeleteDraft}
-            disabled={!hasDraftProgress || deletingDraft}
-            className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-widest text-red-300 transition-all hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {deletingDraft ? 'Deleting...' : 'Delete Draft'}
-          </button>
-        </div>
-
-        {/* Modern Stepper */}
-        <div className="relative flex justify-between items-center px-2">
-          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2 z-0" />
-          <div 
-            className="absolute top-1/2 left-0 h-0.5 bg-[#1ECEFA] -translate-y-1/2 z-0 transition-all duration-500 shadow-sm" 
-            style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
-          />
-          
-          {STEPS.map((label, index) => (
-            <div key={label} className="relative z-10 flex flex-col items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl border-2 transition-all duration-300 ${
-                index < step 
-                  ? 'bg-green-500 border-green-500 text-white shadow-sm' 
-                  : index === step 
-                    ? 'bg-black border-[#1ECEFA] text-[#1ECEFA] shadow-sm' 
-                    : 'bg-black border-white/10 text-slate-600'
-              }`}>
-                {index < step ? <Check className="h-5 w-5" /> : <span className="text-sm font-black">{index + 1}</span>}
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors ${
-                index === step ? 'text-[#1ECEFA]' : 'text-slate-600'
-              }`}>{label}</span>
+        <div className="mx-auto max-w-6xl space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Portfolio Draft Builder</p>
+              <p className="text-xs text-slate-500">Save and continue later is enabled throughout this flow.</p>
             </div>
-          ))}
-        </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={saveDraftNow}
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-200 transition hover:border-white/30"
+              >
+                Save Draft
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-300 transition hover:border-white/30"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteDraft}
+                disabled={!hasDraftProgress || deletingDraft}
+                className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingDraft ? 'Deleting...' : 'Delete Draft'}
+              </button>
+            </div>
+          </div>
 
-        {/* Step Content */}
-        <div className="min-h-[400px]">
-          {step === 0 && (
-            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Pick Your Portfolio Angle</h2>
-                <p className="text-sm text-slate-400">This controls how AI frames your experience, skills, and value.</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Draft progress autosaves while you work.</p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {PERSONA_OPTIONS.map((option) => (
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="relative mb-4 h-[2px] w-full bg-white/10">
+              <div className="h-full bg-[#1ECEFA] transition-all duration-300" style={{ width: `${flowProgressWidth}%` }} />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-4">
+              {FLOW_STEPS.map((stage) => {
+                const active = stage.id === activeFlowStage;
+                const complete = stage.id < activeFlowStage;
+                return (
                   <button
-                    key={option.value}
+                    key={stage.id}
                     type="button"
-                    onClick={() => setPersona(option.value)}
-                    className={`group relative flex flex-col items-start rounded-3xl border p-6 transition-all duration-300 ${
-                      persona === option.value 
-                        ? 'border-[#1ECEFA] bg-[#1ECEFA]/5 shadow-inner' 
-                        : 'border-white/10 bg-black/40 hover:border-white/20'
-                    }`}
+                    onClick={() => goToFlowStep(stage.id)}
+                    disabled={step >= 2}
+                    className={`rounded-xl border px-3 py-3 text-left transition ${
+                      active
+                        ? 'border-[#1ECEFA]/50 bg-[#1ECEFA]/10'
+                        : complete
+                          ? 'border-emerald-500/40 bg-emerald-500/10'
+                          : 'border-white/10 bg-white/[0.02]'
+                    } disabled:cursor-default`}
                   >
-                    <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border transition-all ${
-                      persona === option.value ? 'bg-[#1ECEFA] border-[#1ECEFA] text-black' : 'bg-white/5 border-white/5 text-slate-500 group-hover:text-white'
-                    }`}>
-                      <User className="h-6 w-6" />
-                    </div>
-                    <h3 className={`text-sm font-black uppercase tracking-tight transition-colors ${
-                      persona === option.value ? 'text-[#1ECEFA]' : 'text-white'
-                    }`}>{option.label}</h3>
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">{option.desc}</p>
-                    
-                    {persona === option.value && (
-                      <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-[#1ECEFA] shadow-sm" />
-                    )}
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Step {stage.id}</p>
+                    <p className="text-sm font-semibold text-white">{stage.title}</p>
+                    <p className="text-xs text-slate-400">{stage.subtitle}</p>
                   </button>
-                ))}
-              </div>
-
-              <div className="grid gap-6 sm:grid-cols-2 rounded-3xl border border-white/10 bg-black/20 p-8">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Personal Site URL (Optional)</label>
-                  <input
-                    value={personalSiteUrl}
-                    onChange={(e) => setPersonalSiteUrl(e.target.value)}
-                    placeholder="https://yourdomain.com"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Location Hint (Optional)</label>
-                  <input
-                    value={locationHint}
-                    onChange={(e) => setLocationHint(e.target.value)}
-                    placeholder="San Francisco, CA"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  onClick={() => setStep(1)}
-                  className="group flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
-                >
-                    Continue to Accounts <ArrowUpRight className="h-5 w-5" />
-                </button>
-              </div>
+                );
+              })}
             </div>
-          )}
+          </div>
 
-          {step === 1 && (
-            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Connect Your Accounts</h2>
-                <p className="text-sm text-slate-400">Use the exact provider links below. Connected accounts give AI the best draft quality.</p>
-              </div>
+          {(step === 0 || step === 1) && (
+            <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+              <div className="space-y-6">
+                {step === 0 && (
+                  <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">Step 1</p>
+                      <h2 className="text-xl font-semibold text-white">Choose Setup Method</h2>
+                      <p className="text-sm text-slate-400">
+                        Select Social Import or Manual Setup for profile data. You can switch methods at any time.
+                      </p>
+                    </div>
 
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 flex items-center gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  <Shield className="h-5 w-5" />
-                </div>
-                <p className="text-xs text-blue-400/80 leading-relaxed">We only read profile data needed to build your portfolio draft. No posting or account modification.</p>
-              </div>
-
-              {loadingIntegrations ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3, 4, 5, 6].map((item) => (
-                    <div key={item} className="h-44 animate-pulse rounded-3xl bg-white/5 border border-white/5" />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {integrations.map((integration) => {
-                    const meta = PROVIDER_META[integration.id];
-                    return (
-                      <div
-                        key={integration.id}
-                        className={`group relative rounded-3xl border p-6 transition-all duration-300 ${
-                          integration.connected
-                            ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-inner'
-                            : 'border-white/10 bg-black/40 hover:border-white/20'
+                    <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setProfileSetupMethod('social')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          profileSetupMethod === 'social' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
                         }`}
                       >
-                        <div className="mb-5 flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5">
-                              <img
-                                src={meta.logoUrl}
-                                alt={`${meta.label} logo`}
-                                className="h-5 w-5 object-contain"
-                                loading="lazy"
-                              />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-black text-white uppercase tracking-tight">{integration.name}</h3>
-                              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{integration.category}</p>
-                            </div>
-                          </div>
-                          {integration.connected ? (
-                            <span className="rounded-full border border-green-500/30 bg-green-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-green-400">
-                              Linked
-                            </span>
-                          ) : (
-                            <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">
-                              Not linked
-                            </span>
-                          )}
-                        </div>
+                        Social Import
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProfileSetupMethod('manual')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          profileSetupMethod === 'manual' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
+                        }`}
+                      >
+                        Manual Setup
+                      </button>
+                    </div>
 
-                        {integration.connected ? (
-                          <button
-                            onClick={() => handleDisconnect(integration.id)}
-                            disabled={disconnectingProvider === integration.id}
-                            className="w-full rounded-xl border border-red-500/20 bg-red-500/5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-60"
-                          >
-                            {disconnectingProvider === integration.id ? 'Disconnecting...' : 'Disconnect'}
-                          </button>
+                    {profileSetupMethod === 'social' ? (
+                      <div className="space-y-4">
+                        <p className="text-xs text-slate-400">
+                          Connect LinkedIn, Upwork, and Fiverr to extract profile details for AI refinement.
+                        </p>
+                        {loadingIntegrations ? (
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((item) => (
+                              <div key={item} className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" />
+                            ))}
+                          </div>
                         ) : (
-                          <button
-                            onClick={() => handleConnect(integration.id)}
-                            disabled={connectingProvider === integration.id}
-                            className="w-full rounded-xl bg-white/5 border border-white/10 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-[#1ECEFA] hover:text-black transition-all disabled:opacity-60"
-                          >
-                            {connectingProvider === integration.id ? 'Connecting...' : 'Connect'}
-                          </button>
+                          renderProviderCards(PROFILE_PROVIDER_IDS)
+                        )}
+                        <div className="flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/10 p-3">
+                          <Shield className="mt-0.5 h-4 w-4 text-blue-300" />
+                          <p className="text-xs text-blue-200">
+                            Data is read-only and used only to generate your draft portfolio.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Full Name</label>
+                            <input
+                              value={manualFullName}
+                              onChange={(event) => setManualFullName(event.target.value)}
+                              placeholder="Jane Doe"
+                              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Professional Title</label>
+                            <input
+                              value={manualProfessionalTitle}
+                              onChange={(event) => setManualProfessionalTitle(event.target.value)}
+                              placeholder="Product Designer"
+                              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="text-xs font-semibold text-slate-300">Bio / About</label>
+                            <button
+                              type="button"
+                              onClick={() => setManualBio((current) => aiRewrite(current, persona))}
+                              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-200"
+                            >
+                              <Sparkles className="h-3.5 w-3.5" />
+                              AI Rewrite
+                            </button>
+                          </div>
+                          <textarea
+                            value={manualBio}
+                            onChange={(event) => setManualBio(event.target.value)}
+                            rows={4}
+                            placeholder="Short professional summary..."
+                            className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                          />
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Skills (comma or new line)</label>
+                            <textarea
+                              value={manualSkills}
+                              onChange={(event) => setManualSkills(event.target.value)}
+                              rows={3}
+                              placeholder="React, TypeScript, UX Research"
+                              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-300">Contact Email</label>
+                            <input
+                              type="email"
+                              value={manualContactEmail}
+                              onChange={(event) => setManualContactEmail(event.target.value)}
+                              placeholder="you@example.com"
+                              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                            />
+                            <label className="mt-2 block text-xs font-semibold text-slate-300">Profile Picture</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleProfileImageUpload}
+                              className="w-full text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-100"
+                            />
+                          </div>
+                        </div>
+                        {manualProfileImageUrl && (
+                          <img
+                            src={manualProfileImageUrl}
+                            alt="Profile preview"
+                            className="h-24 w-24 rounded-xl border border-white/10 object-cover"
+                          />
                         )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    )}
 
-              <div className="space-y-6 rounded-3xl border border-white/10 bg-black/20 p-8">
-                <div className="space-y-1">
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">Manual Fallback Data</h3>
-                  <p className="text-xs text-slate-500">If you skip an account, add equivalent context below so AI can still build a strong draft.</p>
-                </div>
-
-                <div className="grid gap-6 sm:grid-cols-2">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">LinkedIn Headline</label>
-                      <input
-                        value={manualLinkedinHeadline}
-                        onChange={(e) => setManualLinkedinHeadline(e.target.value)}
-                        placeholder="Senior Product Designer"
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
-                      />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Personal Site URL (optional)</label>
+                        <input
+                          value={personalSiteUrl}
+                          onChange={(event) => setPersonalSiteUrl(event.target.value)}
+                          placeholder="https://yourportfolio.com"
+                          className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Location Hint (optional)</label>
+                        <input
+                          value={locationHint}
+                          onChange={(event) => setLocationHint(event.target.value)}
+                          placeholder="San Francisco, CA"
+                          className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">LinkedIn Summary</label>
-                      <textarea
-                        value={manualLinkedinSummary}
-                        onChange={(e) => setManualLinkedinSummary(e.target.value)}
-                        rows={4}
-                        placeholder="Experienced in building user-first digital products..."
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
-                      />
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={saveDraftNow}
+                        className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                      >
+                        Save & Continue Later
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep(1);
+                          setBuilderStage('projects');
+                        }}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black"
+                      >
+                        Continue to Projects
+                        <ArrowUpRight className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Upwork Title</label>
-                      <input
-                        value={manualUpworkTitle}
-                        onChange={(e) => setManualUpworkTitle(e.target.value)}
-                        placeholder="Full-Stack Developer | React + Node"
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
-                      />
+                )}
+
+                {step === 1 && builderStage === 'projects' && (
+                  <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">Step 2</p>
+                      <h2 className="text-xl font-semibold text-white">Project Import or Upload</h2>
+                      <p className="text-sm text-slate-400">
+                        Connect project platforms or manually add case studies and project assets.
+                      </p>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Upwork Overview</label>
-                      <textarea
-                        value={manualUpworkOverview}
-                        onChange={(e) => setManualUpworkOverview(e.target.value)}
-                        rows={3}
-                        placeholder="I build high-performing web apps with strong API architecture..."
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
-                      />
+
+                    <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setProjectSetupMethod('social')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          projectSetupMethod === 'social' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
+                        }`}
+                      >
+                        Social Import
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProjectSetupMethod('manual')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          projectSetupMethod === 'manual' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
+                        }`}
+                      >
+                        Manual Upload
+                      </button>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Core Skills (comma/new line)</label>
-                      <textarea
-                        value={manualSkills}
-                        onChange={(e) => setManualSkills(e.target.value)}
-                        rows={2}
-                        placeholder="React, TypeScript, PostgreSQL, AWS"
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
-                      />
+
+                    {projectSetupMethod === 'social' ? (
+                      <div className="space-y-3">
+                        <p className="text-xs text-slate-400">Connect Behance, Dribbble, and Figma for project extraction.</p>
+                        {loadingIntegrations ? (
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {[1, 2, 3].map((item) => (
+                              <div key={item} className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" />
+                            ))}
+                          </div>
+                        ) : (
+                          renderProviderCards(PROJECT_PROVIDER_IDS)
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {manualProjects.map((project, index) => (
+                          <div key={project.id} className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Project {index + 1}</p>
+                              <button
+                                type="button"
+                                onClick={() => removeManualProject(project.id)}
+                                className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-red-300"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input
+                                value={project.title}
+                                onChange={(event) => updateManualProject(project.id, { title: event.target.value })}
+                                placeholder="Project title"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                              <input
+                                value={project.tools}
+                                onChange={(event) => updateManualProject(project.id, { tools: event.target.value })}
+                                placeholder="Tools used"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <label className="text-xs font-semibold text-slate-300">Description</label>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateManualProject(project.id, {
+                                      description: aiRewrite(project.description, persona),
+                                    })
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-200"
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                  AI Rewrite
+                                </button>
+                              </div>
+                              <textarea
+                                value={project.description}
+                                onChange={(event) =>
+                                  updateManualProject(project.id, { description: event.target.value })
+                                }
+                                rows={3}
+                                placeholder="Describe the problem, your approach, and outcomes."
+                                className="w-full rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <label className="text-xs font-semibold text-slate-300">Case Study</label>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateManualProject(project.id, { caseStudy: aiRewrite(project.caseStudy, persona) })
+                                  }
+                                  className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-200"
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                  AI Rewrite
+                                </button>
+                              </div>
+                              <textarea
+                                value={project.caseStudy}
+                                onChange={(event) => updateManualProject(project.id, { caseStudy: event.target.value })}
+                                rows={3}
+                                placeholder="Add your case-study narrative."
+                                className="w-full rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input
+                                value={project.link}
+                                onChange={(event) => updateManualProject(project.id, { link: event.target.value })}
+                                placeholder="Project link"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) => void handleProjectImageUpload(project.id, event)}
+                                className="w-full text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-100"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setManualProjects((prev) => [...prev, DEFAULT_MANUAL_PROJECT()])}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Project
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setStep(0)}
+                        className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBuilderStage('certifications')}
+                        className="rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black"
+                      >
+                        Continue to Certifications
+                      </button>
                     </div>
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Import Sources</p>
+                  </div>
+                )}
+
+                {step === 1 && builderStage === 'certifications' && (
+                  <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">Step 3</p>
+                      <h2 className="text-xl font-semibold text-white">Badges & Certifications</h2>
+                      <p className="text-sm text-slate-400">
+                        Connect Udemy/Coursera or add certificates manually.
+                      </p>
+                    </div>
+
+                    <div className="inline-flex rounded-xl border border-white/10 bg-black/20 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setCertificationSetupMethod('social')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          certificationSetupMethod === 'social' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
+                        }`}
+                      >
+                        Social Import
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCertificationSetupMethod('manual')}
+                        className={`rounded-lg px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${
+                          certificationSetupMethod === 'manual' ? 'bg-[#1ECEFA] text-black' : 'text-slate-300'
+                        }`}
+                      >
+                        Manual Upload
+                      </button>
+                    </div>
+
+                    {certificationSetupMethod === 'social' ? (
+                      <div className="space-y-3">
+                        <p className="text-xs text-slate-400">Connect Udemy and Coursera to import certificates.</p>
+                        {loadingIntegrations ? (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {[1, 2].map((item) => (
+                              <div key={item} className="h-28 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" />
+                            ))}
+                          </div>
+                        ) : (
+                          renderProviderCards(CERT_PROVIDER_IDS)
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {manualCertifications.map((certification, index) => (
+                          <div key={certification.id} className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
+                                Certificate {index + 1}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => removeManualCertification(certification.id)}
+                                className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-red-300"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input
+                                value={certification.title}
+                                onChange={(event) =>
+                                  updateManualCertification(certification.id, { title: event.target.value })
+                                }
+                                placeholder="Certificate title"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                              <input
+                                value={certification.issuer}
+                                onChange={(event) =>
+                                  updateManualCertification(certification.id, { issuer: event.target.value })
+                                }
+                                placeholder="Issuer"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                            </div>
+                            <div className="grid gap-3 md:grid-cols-2">
+                              <input
+                                value={certification.date}
+                                onChange={(event) =>
+                                  updateManualCertification(certification.id, { date: event.target.value })
+                                }
+                                placeholder="Completion date"
+                                className="rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                              />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(event) => void handleCertificationImageUpload(certification.id, event)}
+                                className="w-full text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-100"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setManualCertifications((prev) => [...prev, DEFAULT_MANUAL_CERTIFICATION()])
+                          }
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Add Certificate
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setBuilderStage('projects')}
+                        className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBuilderStage('optimize')}
+                        className="rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black"
+                      >
+                        Continue to AI Optimization
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {step === 1 && builderStage === 'optimize' && (
+                  <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+                    <div className="space-y-1">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">Step 4</p>
+                      <h2 className="text-xl font-semibold text-white">AI Optimization Layer</h2>
+                      <p className="text-sm text-slate-400">
+                        AI improves wording, removes redundancy, and aligns tone with your target role before build.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Career Persona</p>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {PERSONA_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setPersona(option.value)}
+                            className={`rounded-xl border p-3 text-left transition ${
+                              persona === option.value
+                                ? 'border-[#1ECEFA]/60 bg-[#1ECEFA]/10'
+                                : 'border-white/10 bg-black/30'
+                            }`}
+                          >
+                            <div className="mb-2 flex items-center gap-2">
+                              <User className="h-4 w-4 text-slate-300" />
+                              <p className="text-sm font-semibold text-white">{option.label}</p>
+                            </div>
+                            <p className="text-xs text-slate-400">{option.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Suggested Headline</p>
+                        <button
+                          type="button"
+                          onClick={() => setManualProfessionalTitle(aiHeadlineSuggestion)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-200"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          Use Suggestion
+                        </button>
+                      </div>
+                      <p className="text-sm text-white">{aiHeadlineSuggestion}</p>
+                    </div>
+
+                    <div className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Suggested Skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {aiSuggestedSkills.length > 0 ? (
+                          aiSuggestedSkills.map((skill) => (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={() => {
+                                const next = new Set(manualSkillList);
+                                next.add(skill);
+                                setManualSkills(Array.from(next).join(', '));
+                              }}
+                              className="rounded-lg border border-[#1ECEFA]/40 bg-[#1ECEFA]/10 px-2 py-1 text-[11px] font-semibold text-[#9DEFFE]"
+                            >
+                              + {skill}
+                            </button>
+                          ))
+                        ) : (
+                          <p className="text-xs text-slate-500">No additional suggestions. Your skills list looks complete.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-xl border border-white/10 bg-black/25 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Data Sources Used for Build</p>
                       <div className="flex flex-wrap gap-2">
                         {importProviders.length > 0 ? (
                           importProviders.map((provider) => (
-                            <span key={provider} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 px-2.5 py-1 text-[9px] font-black text-[#1ECEFA] uppercase tracking-widest">
+                            <span
+                              key={provider}
+                              className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-slate-200"
+                            >
                               <img
                                 src={PROVIDER_META[provider].logoUrl}
                                 alt={`${PROVIDER_META[provider].label} logo`}
-                                className="h-3.5 w-3.5 object-contain"
+                                className="h-4 w-4 object-contain"
                                 loading="lazy"
                               />
                               {PROVIDER_META[provider].label}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-slate-700 italic">No sources selected yet.</span>
+                          <p className="text-xs text-slate-500">No import sources selected yet.</p>
                         )}
                       </div>
                     </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setBuilderStage('certifications')}
+                        className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                      >
+                        Back
+                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={saveDraftNow}
+                          className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
+                        >
+                          Save & Continue Later
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startImport}
+                          disabled={startingImport}
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black disabled:opacity-60"
+                        >
+                          {startingImport ? 'Starting AI...' : 'Generate AI Draft'}
+                          <Zap className="h-4 w-4 fill-current" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              <div className="flex justify-center gap-4">
-                <button 
-                  onClick={() => setStep(0)} 
-                  className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  Back
-                </button>
-                <button 
-                  onClick={startImport} 
-                  disabled={startingImport}
-                  className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:shadow-md active:scale-95 disabled:opacity-60"
-                >
-                  {startingImport ? 'Starting AI Draft...' : 'Start AI Draft'} <Zap className="h-5 w-5 fill-current" />
-                </button>
-              </div>
+              <aside className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Real-time Preview</p>
+                <div className="space-y-4 rounded-xl border border-white/10 bg-black/25 p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      {manualProfileImageUrl ? (
+                        <img
+                          src={manualProfileImageUrl}
+                          alt="Profile"
+                          className="h-12 w-12 rounded-lg border border-white/10 object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+                          <User className="h-5 w-5 text-slate-400" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-semibold text-white">{previewName}</p>
+                        <p className="text-xs text-slate-400">{previewTitle}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs leading-relaxed text-slate-300">{previewBio}</p>
+                    {(manualContactEmail || personalSiteUrl) && (
+                      <p className="text-xs text-slate-400">
+                        Contact: {manualContactEmail || personalSiteUrl}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Skills</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {manualSkillList.length > 0 ? (
+                        manualSkillList.slice(0, 10).map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded-md border border-white/15 bg-white/5 px-2 py-1 text-[11px] text-slate-200"
+                          >
+                            {skill}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-500">Skills will appear here.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Projects</p>
+                    <div className="space-y-2">
+                      {previewProjects.length > 0 ? (
+                        previewProjects.map((project, index) => (
+                          <div key={`${project.title}-${index}`} className="rounded-lg border border-white/10 bg-black/35 p-2">
+                            <p className="text-xs font-semibold text-white">{project.title}</p>
+                            <p className="mt-1 text-[11px] text-slate-400">{project.description}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-500">Projects will appear here.</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Certifications</p>
+                    <div className="space-y-1">
+                      {previewCertifications.length > 0 ? (
+                        previewCertifications.map((certification) => (
+                          <p key={certification} className="text-xs text-slate-300">
+                            {certification}
+                          </p>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-500">Certifications will appear here.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Preview-before-publish is enabled. Final editing happens in the draft editor after AI generation.
+                </p>
+              </aside>
             </div>
           )}
 
           {step === 2 && (
-            <div className="flex flex-col items-center justify-center space-y-12 animate-in fade-in zoom-in-95 duration-700 py-20">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8">
               {aiFailed ? (
-                <>
-                  <div className="h-28 w-28 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
-                    <Bot className="h-12 w-12" />
+                <div className="space-y-6 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-red-500/30 bg-red-500/10 text-red-300">
+                    <Bot className="h-7 w-7" />
                   </div>
-                  <div className="space-y-4 text-center max-w-md">
-                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">AI Draft Failed</h2>
-                    <p className="text-sm text-slate-400 leading-relaxed">
-                      {status?.message ?? 'We could not complete the draft. Reconnect providers or add fallback details, then retry.'}
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-white">AI Draft Failed</h3>
+                    <p className="mx-auto max-w-xl text-sm text-slate-400">
+                      {status?.message ?? 'We could not complete this run. Reconnect providers or update manual fields and retry.'}
                     </p>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-4">
+                  <div className="flex flex-wrap items-center justify-center gap-3">
                     <button
-                      onClick={() => setStep(1)}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                      type="button"
+                      onClick={() => {
+                        setStep(1);
+                        setBuilderStage('optimize');
+                      }}
+                      className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
                     >
-                      Back to Accounts
+                      Back to Optimization
                     </button>
                     <button
+                      type="button"
                       onClick={startImport}
                       disabled={startingImport}
-                      className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black disabled:opacity-60"
                     >
-                      {startingImport ? 'Retrying...' : 'Retry AI Draft'} <Zap className="h-5 w-5 fill-current" />
+                      {startingImport ? 'Retrying...' : 'Retry'}
+                      <Zap className="h-4 w-4 fill-current" />
                     </button>
                   </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="relative">
-                    <div className="h-40 w-40 rounded-full border-4 border-white/5 border-t-[#1ECEFA] animate-spin" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-24 w-24 rounded-full bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 flex items-center justify-center animate-pulse">
-                        <Bot className="h-10 w-10 text-[#1ECEFA]" />
-                      </div>
-                    </div>
+                <div className="space-y-6 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 text-[#1ECEFA]">
+                    <Bot className="h-7 w-7" />
                   </div>
-
-                  <div className="space-y-4 text-center max-w-md">
-                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">Generating Your AI Draft</h2>
-                    <div className="space-y-2">
-                      <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                        <div
-                          className="h-full bg-[#1ECEFA] transition-all duration-1000 shadow-sm"
-                          style={{ width: `${status?.progressPct ?? 10}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em]">
-                        <span className="text-slate-600">Progress</span>
-                        <span className="text-[#1ECEFA]">{status?.progressPct ?? 10}%</span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-slate-500 leading-relaxed italic">"{status?.message ?? 'Analyzing connected accounts and building a polished first draft...'}"</p>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">Generating Portfolio Draft</h3>
+                    <p className="mt-2 text-sm text-slate-400">
+                      {status?.message ?? 'Analyzing sources and preparing a polished structure.'}
+                    </p>
                   </div>
-                </>
+                  <div className="mx-auto w-full max-w-xl space-y-2">
+                    <div className="h-2 w-full rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-[#1ECEFA] transition-all duration-500"
+                        style={{ width: `${status?.progressPct ?? 10}%` }}
+                      />
+                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+                      {status?.progressPct ?? 10}% complete
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Review AI Merge</h2>
-                <p className="text-sm text-slate-400">If sources disagree, confirm the best value before launch.</p>
+            <div className="space-y-6 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#1ECEFA]">Review</p>
+                <h3 className="text-xl font-semibold text-white">Resolve Import Conflicts</h3>
+                <p className="text-sm text-slate-400">Confirm values where imported sources disagree.</p>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl">
-                {conflicts.length === 0 ? (
-                  <div className="text-center py-10 space-y-4">
-                    <div className="mx-auto h-16 w-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
-                      <Check className="h-8 w-8" />
-                    </div>
-                    <p className="text-sm text-slate-400">No conflicts found. AI merged all sources cleanly.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {conflicts.map((conflict) => (
-                      <div key={conflict.field} className="group rounded-2xl border border-white/5 bg-white/2 p-6 transition-all hover:border-white/10 hover:bg-white/5">
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Conflict: {conflict.field}</p>
-                          <span className="rounded-lg bg-blue-500/10 border border-blue-500/20 px-2 py-1 text-[9px] font-black text-blue-400 uppercase tracking-widest">AI Recommended</span>
-                        </div>
-                        <div className="space-y-4">
-                          <input
-                            value={overrides[conflict.field] ?? ''}
-                            onChange={(e) => setOverrides((prev) => ({ ...prev, [conflict.field]: e.target.value }))}
-                            className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
-                          />
-                          <p className="text-[10px] text-slate-600 italic px-2">Source: {providerLabel(conflict.recommendedProvider)}</p>
-                        </div>
+              {conflicts.length === 0 ? (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
+                  No conflicts found. You can finalize the draft.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {conflicts.map((conflict) => (
+                    <div key={conflict.field} className="space-y-2 rounded-xl border border-white/10 bg-black/25 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">{conflict.field}</p>
+                        <span className="rounded-md border border-[#1ECEFA]/40 bg-[#1ECEFA]/10 px-2 py-1 text-[10px] font-semibold text-[#A8F3FF]">
+                          Suggested: {providerLabel(conflict.recommendedProvider)}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      <input
+                        value={overrides[conflict.field] ?? ''}
+                        onChange={(event) =>
+                          setOverrides((prev) => ({ ...prev, [conflict.field]: event.target.value }))
+                        }
+                        className="w-full rounded-xl border border-white/10 bg-black/35 px-3 py-2 text-sm text-white outline-none transition focus:border-[#1ECEFA]/60"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <div className="flex justify-center gap-4">
-                <button 
-                  onClick={() => setStep(1)} 
-                  className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(1);
+                    setBuilderStage('optimize');
+                  }}
+                  className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.16em] text-slate-200"
                 >
                   Back
                 </button>
                 <button
+                  type="button"
                   onClick={confirmImport}
                   disabled={confirming}
-                  className="flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black disabled:opacity-60"
                 >
-                  {confirming ? 'Finalizing Draft...' : 'Finalize Draft'} <Check className="h-5 w-5" />
+                  {confirming ? 'Finalizing...' : 'Finalize Draft'}
+                  <Check className="h-4 w-4" />
                 </button>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="flex flex-col items-center justify-center text-center space-y-10 animate-in fade-in zoom-in-95 duration-700 py-20">
-              <div className="relative">
-                <div className="h-32 w-32 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                  <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm">
-                    <Check className="h-10 w-10" strokeWidth={3} />
-                  </div>
-                </div>
-                {/* Particles/Glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-full bg-green-500/20 blur-[60px] rounded-full -z-10" />
+            <div className="space-y-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-8 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/40 bg-emerald-400/20 text-emerald-100">
+                <Check className="h-8 w-8" />
               </div>
-              
-              <div className="space-y-4 max-w-md">
-                <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Draft Ready</h2>
-                <p className="text-sm text-slate-500 leading-relaxed">Your portfolio draft is ready. Open the editor to fine-tune sections before publishing.</p>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-semibold text-white">Draft Ready</h3>
+                <p className="text-sm text-emerald-100/90">
+                  Your portfolio draft is ready for final edits and publishing.
+                </p>
               </div>
-
-              <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-sm">
+              <div className="flex flex-wrap items-center justify-center gap-3">
                 {status?.draftAssetId && (
                   <button
+                    type="button"
                     onClick={() => router.push(`/portfolios/${status.draftAssetId}/edit`)}
-                    className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-black"
                   >
-                    Open Editor <ArrowUpRight className="h-5 w-5" />
+                    Open Editor
+                    <ArrowUpRight className="h-4 w-4" />
                   </button>
                 )}
-                <button 
-                  onClick={() => router.push('/dashboard')} 
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+                <button
+                  type="button"
+                  onClick={() => router.push('/portfolios')}
+                  className="rounded-xl border border-white/20 bg-white/10 px-5 py-2 text-xs font-black uppercase tracking-[0.16em] text-white"
                 >
-                  Dashboard
+                  Back to Portfolios
                 </button>
               </div>
             </div>
           )}
-        </div>
 
-        {statusError && (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-center animate-in shake duration-500">
-            <p className="text-xs font-black uppercase tracking-widest text-red-500">{statusError}</p>
-          </div>
-        )}
-        {statusNote && !statusError && (
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
-            <p className="text-xs font-black uppercase tracking-widest text-emerald-400">{statusNote}</p>
-          </div>
-        )}
-      </div>
-    </FeaturePage>
+          {statusError && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3">
+              <p className="text-xs font-semibold text-red-300">{statusError}</p>
+            </div>
+          )}
+          {statusNote && !statusError && (
+            <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3">
+              <p className="text-xs font-semibold text-emerald-200">{statusNote}</p>
+            </div>
+          )}
+        </div>
+      </FeaturePage>
     </AuthGuard>
   );
 }
-

@@ -1,4 +1,5 @@
 import {
+  PublicProfileCertificationItem,
   PublicProfileExperienceItem,
   PublicProfilePayload,
   PublicProfileProjectItem,
@@ -146,10 +147,38 @@ function coerceProjects(value: unknown): PublicProfileProjectItem[] {
     const description = asString(row.description) || asString(row.summary);
     const rawUrl = asString(row.url) || asString(row.href);
     const url = rawUrl ? normalizeUrl(rawUrl) ?? undefined : undefined;
+    const imageUrl = normalizeUrl(asString(row.imageUrl) || asString(row.image)) ?? undefined;
+    const tags = asStringArray(row.tags).slice(0, 8);
+    const caseStudy = asString(row.caseStudy) || asString(row.impact);
     items.push({
       title,
       ...(description ? { description } : {}),
       ...(url ? { url } : {}),
+      ...(imageUrl ? { imageUrl } : {}),
+      ...(tags.length > 0 ? { tags } : {}),
+      ...(caseStudy ? { caseStudy } : {}),
+    });
+  }
+
+  return items;
+}
+
+function coerceCertifications(value: unknown): PublicProfileCertificationItem[] {
+  if (!Array.isArray(value)) return [];
+
+  const items: PublicProfileCertificationItem[] = [];
+  for (const raw of value) {
+    const row = asRecord(raw);
+    const title = asString(row.title) || asString(row.name);
+    if (!title) continue;
+    const issuer = asString(row.issuer);
+    const date = asString(row.date) || asString(row.completedAt);
+    const imageUrl = normalizeUrl(asString(row.imageUrl) || asString(row.image)) ?? undefined;
+    items.push({
+      title,
+      ...(issuer ? { issuer } : {}),
+      ...(date ? { date } : {}),
+      ...(imageUrl ? { imageUrl } : {}),
     });
   }
 
@@ -250,6 +279,7 @@ export function mapAssetToPublicProfile(input: {
   const about = asRecord(content.about);
   const experience = asRecord(content.experience);
   const projects = asRecord(content.projects);
+  const certifications = asRecord(content.certifications);
   const skills = asRecord(content.skills);
   const contact = asRecord(content.contact);
 
@@ -258,6 +288,9 @@ export function mapAssetToPublicProfile(input: {
   let aboutBody = asString(about.body);
   let experienceItems = coerceExperience(experience.items ?? content.experience);
   let projectItems = coerceProjects(projects.items ?? content.projects);
+  let certificationItems = coerceCertifications(
+    certifications.items ?? content.certifications,
+  );
   let skillItems = asStringArray(skills.items ?? content.skills);
   let contactBody = asString(contact.body);
   let links = coerceLinks(content.links);
@@ -276,6 +309,9 @@ export function mapAssetToPublicProfile(input: {
     }
     if (type === 'projects' && projectItems.length === 0) {
       projectItems = coerceProjects(text);
+    }
+    if ((type === 'certifications' || type === 'badges') && certificationItems.length === 0) {
+      certificationItems = coerceCertifications(section.items ?? section.content);
     }
     if (type === 'skills' && skillItems.length === 0) {
       skillItems = asStringArray(text);
@@ -339,6 +375,7 @@ export function mapAssetToPublicProfile(input: {
       about: aboutBody,
       experience: experienceItems,
       projects: projectItems,
+      certifications: certificationItems,
       skills: skillItems,
       links,
       contact: contactBody,

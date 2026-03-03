@@ -19,6 +19,7 @@ const ALLOWED_PROVIDERS = new Set<ImportProvider>([
   'dribbble',
   'figma',
   'coursera',
+  'udemy',
 ]);
 
 @Injectable()

@@ -28,6 +28,16 @@ export interface PublicProfileProjectItem {
   title: string;
   description?: string;
   url?: string;
+  imageUrl?: string;
+  tags?: string[];
+  caseStudy?: string;
+}
+
+export interface PublicProfileCertificationItem {
+  title: string;
+  issuer?: string;
+  date?: string;
+  imageUrl?: string;
 }
 
 export interface PublicProfileSections {
@@ -38,6 +48,7 @@ export interface PublicProfileSections {
   about: string;
   experience: PublicProfileExperienceItem[];
   projects: PublicProfileProjectItem[];
+  certifications: PublicProfileCertificationItem[];
   skills: string[];
   links: SmartLink[];
   contact: string;

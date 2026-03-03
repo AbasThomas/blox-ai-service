@@ -102,6 +102,10 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
   const sameAsLinks = profile.sections.links
     .map((link) => absoluteUrl(link.url))
     .filter((url): url is string => !!url && url.startsWith('http'));
+  const contactLink =
+    profile.sections.links.find(
+      (link) => link.kind === 'contact' || link.url.startsWith('mailto:') || link.url.startsWith('tel:'),
+    ) ?? profile.sections.links[0];
 
   // Person + ProfilePage schema
   const profileJsonLd = {
@@ -170,6 +174,18 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
         </p>
         <h1 className="text-4xl font-black text-slate-900">{profile.sections.hero.heading}</h1>
         <p className="max-w-3xl text-base text-slate-600">{profile.sections.hero.body}</p>
+        {contactLink ? (
+          <div className="pt-2">
+            <a
+              href={contactLink.url}
+              className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white transition hover:bg-slate-700"
+              target={contactLink.url.startsWith('http') ? '_blank' : undefined}
+              rel={contactLink.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+            >
+              Contact
+            </a>
+          </div>
+        ) : null}
       </header>
 
       {profile.sections.links.length > 0 ? (
@@ -217,25 +233,84 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
         {profile.sections.projects.length > 0 ? (
           <section aria-labelledby="projects-heading" className="space-y-3">
             <h2 id="projects-heading" className="text-xl font-bold text-slate-900">Projects</h2>
-            <ul className="space-y-3">
+            <ul className="grid gap-4 sm:grid-cols-2">
               {profile.sections.projects.map((project, index) => (
-                <li key={`${project.title}-${index}`} className="rounded-lg border border-slate-200 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">{project.title}</h3>
-                  {project.description ? (
-                    <p className="mt-2 text-sm text-slate-700">{project.description}</p>
+                <li key={`${project.title}-${index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                  {project.imageUrl ? (
+                    <img
+                      src={project.imageUrl}
+                      alt={`${project.title} preview`}
+                      className="h-36 w-full object-cover"
+                      loading="lazy"
+                    />
                   ) : null}
-                  {project.url ? (
-                    <p className="mt-2">
-                      <a
-                        href={project.url}
-                        className="text-xs font-semibold text-blue-700 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View project
-                      </a>
-                    </p>
-                  ) : null}
+                  <div className="space-y-2 p-4">
+                    <h3 className="text-sm font-semibold text-slate-900">{project.title}</h3>
+                    {Array.isArray(project.tags) && project.tags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {project.tags.slice(0, 6).map((tag) => (
+                          <span
+                            key={`${project.title}-${tag}`}
+                            className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    {project.description ? (
+                      <p className="mt-2 text-sm text-slate-700">{project.description}</p>
+                    ) : null}
+                    {project.caseStudy ? (
+                      <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
+                          View Case Study
+                        </summary>
+                        <p className="mt-2 text-sm text-slate-700">{project.caseStudy}</p>
+                      </details>
+                    ) : null}
+                    {project.url ? (
+                      <p className="mt-2">
+                        <a
+                          href={project.url}
+                          className="text-xs font-semibold text-blue-700 hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          View project
+                        </a>
+                      </p>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {profile.sections.certifications.length > 0 ? (
+          <section aria-labelledby="certifications-heading" className="space-y-3">
+            <h2 id="certifications-heading" className="text-xl font-bold text-slate-900">
+              Certifications &amp; Badges
+            </h2>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {profile.sections.certifications.map((item, index) => (
+                <li key={`${item.title}-${index}`} className="rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-start gap-3">
+                    {item.imageUrl ? (
+                      <img
+                        src={item.imageUrl}
+                        alt={`${item.title} certificate`}
+                        className="h-14 w-14 rounded-md object-cover"
+                        loading="lazy"
+                      />
+                    ) : null}
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+                      {item.issuer ? <p className="text-xs text-slate-500">{item.issuer}</p> : null}
+                      {item.date ? <p className="text-xs text-slate-500">{item.date}</p> : null}
+                    </div>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -259,10 +334,28 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
         ) : null}
       </main>
 
-      {profile.sections.contact ? (
+      {profile.sections.contact || profile.sections.links.length > 0 ? (
         <footer className="border-t border-slate-100 pt-6">
           <h2 className="text-base font-bold text-slate-900">Contact</h2>
-          <p className="mt-2 text-sm text-slate-700">{profile.sections.contact}</p>
+          {profile.sections.contact ? (
+            <p className="mt-2 text-sm text-slate-700">{profile.sections.contact}</p>
+          ) : null}
+          {profile.sections.links.length > 0 ? (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {profile.sections.links.map((link) => (
+                <li key={`contact-${link.url}`}>
+                  <a
+                    href={link.url}
+                    className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400"
+                    target={link.url.startsWith('http') ? '_blank' : undefined}
+                    rel={link.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </footer>
       ) : null}
     </article>

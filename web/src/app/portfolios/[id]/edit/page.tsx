@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi, scannerApi } from '@/lib/api';
 
-type SectionKey = 'hero' | 'about' | 'experience' | 'projects' | 'skills' | 'contact';
+type SectionKey = 'hero' | 'about' | 'experience' | 'projects' | 'skills' | 'certifications' | 'contact';
 
 interface SectionData {
   heading?: string;
@@ -21,6 +21,7 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   experience: 'Experience',
   projects: 'Projects',
   skills: 'Skills',
+  certifications: 'Certifications',
   contact: 'Contact',
 };
 
@@ -30,6 +31,7 @@ const DEFAULT_CONTENT: ContentMap = {
   experience: { items: [] },
   projects: { items: [] },
   skills: { items: [] },
+  certifications: { items: [] },
   contact: { body: '' },
 };
 
@@ -204,12 +206,13 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
               </div>
             )}
 
-            {(activeSection === 'experience' || activeSection === 'projects' || activeSection === 'skills') && (
+            {(activeSection === 'experience' || activeSection === 'projects' || activeSection === 'skills' || activeSection === 'certifications') && (
               <div className="space-y-2">
                 {(content[activeSection].items ?? []).map((item, i) => (
                   <div key={i} className="flex gap-2">
                     <textarea rows={2} value={item} onChange={(e) => updateItem(activeSection, i, e.target.value)}
                       placeholder={activeSection === 'skills' ? 'Skill (e.g. React, Python)' :
+                        activeSection === 'certifications' ? 'Certificate, issuer, date' :
                         activeSection === 'projects' ? 'Project name, description, URL' :
                         'Role at Company (Dates) — achievements'}
                       className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
@@ -219,7 +222,7 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
                 ))}
                 <button onClick={() => addItem(activeSection)}
                   className="rounded-md border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500 hover:border-slate-400 w-full">
-                  + Add {activeSection === 'skills' ? 'skill' : activeSection === 'projects' ? 'project' : 'position'}
+                  + Add {activeSection === 'skills' ? 'skill' : activeSection === 'projects' ? 'project' : activeSection === 'certifications' ? 'certification' : 'position'}
                 </button>
               </div>
             )}
@@ -305,3 +308,4 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
     </FeaturePage>
   );
 }
+
