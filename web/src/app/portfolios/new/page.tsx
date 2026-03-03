@@ -278,7 +278,10 @@ export default function PortfolioNewPage() {
           router.replace('/login');
           return;
         }
-        window.location.href = `${process.env.NEXT_PUBLIC_APP_BASE_URL || ''}${res.authUrl}?token=${encodeURIComponent(token)}`;
+        const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || window.location.origin;
+        const authUrl = new URL(res.authUrl, baseUrl);
+        authUrl.searchParams.set('token', token);
+        window.location.href = authUrl.toString();
         return;
       }
 
@@ -336,6 +339,7 @@ export default function PortfolioNewPage() {
 
       setRunId(res.runId);
       setStatus(res);
+      setStatusNote('AI draft started. We are processing your connected sources.');
       setStep(2);
     } catch (error) {
       handleApiError(error, 'Failed to start import.');
@@ -487,68 +491,89 @@ export default function PortfolioNewPage() {
           {step === 1 && (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Connect Your Nodes</h2>
-                <p className="text-sm text-slate-400">Link your accounts to provide raw data for AI compilation.</p>
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Connect Your Accounts</h2>
+                <p className="text-sm text-slate-400">Use the exact provider links below. Connected accounts give AI the best draft quality.</p>
               </div>
 
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   <Shield className="h-5 w-5" />
                 </div>
-                <p className="text-xs text-blue-400/80 leading-relaxed">We only access public profile data to build your draft. No modify permissions are requested.</p>
+                <p className="text-xs text-blue-400/80 leading-relaxed">We only read profile data needed to build your portfolio draft. No posting or account modification.</p>
               </div>
 
               {loadingIntegrations ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {[1, 2, 3, 4, 5, 6].map((item) => (
-                    <div key={item} className="h-40 animate-pulse rounded-3xl bg-white/5 border border-white/5" />
+                    <div key={item} className="h-44 animate-pulse rounded-3xl bg-white/5 border border-white/5" />
                   ))}
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {integrations.map((integration) => (
-                    <div 
-                      key={integration.id} 
-                      className={`group relative rounded-3xl border p-6 transition-all duration-300 ${
-                        integration.connected 
-                          ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[inset_0_0_20px_rgba(30,206,250,0.05)]' 
-                          : 'border-white/10 bg-black/40 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-sm font-black text-white uppercase tracking-tight">{integration.name}</h3>
-                        {integration.connected && (
-                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500/20 text-green-400 border border-green-500/20">
-                            <Check className="h-3 w-3" />
+                  {integrations.map((integration) => {
+                    const meta = PROVIDER_META[integration.id];
+                    return (
+                      <div
+                        key={integration.id}
+                        className={`group relative rounded-3xl border p-6 transition-all duration-300 ${
+                          integration.connected
+                            ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[inset_0_0_20px_rgba(30,206,250,0.05)]'
+                            : 'border-white/10 bg-black/40 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="mb-5 flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/5">
+                              <img
+                                src={meta.logoUrl}
+                                alt={`${meta.label} logo`}
+                                className="h-5 w-5 object-contain"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-black text-white uppercase tracking-tight">{integration.name}</h3>
+                              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">{integration.category}</p>
+                            </div>
                           </div>
+                          {integration.connected ? (
+                            <span className="rounded-full border border-green-500/30 bg-green-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-green-400">
+                              Linked
+                            </span>
+                          ) : (
+                            <span className="rounded-full border border-white/20 bg-white/5 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                              Not linked
+                            </span>
+                          )}
+                        </div>
+
+                        {integration.connected ? (
+                          <button
+                            onClick={() => handleDisconnect(integration.id)}
+                            disabled={disconnectingProvider === integration.id}
+                            className="w-full rounded-xl border border-red-500/20 bg-red-500/5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-60"
+                          >
+                            {disconnectingProvider === integration.id ? 'Disconnecting...' : 'Disconnect'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleConnect(integration.id)}
+                            disabled={connectingProvider === integration.id}
+                            className="w-full rounded-xl bg-white/5 border border-white/10 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-[#1ECEFA] hover:text-black transition-all disabled:opacity-60"
+                          >
+                            {connectingProvider === integration.id ? 'Connecting...' : 'Connect'}
+                          </button>
                         )}
                       </div>
-                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6">{integration.category}</p>
-                      
-                      {integration.connected ? (
-                        <button
-                          onClick={() => handleDisconnect(integration.id)}
-                          className="w-full rounded-xl border border-red-500/20 bg-red-500/5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 hover:bg-red-500 hover:text-white transition-all"
-                        >
-                          DISCONNECT
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleConnect(integration.id)}
-                          className="w-full rounded-xl bg-white/5 border border-white/10 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white hover:bg-[#1ECEFA] hover:text-black transition-all"
-                        >
-                          CONNECT
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
-              <div className="space-y-6 rounded-3xl border border-white/5 bg-black/20 p-8">
+              <div className="space-y-6 rounded-3xl border border-white/10 bg-black/20 p-8">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">Manual Overrides</h3>
-                  <p className="text-xs text-slate-500">If you prefer not to connect an account, provide manual context here.</p>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tight">Manual Fallback Data</h3>
+                  <p className="text-xs text-slate-500">If you skip an account, add equivalent context below so AI can still build a strong draft.</p>
                 </div>
 
                 <div className="grid gap-6 sm:grid-cols-2">
@@ -558,41 +583,68 @@ export default function PortfolioNewPage() {
                       <input
                         value={manualLinkedinHeadline}
                         onChange={(e) => setManualLinkedinHeadline(e.target.value)}
-                        placeholder="Senior Systems Engineer"
+                        placeholder="Senior Product Designer"
                         className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Professional Summary</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">LinkedIn Summary</label>
                       <textarea
                         value={manualLinkedinSummary}
                         onChange={(e) => setManualLinkedinSummary(e.target.value)}
                         rows={4}
-                        placeholder="I specialize in architecting scalable distributed systems..."
+                        placeholder="Experienced in building user-first digital products..."
                         className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
                       />
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Core Skills (Comma separated)</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Upwork Title</label>
+                      <input
+                        value={manualUpworkTitle}
+                        onChange={(e) => setManualUpworkTitle(e.target.value)}
+                        placeholder="Full-Stack Developer | React + Node"
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Upwork Overview</label>
+                      <textarea
+                        value={manualUpworkOverview}
+                        onChange={(e) => setManualUpworkOverview(e.target.value)}
+                        rows={3}
+                        placeholder="I build high-performing web apps with strong API architecture..."
+                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Core Skills (comma/new line)</label>
                       <textarea
                         value={manualSkills}
                         onChange={(e) => setManualSkills(e.target.value)}
                         rows={2}
-                        placeholder="React, TypeScript, AWS, Kubernetes"
+                        placeholder="React, TypeScript, PostgreSQL, AWS"
                         className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all resize-none"
                       />
                     </div>
                     <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-3">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Import Nodes</p>
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Import Sources</p>
                       <div className="flex flex-wrap gap-2">
                         {importProviders.length > 0 ? (
-                          importProviders.map(p => (
-                            <span key={p} className="rounded-lg bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 px-2.5 py-1 text-[9px] font-black text-[#1ECEFA] uppercase tracking-widest">{p}</span>
+                          importProviders.map((provider) => (
+                            <span key={provider} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 px-2.5 py-1 text-[9px] font-black text-[#1ECEFA] uppercase tracking-widest">
+                              <img
+                                src={PROVIDER_META[provider].logoUrl}
+                                alt={`${PROVIDER_META[provider].label} logo`}
+                                className="h-3.5 w-3.5 object-contain"
+                                loading="lazy"
+                              />
+                              {PROVIDER_META[provider].label}
+                            </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-slate-700 italic">None selected</span>
+                          <span className="text-[10px] text-slate-700 italic">No sources selected yet.</span>
                         )}
                       </div>
                     </div>
@@ -609,9 +661,10 @@ export default function PortfolioNewPage() {
                 </button>
                 <button 
                   onClick={startImport} 
-                  className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95"
+                  disabled={startingImport}
+                  className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-60"
                 >
-                  Initialize AI Compilation <Zap className="h-5 w-5 fill-current" />
+                  {startingImport ? 'Starting AI Draft...' : 'Start AI Draft'} <Zap className="h-5 w-5 fill-current" />
                 </button>
               </div>
             </div>
@@ -619,39 +672,70 @@ export default function PortfolioNewPage() {
 
           {step === 2 && (
             <div className="flex flex-col items-center justify-center space-y-12 animate-in fade-in zoom-in-95 duration-700 py-20">
-              <div className="relative">
-                <div className="h-40 w-40 rounded-full border-4 border-white/5 border-t-[#1ECEFA] animate-spin" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-24 w-24 rounded-full bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 flex items-center justify-center animate-pulse">
-                    <Bot className="h-10 w-10 text-[#1ECEFA]" />
+              {aiFailed ? (
+                <>
+                  <div className="h-28 w-28 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+                    <Bot className="h-12 w-12" />
                   </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4 text-center max-w-md">
-                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Compiling Your Story</h2>
-                <div className="space-y-2">
-                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                    <div 
-                      className="h-full bg-[#1ECEFA] transition-all duration-1000 shadow-[0_0_15px_rgba(30,206,250,0.6)]" 
-                      style={{ width: `${status?.progressPct ?? 10}%` }}
-                    />
+                  <div className="space-y-4 text-center max-w-md">
+                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">AI Draft Failed</h2>
+                    <p className="text-sm text-slate-400 leading-relaxed">
+                      {status?.message ?? 'We could not complete the draft. Reconnect providers or add fallback details, then retry.'}
+                    </p>
                   </div>
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em]">
-                    <span className="text-slate-600">Progress</span>
-                    <span className="text-[#1ECEFA]">{status?.progressPct ?? 10}%</span>
+                  <div className="flex flex-wrap justify-center gap-4">
+                    <button
+                      onClick={() => setStep(1)}
+                      className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                    >
+                      Back to Accounts
+                    </button>
+                    <button
+                      onClick={startImport}
+                      disabled={startingImport}
+                      className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white disabled:opacity-60"
+                    >
+                      {startingImport ? 'Retrying...' : 'Retry AI Draft'} <Zap className="h-5 w-5 fill-current" />
+                    </button>
                   </div>
-                </div>
-                <p className="text-sm text-slate-500 leading-relaxed italic">"{status?.message ?? 'Synthesizing professional nodes and optimizing narrative...'}"</p>
-              </div>
+                </>
+              ) : (
+                <>
+                  <div className="relative">
+                    <div className="h-40 w-40 rounded-full border-4 border-white/5 border-t-[#1ECEFA] animate-spin" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-24 w-24 rounded-full bg-[#1ECEFA]/10 border border-[#1ECEFA]/20 flex items-center justify-center animate-pulse">
+                        <Bot className="h-10 w-10 text-[#1ECEFA]" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 text-center max-w-md">
+                    <h2 className="text-2xl font-black text-white tracking-tight uppercase">Generating Your AI Draft</h2>
+                    <div className="space-y-2">
+                      <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className="h-full bg-[#1ECEFA] transition-all duration-1000 shadow-[0_0_15px_rgba(30,206,250,0.6)]"
+                          style={{ width: `${status?.progressPct ?? 10}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em]">
+                        <span className="text-slate-600">Progress</span>
+                        <span className="text-[#1ECEFA]">{status?.progressPct ?? 10}%</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-slate-500 leading-relaxed italic">"{status?.message ?? 'Analyzing connected accounts and building a polished first draft...'}"</p>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
           {step === 3 && (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Review Conflicts</h2>
-                <p className="text-sm text-slate-400">Multiple sources provided different values. Review and finalize.</p>
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Review AI Merge</h2>
+                <p className="text-sm text-slate-400">If sources disagree, confirm the best value before launch.</p>
               </div>
 
               <div className="rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl">
@@ -660,7 +744,7 @@ export default function PortfolioNewPage() {
                     <div className="mx-auto h-16 w-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-400">
                       <Check className="h-8 w-8" />
                     </div>
-                    <p className="text-sm text-slate-400">No merge conflicts detected. AI has automatically optimized your data.</p>
+                    <p className="text-sm text-slate-400">No conflicts found. AI merged all sources cleanly.</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -676,7 +760,7 @@ export default function PortfolioNewPage() {
                             onChange={(e) => setOverrides((prev) => ({ ...prev, [conflict.field]: e.target.value }))}
                             className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none transition-all"
                           />
-                          <p className="text-[10px] text-slate-600 italic px-2">Source: {conflict.recommendedProvider}</p>
+                          <p className="text-[10px] text-slate-600 italic px-2">Source: {providerLabel(conflict.recommendedProvider)}</p>
                         </div>
                       </div>
                     ))}
@@ -696,7 +780,7 @@ export default function PortfolioNewPage() {
                   disabled={confirming}
                   className="flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-50"
                 >
-                  {confirming ? 'Finalizing Archive...' : 'Finalize Draft'} <Check className="h-5 w-5" />
+                  {confirming ? 'Finalizing Draft...' : 'Finalize Draft'} <Check className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -715,8 +799,8 @@ export default function PortfolioNewPage() {
               </div>
               
               <div className="space-y-4 max-w-md">
-                <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Compilation Successful</h2>
-                <p className="text-sm text-slate-500 leading-relaxed">Your professional archive has been generated. The draft is ready for fine-tuning in the visual editor.</p>
+                <h2 className="text-4xl font-black text-white tracking-tighter uppercase">Draft Ready</h2>
+                <p className="text-sm text-slate-500 leading-relaxed">Your portfolio draft is ready. Open the editor to fine-tune sections before publishing.</p>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-center gap-4 w-full max-w-sm">
@@ -744,7 +828,13 @@ export default function PortfolioNewPage() {
             <p className="text-xs font-black uppercase tracking-widest text-red-500">{statusError}</p>
           </div>
         )}
+        {statusNote && !statusError && (
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-center">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-400">{statusNote}</p>
+          </div>
+        )}
       </div>
     </FeaturePage>
+    </AuthGuard>
   );
 }

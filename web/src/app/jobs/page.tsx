@@ -64,18 +64,18 @@ export default function JobsPage() {
     >
       <div className="space-y-8 animate-in fade-in duration-500">
         {/* Filters Header */}
-        <div className="flex flex-col lg:flex-row gap-4 p-6 rounded-3xl bg-black/20 border border-white/5 backdrop-blur-md">
+        <div className="flex flex-col lg:flex-row gap-4 p-4 md:p-6 rounded-2xl md:rounded-3xl bg-black/20 border border-white/5 backdrop-blur-md">
           <div className="relative flex-1 group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-[#1ECEFA] transition-colors" />
             <input 
               value={query} 
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Filter by role, company, or technical node..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 pl-12 pr-5 py-4 text-sm text-white placeholder-slate-600 focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
+              className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 pl-12 pr-5 py-3 md:py-4 text-sm text-white placeholder-slate-600 focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
             />
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:border-white/20 transition-all">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <label className="w-full sm:w-auto flex items-center justify-center gap-3 rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-5 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-slate-400 cursor-pointer hover:border-white/20 transition-all">
               <input 
                 type="checkbox" 
                 checked={remoteOnly} 
@@ -84,12 +84,12 @@ export default function JobsPage() {
               />
               Remote Only
             </label>
-            <div className="relative group">
+            <div className="relative group w-full sm:w-auto">
               <Filter className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-[#1ECEFA] transition-colors" />
               <select 
                 value={minScore} 
                 onChange={(e) => setMinScore(Number(e.target.value))}
-                className="rounded-2xl border border-white/10 bg-white/5 pl-12 pr-10 py-4 text-xs font-black uppercase tracking-widest text-slate-400 focus:border-[#1ECEFA]/50 focus:outline-none transition-all appearance-none"
+                className="w-full sm:w-auto rounded-xl md:rounded-2xl border border-white/10 bg-white/5 pl-12 pr-10 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-slate-400 focus:border-[#1ECEFA]/50 focus:outline-none transition-all appearance-none"
               >
                 <option value={0}>All Alignment Levels</option>
                 <option value={60}>60%+ Match</option>
@@ -101,7 +101,7 @@ export default function JobsPage() {
         </div>
 
         {/* Stats Summary */}
-        <div className="flex items-center gap-6 px-4">
+        <div className="flex flex-wrap items-center gap-4 md:gap-6 px-2 md:px-4">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[#1ECEFA] animate-pulse" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{filtered.length} Opportunities Identified</span>
@@ -113,32 +113,32 @@ export default function JobsPage() {
         </div>
 
         {/* Job Grid */}
-        <div className="grid gap-6">
+        <div className="grid gap-4 md:gap-6">
           {filtered.map((job) => (
             <article 
               key={job.id} 
-              className="group relative flex flex-col md:flex-row items-center gap-8 overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
+              className="group relative flex flex-col md:flex-row items-center gap-6 md:gap-8 overflow-hidden rounded-2xl md:rounded-[2rem] border border-white/10 bg-black/40 p-6 md:p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
             >
               {/* Match alignment score */}
-              <div className={`shrink-0 h-24 w-24 rounded-3xl border flex flex-col items-center justify-center space-y-1 transition-all group-hover:scale-105 ${scoreBg(job.matchScore)}`}>
-                <p className={`text-3xl font-black leading-none tracking-tighter ${scoreColor(job.matchScore)}`}>{job.matchScore}</p>
+              <div className={`shrink-0 h-20 w-20 md:h-24 md:w-24 rounded-2xl md:rounded-3xl border flex flex-col items-center justify-center space-y-1 transition-all group-hover:scale-105 ${scoreBg(job.matchScore)}`}>
+                <p className={`text-2xl md:text-3xl font-black leading-none tracking-tighter ${scoreColor(job.matchScore)}`}>{job.matchScore}</p>
                 <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-500">Alignment</p>
               </div>
 
-              <div className="flex-1 min-w-0 space-y-6">
-                <div className="flex flex-col md:flex-row items-start justify-between gap-4">
+              <div className="flex-1 min-w-0 space-y-6 text-center md:text-left">
+                <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-2">
                   <div className="space-y-1">
-                    <h3 className="text-2xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{job.title}</h3>
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    <h3 className="text-lg md:text-2xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{job.title}</h3>
+                    <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs font-bold text-slate-500 uppercase tracking-widest">
                       <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> {job.company}</span>
                       <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {job.location}</span>
                       {job.salary && <span className="flex items-center gap-1.5 text-slate-400"><DollarSign className="h-3.5 w-3.5" /> {job.salary}</span>}
                     </div>
                   </div>
-                  <time className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{new Date(job.postedAt).toLocaleDateString()}</time>
+                  <time className="text-[9px] font-black text-slate-600 uppercase tracking-widest shrink-0">{new Date(job.postedAt).toLocaleDateString()}</time>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap justify-center md:justify-start gap-2">
                   {job.remote && (
                     <span className="rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-green-400 flex items-center gap-1.5">
                       <Zap className="h-3 w-3 fill-current" /> Global Remote
@@ -149,16 +149,16 @@ export default function JobsPage() {
                   ))}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 pt-2">
+                <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
                   <button 
                     onClick={() => router.push(`/scanner?jobId=${job.id}`)}
-                    className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95"
                   >
                     Scan & Tailor <ArrowUpRight className="h-3.5 w-3.5" />
                   </button>
                   <button 
                     onClick={() => handleTrack(job.id)}
-                    className={`flex items-center gap-2 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
                       tracked.has(job.id)
                         ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)]'
                         : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
@@ -168,7 +168,7 @@ export default function JobsPage() {
                     {tracked.has(job.id) ? 'Tracked' : 'Track Target'}
                   </button>
                   {user.tier === PlanTier.PREMIUM && (
-                    <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
+                    <button className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
                       <Bot className="h-3.5 w-3.5" /> Auto-Apply Protocol
                     </button>
                   )}
@@ -181,15 +181,15 @@ export default function JobsPage() {
           ))}
 
           {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-20 text-center">
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 text-slate-700">
-                <Search className="h-10 w-10" strokeWidth={1.5} />
+            <div className="flex flex-col items-center justify-center rounded-2xl md:rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-12 md:p-20 text-center">
+              <div className="mb-6 flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl md:rounded-3xl bg-white/5 text-slate-700">
+                <Search className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
               </div>
-              <h3 className="text-xl font-black text-white tracking-tight uppercase">No Identical Alignment Detected</h3>
+              <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase">No Identical Alignment Detected</h3>
               <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">No opportunities match your current filters. Try expanding your search nodes or decreasing alignment minimums.</p>
               <button 
                 onClick={() => { setQuery(''); setRemoteOnly(false); setMinScore(0); }}
-                className="mt-8 rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
+                className="mt-8 rounded-xl md:rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
               >
                 Reset Search Filters
               </button>
