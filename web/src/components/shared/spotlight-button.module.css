@@ -25,12 +25,13 @@
   text-decoration: none;
   overflow: hidden;
   transition: transform 0.5s ease, box-shadow 0.5s ease, color 0.3s ease;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.24);
 }
 
 .control:hover {
   transform: scale(1.02);
   color: #fff;
-  box-shadow: 0 0 40px -10px rgba(120, 180, 255, 0.45);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.3);
 }
 
 .control:focus-visible {
@@ -103,13 +104,13 @@
   border-radius: 9999px;
   pointer-events: none;
   transform: translateX(-50%);
-  background: rgba(120, 180, 255, 0.1);
-  filter: blur(24px);
+  background: rgba(120, 180, 255, 0.04);
+  filter: blur(16px);
   transition: background-color 0.5s ease;
 }
 
 .control:hover .innerGlow {
-  background: rgba(120, 180, 255, 0.26);
+  background: rgba(120, 180, 255, 0.08);
 }
 
 .content {

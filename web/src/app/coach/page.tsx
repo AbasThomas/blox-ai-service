@@ -67,7 +67,7 @@ export default function CoachPage() {
             <div className="space-y-3">
               <div className="h-3 w-full rounded-full bg-white/5 overflow-hidden border border-white/5 p-0.5">
                 <div 
-                  className="h-full bg-gradient-to-r from-[#1ECEFA] to-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(30,206,250,0.5)]" 
+                  className="h-full bg-gradient-to-r from-[#1ECEFA] to-blue-600 rounded-full transition-all duration-1000 shadow-sm" 
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -88,7 +88,7 @@ export default function CoachPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 md:px-5 md:py-2.5 text-xs font-black uppercase tracking-widest transition-all duration-200 ${
                 activeTab === tab.id 
-                  ? 'bg-[#1ECEFA] text-black shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
+                  ? 'bg-[#1ECEFA] text-black shadow-sm' 
                   : 'text-slate-500 hover:bg-white/5 hover:text-white'
               }`}
             >
@@ -114,7 +114,7 @@ export default function CoachPage() {
                         </div>
                         <div className="relative h-1.5 rounded-full bg-white/5 overflow-hidden">
                           <div className="absolute h-full bg-white/10" style={{ width: `${skill.target}%` }} />
-                          <div className="absolute h-full bg-[#1ECEFA] shadow-[0_0_10px_rgba(30,206,250,0.5)]" style={{ width: `${skill.level}%` }} />
+                          <div className="absolute h-full bg-[#1ECEFA] shadow-sm" style={{ width: `${skill.level}%` }} />
                         </div>
                         <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/80 flex items-center gap-1">
                           <Zap className="h-2.5 w-2.5 fill-current" /> Delta: {skill.target - skill.level} points
@@ -141,7 +141,7 @@ export default function CoachPage() {
                 >
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 ${
                     m.done 
-                      ? 'bg-green-500 border-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]' 
+                      ? 'bg-green-500 border-green-500 text-white shadow-sm' 
                       : 'bg-black border-white/10 text-slate-600 group-hover:border-white/30'
                   }`}>
                     {m.done ? <Check className="h-5 w-5" /> : <div className="h-2 w-2 rounded-full bg-slate-800" />}
@@ -189,3 +189,4 @@ export default function CoachPage() {
     </FeaturePage>
   );
 }
+

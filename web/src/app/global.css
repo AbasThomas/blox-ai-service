@@ -55,44 +55,24 @@ h4 {
   }
 }
 
-@keyframes hero-btn-glow {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgba(120, 180, 255, 0.35),
-      0 0 16px rgba(80, 140, 255, 0.18),
-      inset 0 0 12px rgba(120, 180, 255, 0.08);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgba(140, 205, 255, 0.65),
-      0 0 24px rgba(80, 140, 255, 0.35),
-      inset 0 0 16px rgba(120, 180, 255, 0.16);
-  }
-}
-
 .hero-spotlight-btn {
   border-color: rgba(120, 180, 255, 0.55) !important;
-  animation: hero-btn-glow 2.6s ease-in-out infinite;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28);
 }
 
 .hero-spotlight-btn:hover {
   border-color: rgba(160, 215, 255, 0.9) !important;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.32);
 }
 
 .hero-spotlight-btn-primary {
   border-color: rgba(90, 175, 255, 0.95) !important;
-  box-shadow:
-    0 0 0 1px rgba(120, 185, 255, 0.9),
-    0 0 22px rgba(70, 145, 255, 0.38),
-    inset 0 0 14px rgba(120, 180, 255, 0.2);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
 }
 
 .hero-spotlight-btn-primary:hover {
   border-color: rgba(170, 220, 255, 1) !important;
-  box-shadow:
-    0 0 0 1px rgba(170, 220, 255, 1),
-    0 0 30px rgba(70, 145, 255, 0.52),
-    inset 0 0 18px rgba(130, 190, 255, 0.28);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.4);
 }
 
 .hero-spotlight-btn-shine {
@@ -111,6 +91,15 @@ h4 {
   );
   filter: blur(2px);
   animation: hero-btn-shine 3.2s linear infinite;
+}
+
+/* Remove neon-like shadow treatments globally for a cleaner UI system. */
+[class*="shadow-[0_0"],
+[class*="shadow-[inset_0_0"],
+[class*="hover:shadow-[0_0"],
+[class*="hover:shadow-[inset_0_0"],
+[class*="group-hover:shadow-[0_0"] {
+  box-shadow: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

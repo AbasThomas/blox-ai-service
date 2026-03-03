@@ -173,10 +173,7 @@ export function HexagonBackground({
                     proximityFactor > 0
                       ? withAlpha("#161B22", 0.9 + proximityFactor * 0.1)
                       : "#0C0F13"
-                  const dynamicShadow =
-                    proximityFactor > 0
-                      ? `0 0 ${10 + 24 * proximityFactor}px ${withAlpha(glowColor, 0.25 + proximityFactor * 0.45)}`
-                      : "none"
+                  const dynamicShadow = "none"
 
                   return (
                     <div
@@ -185,7 +182,7 @@ export function HexagonBackground({
                         "relative shrink-0 transition-all duration-500",
                         "[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
                         "before:absolute before:inset-0 before:bg-[var(--dynamic-border)]",
-                        "before:shadow-[var(--dynamic-shadow)] before:transition-all before:duration-500",
+                        "before:transition-all before:duration-500",
                         "after:absolute after:inset-[var(--margin)] after:bg-[var(--dynamic-fill)]",
                         "after:[clip-path:polygon(50%_0%,100%_25%,100%_75%,50%_100%,0%_75%,0%_25%)]",
                         "after:transition-all after:duration-300",
@@ -206,15 +203,6 @@ export function HexagonBackground({
           )
         })}
       </div>
-
-      {/* Ambient glow overlay */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-20"
-        style={{
-          background: `radial-gradient(ellipse at 30% 20%, rgba(30,206,250,0.15) 0%, transparent 50%),
-                       radial-gradient(ellipse at 70% 80%, rgba(30,206,250,0.1) 0%, transparent 50%)`,
-        }}
-      />
 
       {/* Vignette */}
       <div

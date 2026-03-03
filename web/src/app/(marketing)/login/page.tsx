@@ -127,7 +127,7 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-xl relative z-10">
+          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-sm backdrop-blur-xl relative z-10">
           <div className="mb-8 text-center">
             <h1 className="font-display text-3xl font-black tracking-tight text-white">Welcome back.</h1>
             <p className="mt-2 text-sm text-slate-400">Initialize your deployed identity.</p>
@@ -224,3 +224,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

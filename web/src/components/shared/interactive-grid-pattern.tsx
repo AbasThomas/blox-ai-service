@@ -138,9 +138,7 @@ export function InteractiveGridPattern({
                       : proximityFactor > 0
                         ? glowColor.replace(/[\d.]+\)$/, `${proximityFactor * 0.15})`)
                         : "transparent",
-                    boxShadow: isHovered
-                      ? `0 0 ${20 * grid.scale}px ${glowColor}, inset 0 0 ${10 * grid.scale}px ${glowColor.replace(/[\d.]+\)$/, "0.2)")}`
-                      : "none",
+                    boxShadow: "none",
                     transitionDuration: isHovered ? "0ms" : "1000ms",
                   }}
                 />
@@ -149,16 +147,6 @@ export function InteractiveGridPattern({
           </div>
         ))}
       </div>
-
-      {/* Center ambient glow */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20"
-        style={{
-          width: "60vmin",
-          height: "60vmin",
-          background: `radial-gradient(circle, ${glowColor.replace(/[\d.]+\)$/, "0.3)")} 0%, transparent 70%)`,
-        }}
-      />
 
       {/* Vignette */}
       <div

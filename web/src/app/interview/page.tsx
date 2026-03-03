@@ -154,7 +154,7 @@ export default function InterviewPage() {
 
             <button 
               onClick={() => setPhase('recording')}
-              className="group flex items-center justify-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95"
+              className="group flex items-center justify-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
             >
               Initialize Simulation <Play className="h-5 w-5 fill-current" />
             </button>
@@ -172,7 +172,7 @@ export default function InterviewPage() {
               </div>
               <div className="flex gap-2">
                 {questions.map((_, i) => (
-                  <div key={i} className={`h-1 w-8 rounded-full transition-all duration-500 ${i < responses.length ? 'bg-green-500' : i === questionIndex ? 'bg-[#1ECEFA] shadow-[0_0_10px_rgba(30,206,250,0.5)]' : 'bg-white/5'}`} />
+                  <div key={i} className={`h-1 w-8 rounded-full transition-all duration-500 ${i < responses.length ? 'bg-green-500' : i === questionIndex ? 'bg-[#1ECEFA] shadow-sm' : 'bg-white/5'}`} />
                 ))}
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function InterviewPage() {
                 {!recording ? (
                   <button 
                     onClick={startRecording}
-                    className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-red-600 px-8 py-6 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-red-500 hover:shadow-[0_0_30px_rgba(239,68,68,0.4)] active:scale-95"
+                    className="flex-1 flex items-center justify-center gap-4 rounded-3xl bg-red-600 px-8 py-6 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-red-500 hover:shadow-md active:scale-95"
                   >
                     <div className="h-3 w-3 rounded-full bg-white animate-pulse" />
                     Begin Response
@@ -256,7 +256,7 @@ export default function InterviewPage() {
                     <span className={`text-2xl font-black ${f.score >= 75 ? 'text-green-400' : f.score >= 55 ? 'text-amber-400' : 'text-red-400'}`}>{f.score}</span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden mb-6">
-                    <div className={`h-full transition-all duration-1000 ${f.score >= 75 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-[#1ECEFA]'}`} style={{ width: `${f.score}%` }} />
+                    <div className={`h-full transition-all duration-1000 ${f.score >= 75 ? 'bg-green-500 shadow-sm' : 'bg-[#1ECEFA]'}`} style={{ width: `${f.score}%` }} />
                   </div>
                   <p className="text-sm text-slate-500 leading-relaxed italic">"{f.comment}"</p>
                 </div>
@@ -277,3 +277,4 @@ export default function InterviewPage() {
     </FeaturePage>
   );
 }
+

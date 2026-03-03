@@ -19,7 +19,7 @@ export function AppLoadingScreen({
             <div className="blox-loader-orbit blox-loader-orbit-delayed absolute -inset-[3.4rem] rounded-full border border-[#1ECEFA]/10" />
             <div className="blox-loader-ring absolute -inset-[4.5rem] rounded-full border border-white/5" />
 
-            <div className="relative rounded-[1.8rem] border border-white/10 bg-black/40 p-7 backdrop-blur-xl shadow-[0_0_80px_rgba(30,206,250,0.18)]">
+            <div className="relative rounded-[1.8rem] border border-white/10 bg-black/40 p-7 backdrop-blur-xl shadow-sm">
               <Logo iconOnly size="custom" iconClassName="h-20 w-20 blox-loader-float" />
               <div className="blox-loader-scan absolute left-1/2 top-0 h-[2px] w-20 -translate-x-1/2 bg-gradient-to-r from-transparent via-[#9feeff] to-transparent" />
             </div>
@@ -40,3 +40,4 @@ export function AppLoadingScreen({
     </div>
   );
 }
+

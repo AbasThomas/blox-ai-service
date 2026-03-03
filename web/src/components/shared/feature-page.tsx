@@ -19,7 +19,7 @@ export function FeaturePage({ title, description, minTier, children, className, 
       <section className={`mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8 ${className || ''}`}>
         <div className="flex items-start gap-4 pb-6 border-b border-white/10">
           {headerIcon && (
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-[0_0_15px_rgba(30,206,250,0.15)] text-[#1ECEFA]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-sm text-[#1ECEFA]">
               {headerIcon}
             </div>
           )}
@@ -29,11 +29,12 @@ export function FeaturePage({ title, description, minTier, children, className, 
           </div>
         </div>
         
-        <div className="rounded-3xl border border-white/10 bg-[#161B22]/60 p-6 md:p-8 shadow-[0_0_40px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+        <div className="rounded-3xl border border-white/10 bg-[#161B22]/60 p-6 md:p-8 shadow-sm backdrop-blur-xl">
           {children}
         </div>
       </section>
     </TierGate>
   );
 }
+
 

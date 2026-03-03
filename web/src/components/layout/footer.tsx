@@ -27,7 +27,7 @@ export function Footer() {
                 <a 
                   key={i}
                   href="#" 
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-all hover:border-[#1ECEFA]/50 hover:bg-[#1ECEFA]/10 hover:text-[#1ECEFA] hover:shadow-[0_0_15px_rgba(30,206,250,0.3)]"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-400 transition-all hover:border-[#1ECEFA]/50 hover:bg-[#1ECEFA]/10 hover:text-[#1ECEFA] hover:shadow-md"
                 >
                   <Icon size={18} />
                 </a>
@@ -95,3 +95,4 @@ export function Footer() {
     </footer>
   );
 }
+

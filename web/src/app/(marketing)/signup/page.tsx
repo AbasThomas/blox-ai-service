@@ -188,7 +188,7 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-xl relative z-10">
+          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-sm backdrop-blur-xl relative z-10">
           <div className="mb-8 text-center">
             <h1 className="font-display text-3xl font-black tracking-tight text-white">Create your account</h1>
             <p className="mt-2 text-sm text-slate-400">Initialize your professional profile.</p>
@@ -312,7 +312,7 @@ export default function SignupPage() {
                         aria-pressed={form.persona === p.value}
                         className={`rounded-xl border p-3 text-left transition-all ${
                           form.persona === p.value
-                            ? 'border-[#1ECEFA]/50 bg-[#1ECEFA]/10 shadow-[0_0_15px_rgba(30,206,250,0.15)]'
+                            ? 'border-[#1ECEFA]/50 bg-[#1ECEFA]/10 shadow-sm'
                             : 'border-white/10 bg-black/20 hover:border-white/30 hover:bg-white/5'
                         }`}
                       >
@@ -402,3 +402,4 @@ export default function SignupPage() {
     </div>
   );
 }
+

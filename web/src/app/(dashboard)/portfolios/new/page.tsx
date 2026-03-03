@@ -550,7 +550,7 @@ export default function PortfolioNewPage() {
         <div className="relative flex justify-between items-center px-2">
           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white/5 -translate-y-1/2 z-0" />
           <div 
-            className="absolute top-1/2 left-0 h-0.5 bg-[#1ECEFA] -translate-y-1/2 z-0 transition-all duration-500 shadow-[0_0_10px_rgba(30,206,250,0.5)]" 
+            className="absolute top-1/2 left-0 h-0.5 bg-[#1ECEFA] -translate-y-1/2 z-0 transition-all duration-500 shadow-sm" 
             style={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
           />
           
@@ -558,9 +558,9 @@ export default function PortfolioNewPage() {
             <div key={label} className="relative z-10 flex flex-col items-center gap-3">
               <div className={`flex h-10 w-10 items-center justify-center rounded-2xl border-2 transition-all duration-300 ${
                 index < step 
-                  ? 'bg-green-500 border-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]' 
+                  ? 'bg-green-500 border-green-500 text-white shadow-sm' 
                   : index === step 
-                    ? 'bg-black border-[#1ECEFA] text-[#1ECEFA] shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
+                    ? 'bg-black border-[#1ECEFA] text-[#1ECEFA] shadow-sm' 
                     : 'bg-black border-white/10 text-slate-600'
               }`}>
                 {index < step ? <Check className="h-5 w-5" /> : <span className="text-sm font-black">{index + 1}</span>}
@@ -590,7 +590,7 @@ export default function PortfolioNewPage() {
                     onClick={() => setPersona(option.value)}
                     className={`group relative flex flex-col items-start rounded-3xl border p-6 transition-all duration-300 ${
                       persona === option.value 
-                        ? 'border-[#1ECEFA] bg-[#1ECEFA]/5 shadow-[inset_0_0_20px_rgba(30,206,250,0.05)]' 
+                        ? 'border-[#1ECEFA] bg-[#1ECEFA]/5 shadow-inner' 
                         : 'border-white/10 bg-black/40 hover:border-white/20'
                     }`}
                   >
@@ -605,7 +605,7 @@ export default function PortfolioNewPage() {
                     <p className="mt-2 text-xs text-slate-500 leading-relaxed">{option.desc}</p>
                     
                     {persona === option.value && (
-                      <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-[#1ECEFA] shadow-[0_0_10px_rgba(30,206,250,0.8)]" />
+                      <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-[#1ECEFA] shadow-sm" />
                     )}
                   </button>
                 ))}
@@ -635,7 +635,7 @@ export default function PortfolioNewPage() {
               <div className="flex justify-center">
                 <button
                   onClick={() => setStep(1)}
-                  className="group flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95"
+                  className="group flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
                 >
                     Continue to Accounts <ArrowUpRight className="h-5 w-5" />
                 </button>
@@ -672,7 +672,7 @@ export default function PortfolioNewPage() {
                         key={integration.id}
                         className={`group relative rounded-3xl border p-6 transition-all duration-300 ${
                           integration.connected
-                            ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[inset_0_0_20px_rgba(30,206,250,0.05)]'
+                            ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-inner'
                             : 'border-white/10 bg-black/40 hover:border-white/20'
                         }`}
                       >
@@ -817,7 +817,7 @@ export default function PortfolioNewPage() {
                 <button 
                   onClick={startImport} 
                   disabled={startingImport}
-                  className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-60"
+                  className="flex items-center gap-3 rounded-2xl bg-[#1ECEFA] px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-white hover:shadow-md active:scale-95 disabled:opacity-60"
                 >
                   {startingImport ? 'Starting AI Draft...' : 'Start AI Draft'} <Zap className="h-5 w-5 fill-current" />
                 </button>
@@ -870,7 +870,7 @@ export default function PortfolioNewPage() {
                     <div className="space-y-2">
                       <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
                         <div
-                          className="h-full bg-[#1ECEFA] transition-all duration-1000 shadow-[0_0_15px_rgba(30,206,250,0.6)]"
+                          className="h-full bg-[#1ECEFA] transition-all duration-1000 shadow-sm"
                           style={{ width: `${status?.progressPct ?? 10}%` }}
                         />
                       </div>
@@ -933,7 +933,7 @@ export default function PortfolioNewPage() {
                 <button
                   onClick={confirmImport}
                   disabled={confirming}
-                  className="flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-50"
+                  className="flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95 disabled:opacity-50"
                 >
                   {confirming ? 'Finalizing Draft...' : 'Finalize Draft'} <Check className="h-5 w-5" />
                 </button>
@@ -945,7 +945,7 @@ export default function PortfolioNewPage() {
             <div className="flex flex-col items-center justify-center text-center space-y-10 animate-in fade-in zoom-in-95 duration-700 py-20">
               <div className="relative">
                 <div className="h-32 w-32 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
-                  <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center text-white shadow-[0_0_40px_rgba(34,197,94,0.6)]">
+                  <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm">
                     <Check className="h-10 w-10" strokeWidth={3} />
                   </div>
                 </div>
@@ -962,7 +962,7 @@ export default function PortfolioNewPage() {
                 {status?.draftAssetId && (
                   <button
                     onClick={() => router.push(`/portfolios/${status.draftAssetId}/edit`)}
-                    className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95"
+                    className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
                   >
                     Open Editor <ArrowUpRight className="h-5 w-5" />
                   </button>
@@ -993,3 +993,4 @@ export default function PortfolioNewPage() {
     </AuthGuard>
   );
 }
+

@@ -55,7 +55,7 @@ function BloxLogo({ size = 36, pulse = false }: { size?: number; pulse?: boolean
         rx="4"
         fill={CYAN}
         animate={pulse ? {
-          filter: ['drop-shadow(0 0 2px #1ECEFA)', 'drop-shadow(0 0 12px #1ECEFA)', 'drop-shadow(0 0 2px #1ECEFA)'],
+          opacity: [0.92, 1, 0.92],
         } : {}}
         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -157,7 +157,7 @@ function DemoBlock({ label, delay, col, row }: { label: string; delay: number; c
       initial={{ opacity: 0, scale: 0.3, y: -40 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ delay, ...SPRING_GOD_MODE }}
-      whileHover={{ scale: 1.04, boxShadow: `0 0 16px ${CYAN}50` }}
+      whileHover={{ scale: 1.04, y: -2 }}
     >
       {label}
     </motion.div>
@@ -235,11 +235,11 @@ export default function HomePage() {
         <div className="relative h-48 w-full overflow-hidden rounded-xl border border-white/10 bg-[#0C0F13]/50">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
           <div className="flex h-full items-center justify-center gap-2 sm:gap-4 px-2">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0077b5]/20 font-bold text-[#0077b5] border border-[#0077b5]/50 shadow-[0_0_20px_rgba(0,119,181,0.5)]">in</div>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0077b5]/20 font-bold text-[#0077b5] border border-[#0077b5]/50 shadow-sm">in</div>
             <div className="hidden sm:block h-0.5 w-6 bg-gradient-to-r from-[#0077b5] to-[#1ECEFA]" />
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1ECEFA]/20 text-[#1ECEFA] border border-[#1ECEFA]/50 shadow-[0_0_30px_rgba(30,206,250,0.6)] z-10"><Bot size={40} /></div>
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1ECEFA]/20 text-[#1ECEFA] border border-[#1ECEFA]/50 shadow-sm z-10"><Bot size={40} /></div>
             <div className="hidden sm:block h-0.5 w-6 bg-gradient-to-r from-[#1ECEFA] to-white/80" />
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border border-white/30 shadow-[0_0_20px_rgba(255,255,255,0.3)]"><Github size={24} /></div>
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/10 text-white border border-white/30 shadow-sm"><Github size={24} /></div>
           </div>
         </div>
       )
@@ -536,7 +536,7 @@ export default function HomePage() {
                   
                   {/* The central node representing the step number */}
                   <motion.div
-                    className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#0C0F13] shadow-[0_0_30px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:border-[#1ECEFA]/40 group-hover:scale-110 md:absolute md:left-1/2 md:-translate-x-1/2"
+                    className="relative z-10 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-[#0C0F13] shadow-sm transition-all duration-300 group-hover:border-[#1ECEFA]/40 group-hover:scale-110 md:absolute md:left-1/2 md:-translate-x-1/2"
                     initial={{ opacity: 0, scale: 0 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true, margin: "-100px" }}
@@ -693,7 +693,7 @@ export default function HomePage() {
                   background: plan.highlight
                     ? `linear-gradient(135deg, ${CYAN}15, rgba(8,11,20,0.95))`
                     : 'linear-gradient(135deg, rgba(17,24,39,0.6), rgba(13,20,32,0.8))',
-                  boxShadow: plan.highlight ? `0 0 40px ${CYAN}20` : 'none',
+                  boxShadow: plan.highlight ? '0 14px 30px rgba(2, 6, 23, 0.28)' : '0 10px 24px rgba(2, 6, 23, 0.22)',
                   backdropFilter: 'blur(16px)',
                 }}
                 initial={{ opacity: 0, y: 40 }}
@@ -704,7 +704,7 @@ export default function HomePage() {
               >
                 {plan.popular && isAnnual && (
                   <div
-                    className="absolute right-5 top-5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider text-black shadow-[0_0_12px_rgba(30,206,250,0.5)]"
+                    className="absolute right-5 top-5 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider text-black shadow-sm"
                     style={{ background: CYAN }}
                   >
                     MOST POPULAR
@@ -736,7 +736,7 @@ export default function HomePage() {
                       }
                       whileHover={{
                         scale: 1.02,
-                        boxShadow: plan.highlight ? `0 0 24px ${CYAN}70` : `0 0 12px ${CYAN}30`,
+                        boxShadow: '0 12px 24px rgba(2, 6, 23, 0.24)',
                         background: plan.highlight ? CYAN : `${CYAN}15`,
                       }}
                       whileTap={{ scale: 0.98 }}
@@ -947,3 +947,4 @@ function FAQItem({ question, answer, delay }: { question: string; answer: string
     </motion.div>
   );
 }
+

@@ -34,7 +34,7 @@ export function Logo({
         viewBox="0 0 100 100"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={`${currentSize.icon} ${size !== 'custom' ? iconClassName : ''} drop-shadow-lg`}
+        className={`${currentSize.icon} ${size !== 'custom' ? iconClassName : ''}`}
       >
         {/* Top-Left Glowing Block */}
         <rect
@@ -44,7 +44,6 @@ export function Logo({
           height="34"
           rx="10"
           fill="#1ECEFA"
-          style={{ filter: 'drop-shadow(0px 0px 6px rgba(30, 206, 250, 0.5))' }}
         />
         {/* Top-Right Dark Block */}
         <rect

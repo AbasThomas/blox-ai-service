@@ -131,7 +131,7 @@ export default function NetworkPage() {
                             <>
                               <button 
                                 onClick={() => handleConnect(person.id)}
-                                className="rounded-xl bg-white px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_15px_rgba(30,206,250,0.4)] active:scale-95"
+                                className="rounded-xl bg-white px-4 py-2.5 text-[9px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
                               >
                                 Connect
                               </button>
@@ -223,7 +223,7 @@ export default function NetworkPage() {
                     <button 
                       onClick={handleSend} 
                       disabled={sending}
-                      className="w-full flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95 disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-4 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95 disabled:opacity-50"
                     >
                       {sending ? 'Transmitting...' : 'Initiate Transmission'} <Send className="h-3.5 w-3.5" />
                     </button>
@@ -237,3 +237,4 @@ export default function NetworkPage() {
     </FeaturePage>
   );
 }
+

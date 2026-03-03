@@ -228,7 +228,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(tab.id as Tab)}
                   className={`flex-shrink-0 lg:flex-shrink flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 focus:outline-none ${
                     activeTab === tab.id 
-                      ? 'bg-[#1ECEFA] text-black shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
+                      ? 'bg-[#1ECEFA] text-black shadow-sm' 
                       : 'text-slate-400 hover:bg-white/5 hover:text-white'
                   }`}
                 >
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                 <button 
                   type="submit" 
                   disabled={savingAccount}
-                  className="flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95 disabled:opacity-50"
                 >
                   {savingAccount ? 'SYNCHRONIZING...' : 'COMMIT CHANGES'}
                 </button>
@@ -391,7 +391,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-slate-400 leading-relaxed">Secure your terminal with a Time-based One-Time Password (TOTP). This adds a required second key during authentication.</p>
                         <button 
                           onClick={handleSetupMfa}
-                          className="mt-4 rounded-xl md:rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-2.5 md:px-6 md:py-3 text-xs font-black tracking-widest text-purple-300 transition-all hover:bg-purple-600 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                          className="mt-4 rounded-xl md:rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-2.5 md:px-6 md:py-3 text-xs font-black tracking-widest text-purple-300 transition-all hover:bg-purple-600 hover:text-white hover:shadow-md"
                         >
                           INITIALIZE 2FA
                         </button>
@@ -470,7 +470,7 @@ export default function SettingsPage() {
                       key={integration.id} 
                       className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl border p-5 md:p-6 transition-all duration-300 ${
                         integration.connected 
-                          ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[inset_0_0_30px_rgba(30,206,250,0.05)]' 
+                          ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-inner' 
                           : 'border-white/10 bg-black/40 hover:border-white/20'
                       }`}
                     >
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                       ) : (
                         <button
                           onClick={() => handleConnectIntegration(integration.id)}
-                          className="mt-6 w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]"
+                          className="mt-6 w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-md"
                         >
                           INITIALIZE LINK
                         </button>
@@ -591,7 +591,7 @@ export default function SettingsPage() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <a 
                       href="/pricing"
-                      className="flex-1 flex items-center justify-center rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95"
+                      className="flex-1 flex items-center justify-center rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
                     >
                       ELEVATE CLEARANCE
                     </a>
@@ -615,7 +615,7 @@ export default function SettingsPage() {
                   <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">Your system is currently operating on standard free-tier boundaries.</p>
                   <a 
                     href="/pricing" 
-                    className="mt-8 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
+                    className="mt-8 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md"
                   >
                     VIEW UPGRADE PROTOCOLS
                   </a>
@@ -645,7 +645,7 @@ export default function SettingsPage() {
                           <p className="text-sm font-black text-white group-hover:text-[#1ECEFA] transition-colors uppercase tracking-tight">{opt.label}</p>
                           <p className="text-xs text-slate-500">{opt.desc}</p>
                         </div>
-                        <button className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 text-slate-400 transition-all hover:bg-[#1ECEFA] hover:text-black group-hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]">
+                        <button className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 text-slate-400 transition-all hover:bg-[#1ECEFA] hover:text-black group-hover:shadow-md">
                           {opt.icon}
                         </button>
                       </div>
@@ -663,7 +663,7 @@ export default function SettingsPage() {
                 <p className="mb-8 text-xs text-red-400/70 leading-relaxed max-w-lg">
                   Initiating this sequence will permanently purge your identity context, compiled nodes, and credentials from our servers. This action is irreversible.
                 </p>
-                <button className="rounded-xl md:rounded-2xl border border-red-500 bg-red-500/10 px-6 md:px-8 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                <button className="rounded-xl md:rounded-2xl border border-red-500 bg-red-500/10 px-6 md:px-8 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-sm">
                   INITIATE PURGE
                 </button>
               </div>
@@ -742,7 +742,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-slate-500 leading-relaxed">Your professional trajectory is being analyzed. Complete more assets to unlock personalized roadmap milestones.</p>
                   </div>
                   <div className="w-full md:w-48 bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
-                    <div className="bg-[#1ECEFA] h-full w-1/3 shadow-[0_0_10px_rgba(30,206,250,0.5)]" />
+                    <div className="bg-[#1ECEFA] h-full w-1/3 shadow-sm" />
                   </div>
                 </div>
               </div>
@@ -753,3 +753,4 @@ export default function SettingsPage() {
     </FeaturePage>
   );
 }
+

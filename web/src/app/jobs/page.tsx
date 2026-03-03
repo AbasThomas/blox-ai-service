@@ -152,7 +152,7 @@ export default function JobsPage() {
                 <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
                   <button 
                     onClick={() => router.push(`/scanner?jobId=${job.id}`)}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_20px_rgba(30,206,250,0.4)] active:scale-95"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
                   >
                     Scan & Tailor <ArrowUpRight className="h-3.5 w-3.5" />
                   </button>
@@ -160,7 +160,7 @@ export default function JobsPage() {
                     onClick={() => handleTrack(job.id)}
                     className={`w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${
                       tracked.has(job.id)
-                        ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)]'
+                        ? 'bg-purple-600 text-white shadow-sm'
                         : 'bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10'
                     }`}
                   >
@@ -168,7 +168,7 @@ export default function JobsPage() {
                     {tracked.has(job.id) ? 'Tracked' : 'Track Target'}
                   </button>
                   {user.tier === PlanTier.PREMIUM && (
-                    <button className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all">
+                    <button className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:shadow-md transition-all">
                       <Bot className="h-3.5 w-3.5" /> Auto-Apply Protocol
                     </button>
                   )}
@@ -189,7 +189,7 @@ export default function JobsPage() {
               <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">No opportunities match your current filters. Try expanding your search nodes or decreasing alignment minimums.</p>
               <button 
                 onClick={() => { setQuery(''); setRemoteOnly(false); setMinScore(0); }}
-                className="mt-8 rounded-xl md:rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
+                className="mt-8 rounded-xl md:rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md"
               >
                 Reset Search Filters
               </button>
@@ -200,3 +200,4 @@ export default function JobsPage() {
     </FeaturePage>
   );
 }
+

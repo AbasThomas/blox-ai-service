@@ -118,7 +118,7 @@ export default function PortfoliosPage() {
           </div>
           <Link
             href="/portfolios/new"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-[#1ECEFA] px-5 py-3 md:px-6 md:py-4 text-xs font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-white hover:scale-[1.02] shadow-[0_0_20px_rgba(30,206,250,0.15)] hover:shadow-[0_0_30px_rgba(30,206,250,0.4)]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-[#1ECEFA] px-5 py-3 md:px-6 md:py-4 text-xs font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-white hover:scale-[1.02] shadow-sm hover:shadow-md"
           >
             <PlusCircle className="h-4 w-4" />
             Initialize New Portfolio
@@ -144,7 +144,7 @@ export default function PortfoliosPage() {
               initial={{ rotate: -10, scale: 0.8 }}
               animate={{ rotate: 0, scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 20 }}
-              className="mb-8 flex h-20 w-20 md:h-24 md:w-24 items-center justify-center rounded-2xl md:rounded-[2rem] border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 text-[#1ECEFA] shadow-[0_0_40px_rgba(30,206,250,0.2)] z-10"
+              className="mb-8 flex h-20 w-20 md:h-24 md:w-24 items-center justify-center rounded-2xl md:rounded-[2rem] border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 text-[#1ECEFA] shadow-sm z-10"
             >
               <BriefcaseBusiness className="h-10 w-10 md:h-12 md:w-12" strokeWidth={1.5} />
             </motion.div>
@@ -154,7 +154,7 @@ export default function PortfoliosPage() {
             
             <Link 
               href="/portfolios/new" 
-              className="group mt-10 relative inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 py-3 md:px-8 md:py-4 text-sm font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-[#1ECEFA] hover:scale-[1.05] z-10 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)]"
+              className="group mt-10 relative inline-flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 py-3 md:px-8 md:py-4 text-sm font-black uppercase tracking-widest text-[#0C0F13] transition-all hover:bg-[#1ECEFA] hover:scale-[1.05] z-10 shadow-sm hover:shadow-md"
             >
               START BUILDING
               <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
@@ -261,3 +261,4 @@ export default function PortfoliosPage() {
     </FeaturePage>
   );
 }
+

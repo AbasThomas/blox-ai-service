@@ -39,7 +39,7 @@ export default function AssetsPage() {
              <FileStack className="mb-4 h-12 w-12 text-slate-600" strokeWidth={1.5} />
              <p className="font-display text-lg font-bold text-white">No Assets Detected</p>
              <p className="mt-2 max-w-sm text-sm text-slate-500 leading-relaxed">The repository is currently empty. Initiate a build sequence to compile your first portfolio node.</p>
-             <Link href="/portfolios/new" className="mt-6 rounded-xl bg-[#1ECEFA] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-[0_0_20px_rgba(30,206,250,0.3)] transition-all hover:bg-white hover:scale-105 active:scale-95">
+             <Link href="/portfolios/new" className="mt-6 rounded-xl bg-[#1ECEFA] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black shadow-sm transition-all hover:bg-white hover:scale-105 active:scale-95">
                INITIATE BUILD 
              </Link>
            </div>
@@ -54,7 +54,7 @@ export default function AssetsPage() {
                      {TYPE_ICONS[asset.type]} {asset.type.replace('_', ' ')}
                    </span>
                    {asset.publishedUrl && (
-                     <span className="flex h-2 w-2 animate-pulse rounded-full bg-[#1ECEFA] shadow-[0_0_8px_rgba(30,206,250,0.8)]" />
+                     <span className="flex h-2 w-2 animate-pulse rounded-full bg-[#1ECEFA] shadow-sm" />
                    )}
                  </div>
                  
@@ -83,3 +83,4 @@ export default function AssetsPage() {
     </FeaturePage>
   );
 }
+

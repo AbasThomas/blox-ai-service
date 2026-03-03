@@ -95,10 +95,10 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
 
-          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-xl relative z-10">
+          <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#161B22]/80 p-8 shadow-sm backdrop-blur-xl relative z-10">
           {sent ? (
             <div className="text-center space-y-6">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-[0_0_30px_rgba(30,206,250,0.2)]">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-sm">
                 <CheckCircle2 className="h-10 w-10 text-[#1ECEFA]" />
               </div>
               <div>
@@ -173,3 +173,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

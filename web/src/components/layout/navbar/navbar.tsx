@@ -49,10 +49,11 @@ export function Navbar({ collapsed, onToggle }: NavbarProps) {
           >
             <Bell className="h-5 w-5" strokeWidth={2} />
             {/* Notification Dot */}
-            <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-[#1ECEFA] shadow-[0_0_10px_rgba(30,206,250,0.5)]" />
+            <span className="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-[#1ECEFA] shadow-sm" />
           </button>
         </div>
       </div>
     </header>
   );
 }
+

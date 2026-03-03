@@ -337,7 +337,7 @@ export default function DashboardPage() {
                   
                   <Link
                     href="/pricing"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 md:px-6 md:py-4 text-xs font-bold text-black transition-all hover:bg-blue-400 hover:text-white active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 md:px-6 md:py-4 text-xs font-bold text-black transition-all hover:bg-blue-400 hover:text-white active:scale-95 shadow-sm hover:shadow-md"
                   >
                     Manage Plan <ArrowUpRight className="h-4 w-4" />
                   </Link>
@@ -350,3 +350,4 @@ export default function DashboardPage() {
     </FeaturePage>
   );
 }
+
