@@ -168,7 +168,14 @@ export default function SettingsPage() {
 
       if (res.authUrl) {
         const token = localStorage.getItem('blox_access_token') ?? '';
-        window.location.href = `${process.env.NEXT_PUBLIC_APP_BASE_URL || ''}${res.authUrl}?token=${encodeURIComponent(token)}`;
+        if (!token) {
+          setIntegrationMsg('Missing access token. Please sign in again.');
+          return;
+        }
+        const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || window.location.origin;
+        const authUrl = new URL(res.authUrl, baseUrl);
+        authUrl.searchParams.set('token', token);
+        window.location.href = authUrl.toString();
         return;
       }
 

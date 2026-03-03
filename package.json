@@ -9,6 +9,7 @@
     "dev:worker": "nx serve worker",
     "dev:realtime": "nx serve realtime",
     "dev:all": "nx run-many -t serve --projects=api,ai-service,worker,realtime,web --parallel=5",
+    "smoke:integrations": "node scripts/smoke-integrations.mjs",
     "build": "nx run-many -t build --all",
     "lint": "nx run-many -t lint --all",
     "test": "nx run-many -t test --all",

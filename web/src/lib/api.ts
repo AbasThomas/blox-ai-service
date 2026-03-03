@@ -1,8 +1,24 @@
+import { useBloxStore } from './store/app-store';
+
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333'}/v1`;
 
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
+function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+
   const token = localStorage.getItem('blox_access_token');
+  if (token) return token;
+
+  const storeToken = useBloxStore.getState().accessToken;
+  if (storeToken) {
+    localStorage.setItem('blox_access_token', storeToken);
+    return storeToken;
+  }
+
+  return null;
+}
+
+function getAuthHeaders(): Record<string, string> {
+  const token = getAccessToken();
   if (!token) return {};
   return { Authorization: `Bearer ${token}` };
 }
@@ -26,6 +42,14 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     } catch {
       // ignore json parse error
     }
+
+    if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/')) {
+      useBloxStore.getState().logout();
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.replace('/login');
+      }
+    }
+
     throw new Error(errorMessage);
   }
 

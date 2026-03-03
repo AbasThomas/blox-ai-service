@@ -11,19 +11,24 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const isAuthenticated = useBloxStore((state) => state.isAuthenticated);
+  const accessToken = useBloxStore((state) => state.accessToken);
   const router = useRouter();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     // Give the store a moment to hydrate from localStorage
     const timer = setTimeout(() => {
+      const hasToken =
+        !!accessToken || (typeof window !== 'undefined' && !!localStorage.getItem('blox_access_token'));
+      const hasSession = isAuthenticated && hasToken;
+
       setChecking(false);
-      if (!isAuthenticated) {
+      if (!hasSession) {
         router.replace('/login');
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [isAuthenticated, router]);
+  }, [accessToken, isAuthenticated, router]);
 
   if (checking) {
     return (
@@ -33,7 +38,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  const hasToken =
+    !!accessToken || (typeof window !== 'undefined' && !!localStorage.getItem('blox_access_token'));
+
+  if (!isAuthenticated || !hasToken) {
     return null;
   }
 

@@ -27,9 +27,15 @@
 ## Onboarding Import Flow (Profile -> Portfolio Draft)
 - Entry point: Dashboard card `Build Your Portfolio in 2 Minutes` -> `/portfolios/new`.
 - Connect providers in onboarding step 1. If OAuth keys are configured (`LINKEDIN_*`, `GITHUB_*`, `UPWORK_*`, `FIGMA_*`), OAuth can be used. If not configured, the app automatically uses fallback/manual connect mode.
+- To test every provider fully on localhost without external OAuth round-trips, set `FORCE_LOCAL_INTEGRATIONS=true` (enabled by default in development when unset).
 - Import generation runs asynchronously via BullMQ queue `import-unify` (worker service).
 - Manual fallback fields in step 1 can provide LinkedIn/Upwork headline, summary/overview, and skills when OAuth is skipped.
 - Step 3 provides merge-conflict review before confirmation and draft finalization.
+
+### Integration Smoke Test
+- Start API + databases first.
+- Run `npm run smoke:integrations`.
+- The script signs up a temporary user, verifies provider catalog, connects/disconnects all providers, and confirms final statuses.
 
 ### Expected Generation Quality
 - Typical draft generation target: under 2 minutes on local/dev infrastructure.

@@ -144,7 +144,8 @@ export class IntegrationsService {
     });
 
     const oauthConfigured = this.hasOauthConfig(providerDef);
-    const shouldUseOAuth = providerDef.mode === 'oauth' && oauthConfigured;
+    const forceLocalMode = this.isLocalIntegrationMode();
+    const shouldUseOAuth = providerDef.mode === 'oauth' && oauthConfigured && !forceLocalMode;
 
     if (!existing && !shouldUseOAuth) {
       await this.prisma.oAuthConnection.create({
@@ -165,9 +166,12 @@ export class IntegrationsService {
       scopes: providerDef.scopes,
       connected: existing ? true : !shouldUseOAuth,
       fallbackMode: !shouldUseOAuth,
+      localMode: forceLocalMode,
       message: shouldUseOAuth
         ? 'Continue with OAuth to import live data.'
-        : 'Using fallback/manual import until OAuth app credentials are configured.',
+        : forceLocalMode
+          ? 'Local integration mode active: connected without external OAuth for local testing.'
+          : 'Using fallback/manual import until OAuth app credentials are configured.',
       privacyNotice: 'We only read public/profile data and never post or modify your accounts.',
     };
   }
@@ -198,5 +202,12 @@ export class IntegrationsService {
     const keys = provider.oauthEnvKeys ?? [];
     if (keys.length === 0) return true;
     return keys.every((key) => !!process.env[key]);
+  }
+
+  private isLocalIntegrationMode() {
+    const flag = (process.env.FORCE_LOCAL_INTEGRATIONS ?? '').toLowerCase().trim();
+    if (flag === 'true' || flag === '1' || flag === 'yes' || flag === 'on') return true;
+    if (flag === 'false' || flag === '0' || flag === 'no' || flag === 'off') return false;
+    return process.env.NODE_ENV !== 'production';
   }
 }
