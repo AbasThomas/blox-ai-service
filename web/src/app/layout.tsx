@@ -1,8 +1,21 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, Instrument_Sans } from 'next/font/google';
 import './global.css';
 import { PosthogProvider } from '../components/layout/posthog-provider';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'https://blox.app';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  variable: '--font-instrument-sans',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -67,15 +80,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Bungee+Inline&family=Londrina+Shadow&family=Rubik+Maze&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
+      <body className={`${inter.variable} ${instrumentSans.variable} font-sans`}>
         <PosthogProvider>
           <div className="flex min-h-screen flex-col">
             {children}

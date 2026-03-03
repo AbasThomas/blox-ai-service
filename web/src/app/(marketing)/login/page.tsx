@@ -176,7 +176,7 @@ export default function LoginPage() {
             <button
               type="submit" disabled={loading}
               onMouseMove={handleSpotlightMove}
-              className="mt-8 hero-spotlight-btn hero-spotlight-btn-primary group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:pointer-events-none disabled:opacity-50"
+              className="mt-8 hero-spotlight-btn hero-spotlight-btn-primary group relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border bg-[rgba(20,20,20,0.6)] px-8 py-[0.9rem] text-[0.9rem] uppercase tracking-[0.12em] text-[#c6e3ff] backdrop-blur-[6px] transition-colors duration-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               style={{ fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
             >
               <span className="hero-spotlight-btn-shine" />
@@ -188,7 +188,7 @@ export default function LoginPage() {
                 }}
               />
               <span className="relative pointer-events-none flex items-center justify-center gap-2">
-                {loading ? 'Loging in...' : 'Login'}
+                {loading ? 'Logging in...' : 'Login'}
                 {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
               </span>
             </button>

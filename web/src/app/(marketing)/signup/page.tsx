@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -333,8 +332,8 @@ export default function SignupPage() {
                   />
                   <span className="text-slate-400">
                     I agree to the{' '}
-                    <Link href="/terms" className="font-bold text-[#1ECEFA] hover:text-white transition-colors">Terms of Service</Link>{' '}
-                    and{' '}
+                    <Link href="/terms" className="font-bold text-[#1ECEFA] hover:text-white transition-colors">Terms of Service</Link>
+                    and
                     <Link href="/privacy" className="font-bold text-[#1ECEFA] hover:text-white transition-colors">Privacy Policy</Link>
                   </span>
                 </label>

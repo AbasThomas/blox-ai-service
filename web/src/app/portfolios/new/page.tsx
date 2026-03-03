@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Persona } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
+import { AuthGuard } from '@/components/shared/auth-guard';
 import { integrationsApi, onboardingApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
 import { Check, Zap, Bot, User, ArrowUpRight, Shield } from '@/components/ui/icons';
@@ -45,16 +46,22 @@ interface ImportConflict {
   candidates: Array<{ provider: string; value: string }>;
 }
 
+interface ConnectResponse {
+  authUrl?: string | null;
+  connected?: boolean;
+  message?: string;
+}
+
 const PERSONA_OPTIONS = [
-  { value: Persona.FREELANCER, label: 'Freelancer', desc: 'Confident, conversion-focused positioning' },
-  { value: Persona.JOB_SEEKER, label: 'Job Seeker', desc: 'Recruiter-friendly narrative and achievements' },
-  { value: Persona.DESIGNER, label: 'Designer', desc: 'Gallery-first structure and visuals' },
-  { value: Persona.DEVELOPER, label: 'Developer', desc: 'Projects and technical credibility first' },
-  { value: Persona.STUDENT, label: 'Student', desc: 'Growth-oriented story and learning outcomes' },
-  { value: Persona.EXECUTIVE, label: 'Executive', desc: 'Leadership impact and strategic outcomes' },
+  { value: Persona.FREELANCER, label: 'Freelancer', desc: 'Service and client-result focused story' },
+  { value: Persona.JOB_SEEKER, label: 'Job Seeker', desc: 'Recruiter-friendly narrative and outcomes' },
+  { value: Persona.DESIGNER, label: 'Designer', desc: 'Visual case studies and portfolio-first layout' },
+  { value: Persona.DEVELOPER, label: 'Developer', desc: 'Projects, architecture, and technical depth' },
+  { value: Persona.STUDENT, label: 'Student', desc: 'Learning journey, internships, and potential' },
+  { value: Persona.EXECUTIVE, label: 'Executive', desc: 'Leadership impact and strategic wins' },
 ] as const;
 
-const STEPS = ['Persona', 'Connect Accounts', 'Auto-Generate', 'Review Merge', 'Done'] as const;
+const STEPS = ['Profile Setup', 'Connect Accounts', 'AI Draft', 'Review', 'Launch'] as const;
 
 const DEFAULT_PROVIDER_ORDER: Provider[] = [
   'linkedin',
@@ -67,6 +74,19 @@ const DEFAULT_PROVIDER_ORDER: Provider[] = [
   'coursera',
 ];
 
+const PROVIDER_META: Record<Provider, { label: string; logoUrl: string }> = {
+  linkedin: { label: 'LinkedIn', logoUrl: 'https://cdn.simpleicons.org/linkedin/0A66C2' },
+  github: { label: 'GitHub', logoUrl: 'https://cdn.simpleicons.org/github/FFFFFF' },
+  upwork: { label: 'Upwork', logoUrl: 'https://cdn.simpleicons.org/upwork/6FDA44' },
+  fiverr: { label: 'Fiverr', logoUrl: 'https://cdn.simpleicons.org/fiverr/1DBF73' },
+  behance: { label: 'Behance', logoUrl: 'https://cdn.simpleicons.org/behance/1769FF' },
+  dribbble: { label: 'Dribbble', logoUrl: 'https://cdn.simpleicons.org/dribbble/EA4C89' },
+  figma: { label: 'Figma', logoUrl: 'https://cdn.simpleicons.org/figma/F24E1E' },
+  coursera: { label: 'Coursera', logoUrl: 'https://cdn.simpleicons.org/coursera/0056D2' },
+};
+
+const AUTH_ERROR_PATTERN = /(401|403|unauthorized|forbidden|expired token|jwt)/i;
+
 function sortByPriority(items: IntegrationItem[]) {
   const rank = { primary: 0, secondary: 1, optional: 2 };
   return [...items].sort((a, b) => rank[a.priority] - rank[b.priority]);
@@ -76,9 +96,16 @@ function connectedProviders(items: IntegrationItem[]) {
   return items.filter((item) => item.connected).map((item) => item.id);
 }
 
+function providerLabel(provider: string) {
+  if (provider in PROVIDER_META) return PROVIDER_META[provider as Provider].label;
+  return provider;
+}
+
 export default function PortfolioNewPage() {
   const router = useRouter();
   const user = useBloxStore((state) => state.user);
+  const isAuthenticated = useBloxStore((state) => state.isAuthenticated);
+  const accessToken = useBloxStore((state) => state.accessToken);
   const [step, setStep] = useState<Step>(0);
   const [persona, setPersona] = useState<Persona | `${Persona}`>(
     (user.persona as Persona | `${Persona}`) ?? Persona.JOB_SEEKER,
@@ -87,9 +114,13 @@ export default function PortfolioNewPage() {
   const [locationHint, setLocationHint] = useState('');
   const [integrations, setIntegrations] = useState<IntegrationItem[]>([]);
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
+  const [connectingProvider, setConnectingProvider] = useState<Provider | null>(null);
+  const [disconnectingProvider, setDisconnectingProvider] = useState<Provider | null>(null);
   const [runId, setRunId] = useState('');
   const [status, setStatus] = useState<ImportStatus | null>(null);
+  const [startingImport, setStartingImport] = useState(false);
   const [statusError, setStatusError] = useState('');
+  const [statusNote, setStatusNote] = useState('');
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
@@ -142,91 +173,158 @@ export default function PortfolioNewPage() {
     () => Array.from(new Set([...selectedProviders, ...fallbackProviders])),
     [fallbackProviders, selectedProviders],
   );
+  const hasManualFallback = fallbackProviders.length > 0;
+
+  const requireSession = useCallback(
+    (reason: string) => {
+      if (isAuthenticated && accessToken) return true;
+      setStatusError(`Your session expired. Please sign in again to ${reason}.`);
+      router.replace('/login');
+      return false;
+    },
+    [accessToken, isAuthenticated, router],
+  );
+
+  const handleApiError = useCallback(
+    (error: unknown, fallback: string) => {
+      const message = error instanceof Error ? error.message : fallback;
+      if (AUTH_ERROR_PATTERN.test(message)) {
+        setStatusError('Your session expired. Please sign in again.');
+        router.replace('/login');
+        return;
+      }
+      setStatusError(message);
+    },
+    [router],
+  );
 
   const loadIntegrations = useCallback(async () => {
+    if (!requireSession('load accounts')) return;
     setLoadingIntegrations(true);
+    setStatusError('');
     try {
       const rows = (await integrationsApi.list()) as IntegrationItem[];
       setIntegrations(sortByPriority(rows));
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'Failed to load integrations');
+      handleApiError(error, 'Failed to load connected accounts.');
     } finally {
       setLoadingIntegrations(false);
     }
-  }, []);
+  }, [handleApiError, requireSession]);
 
   useEffect(() => {
-    if (step === 1) loadIntegrations();
+    if (step === 1) {
+      void loadIntegrations();
+    }
   }, [step, loadIntegrations]);
 
   useEffect(() => {
-    if (!runId || step < 2 || step > 3) return;
-    const timer = setInterval(async () => {
+    if (!runId || (step !== 2 && step !== 3)) return;
+    let stopped = false;
+
+    const pollStatus = async () => {
       try {
+        if (!requireSession('continue AI draft generation')) return;
         const next = (await onboardingApi.getImportStatus(runId)) as ImportStatus;
+        if (stopped) return;
         setStatus(next);
+
+        if (next.status === 'failed') {
+          setStatusError(next.message ?? 'AI draft generation failed. Reconnect accounts and retry.');
+          return;
+        }
 
         if (next.status === 'awaiting_review' || next.status === 'partial') {
           const previewRes = (await onboardingApi.getImportPreview(runId)) as {
             preview?: Record<string, unknown>;
           };
           const nextPreview = (previewRes.preview ?? null) as { conflicts?: ImportConflict[] } | null;
-          const conflictRows = Array.isArray(nextPreview?.conflicts) ? nextPreview.conflicts : [];
-          setConflicts(conflictRows);
+          setConflicts(Array.isArray(nextPreview?.conflicts) ? nextPreview.conflicts : []);
           if (step !== 3) setStep(3);
+          return;
         }
 
-        if (next.status === 'completed' && next.draftAssetId) {
+        if (next.status === 'completed') {
           setStep(4);
         }
-      } catch {
-        // keep polling
+      } catch (error) {
+        if (stopped) return;
+        handleApiError(error, 'Unable to reach AI import service.');
       }
+    };
+
+    void pollStatus();
+    const timer = setInterval(() => {
+      void pollStatus();
     }, 3000);
 
-    return () => clearInterval(timer);
-  }, [runId, step]);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [handleApiError, requireSession, runId, step]);
 
   const handleConnect = async (provider: Provider) => {
+    if (!requireSession('connect an account')) return;
+    setConnectingProvider(provider);
+    setStatusError('');
+    setStatusNote('');
     try {
-      const res = (await integrationsApi.connect(provider)) as {
-        authUrl?: string | null;
-        mode?: string;
-        connected?: boolean;
-        message?: string;
-      };
+      const res = (await integrationsApi.connect(provider)) as ConnectResponse;
       if (res.authUrl) {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333'}${res.authUrl}`;
+        const token = localStorage.getItem('blox_access_token') ?? '';
+        if (!token) {
+          setStatusError('Missing access token. Please sign in again.');
+          router.replace('/login');
+          return;
+        }
+        window.location.href = `${process.env.NEXT_PUBLIC_APP_BASE_URL || ''}${res.authUrl}?token=${encodeURIComponent(token)}`;
         return;
       }
 
       if (res.connected) {
-        setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
+        setIntegrations((prev) =>
+          prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)),
+        );
       }
       if (res.message) {
-        setStatusError(res.message);
+        setStatusNote(res.message);
       }
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'Failed to connect provider');
+      handleApiError(error, 'Failed to connect provider.');
+    } finally {
+      setConnectingProvider(null);
     }
   };
 
   const handleDisconnect = async (provider: Provider) => {
+    if (!requireSession('disconnect an account')) return;
+    setDisconnectingProvider(provider);
+    setStatusError('');
+    setStatusNote('');
     try {
       await integrationsApi.disconnect(provider);
-      setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: false } : item)));
+      setIntegrations((prev) =>
+        prev.map((item) => (item.id === provider ? { ...item, connected: false } : item)),
+      );
+      setStatusNote(`${providerLabel(provider)} disconnected.`);
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'Failed to disconnect provider');
+      handleApiError(error, 'Failed to disconnect provider.');
+    } finally {
+      setDisconnectingProvider(null);
     }
   };
 
   const startImport = async () => {
+    if (!requireSession('start AI draft generation')) return;
     setStatusError('');
+    setStatusNote('');
     if (importProviders.length === 0) {
-      setStatusError('Connect at least one provider or fill manual fallback fields before starting import.');
+      setStatusError('Connect at least one account or provide manual profile details before starting AI.');
       return;
     }
 
+    setStartingImport(true);
     try {
       const res = (await onboardingApi.startImport({
         persona,
@@ -240,7 +338,9 @@ export default function PortfolioNewPage() {
       setStatus(res);
       setStep(2);
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'Failed to start import');
+      handleApiError(error, 'Failed to start import.');
+    } finally {
+      setStartingImport(false);
     }
   };
 
@@ -258,6 +358,7 @@ export default function PortfolioNewPage() {
 
   const confirmImport = async () => {
     if (!runId) return;
+    if (!requireSession('confirm your draft')) return;
     setConfirming(true);
     setStatusError('');
     try {
@@ -272,17 +373,20 @@ export default function PortfolioNewPage() {
         router.push(`/portfolios/${assetId}/edit`);
       }
     } catch (error) {
-      setStatusError(error instanceof Error ? error.message : 'Failed to confirm import');
+      handleApiError(error, 'Failed to finalize import.');
     } finally {
       setConfirming(false);
     }
   };
 
+  const aiFailed = status?.status === 'failed';
+
   return (
-    <FeaturePage 
-      title="Build Your Portfolio" 
-      description="Connect your digital identity and let AI compile your professional story in seconds."
-    >
+    <AuthGuard>
+      <FeaturePage 
+        title="Create New Portfolio" 
+        description="Choose your profile angle, connect your real accounts, and let AI generate a clean first draft."
+      >
       <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in duration-500">
         {/* Modern Stepper */}
         <div className="relative flex justify-between items-center px-2">
@@ -315,8 +419,8 @@ export default function PortfolioNewPage() {
           {step === 0 && (
             <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="space-y-2 text-center">
-                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Define Your Persona</h2>
-                <p className="text-sm text-slate-400">Select the narrative lens AI will use to compile your portfolio.</p>
+                <h2 className="text-3xl font-black text-white tracking-tight uppercase">Pick Your Portfolio Angle</h2>
+                <p className="text-sm text-slate-400">This controls how AI frames your experience, skills, and value.</p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -359,7 +463,7 @@ export default function PortfolioNewPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Location Base (Optional)</label>
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Location Hint (Optional)</label>
                   <input
                     value={locationHint}
                     onChange={(e) => setLocationHint(e.target.value)}
@@ -374,7 +478,7 @@ export default function PortfolioNewPage() {
                   onClick={() => setStep(1)}
                   className="group flex items-center gap-3 rounded-2xl bg-white px-10 py-5 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_30px_rgba(30,206,250,0.5)] active:scale-95"
                 >
-                  Continue to Integrations <ArrowUpRight className="h-5 w-5" />
+                    Continue to Accounts <ArrowUpRight className="h-5 w-5" />
                 </button>
               </div>
             </div>

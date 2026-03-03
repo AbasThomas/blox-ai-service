@@ -143,7 +143,7 @@ export default function BillingPage() {
         <head>
           <title>Receipt ${escapeHtml(receiptNumber)}</title>
           <style>
-            body { font-family: Arial, sans-serif; color: #111; margin: 0; padding: 24px; }
+            body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; color: #111; margin: 0; padding: 24px; }
             h1 { margin: 0 0 4px 0; }
             .meta { color: #555; margin-bottom: 20px; }
             .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #ddd; }

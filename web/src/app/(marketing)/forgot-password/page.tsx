@@ -102,20 +102,20 @@ export default function ForgotPasswordPage() {
                 <CheckCircle2 className="h-10 w-10 text-[#1ECEFA]" />
               </div>
               <div>
-                <h1 className="font-display text-2xl font-black tracking-tight text-white">Sequence Initiated</h1>
+                <h1 className="font-display text-2xl font-black tracking-tight text-white">Email Sent</h1>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  If <strong className="text-white">{email}</strong> exists in our system, you will receive encrypted reset instructions inside your inbox shortly.
+                  If <strong className="text-white">{email}</strong> is registered, you'll receive reset instructions shortly.
                 </p>
               </div>
               <Link href="/login" className="group mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white transition-all hover:border-[#1ECEFA]/50 hover:bg-[#1ECEFA]/10 hover:text-[#1ECEFA]">
-                RETURN TO GATEWAY
+                Back to Sign In
               </Link>
             </div>
           ) : (
             <>
               <div className="mb-8 text-center">
                 <h1 className="font-display text-3xl font-black tracking-tight text-white">Reset Password</h1>
-                <p className="mt-2 text-sm text-slate-400">Enter your core identifier to request a reset.</p>
+                <p className="mt-2 text-sm text-slate-400">Enter your email to reset your password.</p>
               </div>
 
               {error && (
@@ -154,7 +154,7 @@ export default function ForgotPasswordPage() {
                     }}
                   />
                   <span className="relative pointer-events-none flex items-center justify-center gap-2">
-                    {loading ? 'TRANSMITTING...' : 'SEND RESET LINK'}
+                    {loading ? 'Sending...' : 'Reset Password'}
                     {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                   </span>
                 </button>
@@ -162,7 +162,7 @@ export default function ForgotPasswordPage() {
 
               <div className="mt-8 text-center">
                 <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-white">
-                  BACK TO LOGIN
+                  Back to Sign In
                 </Link>
               </div>
             </>
@@ -173,4 +173,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

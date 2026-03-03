@@ -135,9 +135,9 @@ export default function DashboardPage() {
       description={`Good day, welcome back, ${user.name.split(' ')[0]}!`}
       headerIcon={<LayoutDashboard className="h-5 w-5" />}
     >
-      <div className="space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
+      <div className="space-y-6 md:space-y-8 animate-in fade-in duration-700 slide-in-from-bottom-4">
         {/* Professional Stats Grid */}
-        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: 'Total Assets', value: stats.total, icon: LayoutDashboard, color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'hover:border-blue-500/30' },
             { label: 'Portfolios', value: stats.portfolios, icon: BriefcaseBusiness, color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'hover:border-purple-500/30' },
@@ -148,30 +148,30 @@ export default function DashboardPage() {
             return (
               <div
                 key={item.label}
-                className={`group relative overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 ${item.border} hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-black/50`}
+                className={`group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-white/[0.02] p-5 md:p-6 transition-all duration-300 hover:-translate-y-1 ${item.border} hover:bg-white/[0.04] hover:shadow-2xl hover:shadow-black/50`}
                 style={{ animationDelay: `${i * 100}ms` }}
               >
                 <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-white/5 to-transparent blur-2xl group-hover:from-white/10 transition-all duration-500" />
-                <div className="mb-8 flex items-center justify-between">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${item.bg} ${item.color} shadow-inner`}>
-                    <Icon className="h-6 w-6" />
+                <div className="mb-6 flex items-center justify-between">
+                  <div className={`flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-xl md:rounded-2xl ${item.bg} ${item.color} shadow-inner`}>
+                    <Icon className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
-                  <ArrowUpRight className="h-5 w-5 text-slate-600 transition-colors duration-300 group-hover:text-white" />
+                  <ArrowUpRight className="h-4 w-4 md:h-5 md:w-5 text-slate-600 transition-colors duration-300 group-hover:text-white" />
                 </div>
                 <div>
-                  <p className="text-4xl font-bold text-white tracking-tight">{item.value}</p>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-slate-400">{item.label}</p>
+                  <p className="text-3xl md:text-4xl font-bold text-white tracking-tight">{item.value}</p>
+                  <p className="mt-2 text-[10px] md:text-xs font-semibold uppercase tracking-widest text-slate-400">{item.label}</p>
                 </div>
               </div>
             );
           })}
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-12">
+        <div className="grid gap-6 md:gap-8 lg:grid-cols-12">
           {/* Recent Activity */}
           <section className="lg:col-span-8">
-            <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
-              <div className="flex items-center justify-between border-b border-white/5 p-6">
+            <div className="flex h-full flex-col overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+              <div className="flex items-center justify-between border-b border-white/5 p-4 md:p-6">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20 text-blue-400">
                     <Activity className="h-4 w-4" />
@@ -183,11 +183,11 @@ export default function DashboardPage() {
                 </Link>
               </div>
 
-              <div className="flex-1 p-3">
+              <div className="flex-1 p-2 md:p-3">
                 {loading ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 p-2">
                     {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="h-20 animate-pulse rounded-2xl bg-white/5" />
+                      <div key={i} className="h-16 md:h-20 animate-pulse rounded-2xl bg-white/5" />
                     ))}
                   </div>
                 ) : assets.length > 0 ? (
@@ -195,34 +195,34 @@ export default function DashboardPage() {
                     {sortedByUpdated.slice(0, 5).map((asset) => (
                       <div
                         key={asset.id}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-transparent p-4 transition-all duration-300 hover:border-white/5 hover:bg-white/[0.04]"
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4 rounded-xl md:rounded-2xl border border-transparent p-3 md:p-4 transition-all duration-300 hover:border-white/5 hover:bg-white/[0.04]"
                       >
-                        <div className="flex items-center gap-4 min-w-0">
-                          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-black/40 border border-white/5 transition-colors duration-300 group-hover:bg-white/10 ${
+                        <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                          <div className={`flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-lg md:rounded-xl bg-black/40 border border-white/5 transition-colors duration-300 group-hover:bg-white/10 ${
                             asset.type === AssetType.PORTFOLIO ? 'text-blue-400' : 
                             asset.type === AssetType.RESUME ? 'text-emerald-400' : 'text-amber-400'
                           }`}>
-                            {asset.type === AssetType.PORTFOLIO ? <Globe className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
+                            {asset.type === AssetType.PORTFOLIO ? <Globe className="h-5 w-5 md:h-6 md:w-6" /> : <FileText className="h-5 w-5 md:h-6 md:w-6" />}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="truncate text-base font-semibold text-slate-200 group-hover:text-white transition-colors">{asset.title}</h3>
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                            <h3 className="truncate text-sm md:text-base font-semibold text-slate-200 group-hover:text-white transition-colors">{asset.title}</h3>
+                            <div className="flex items-center gap-2 md:gap-3 mt-1">
+                              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] md:text-[10px] font-medium text-slate-300">
                                 {asset.type.replace('_', ' ')}
                               </span>
-                              <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                              <span className="flex items-center gap-1 text-[10px] md:text-[11px] font-medium text-slate-500">
                                 <Clock3 className="h-3 w-3" /> {formatDate(asset.updatedAt)}
                               </span>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="flex items-center gap-2 self-end sm:self-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
                           {asset.publishedUrl && (
                             <Link 
                               href={asset.publishedUrl} 
                               target="_blank" 
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
+                              className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-white/5 text-slate-400 hover:bg-blue-500 hover:text-white transition-all shadow-sm"
                               title="View Live"
                             >
                               <Globe className="h-4 w-4" />
@@ -236,7 +236,7 @@ export default function DashboardPage() {
                                 ? `/resumes/${asset.id}/edit`
                                 : `/cover-letters/${asset.id}/edit`
                             }
-                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-white hover:text-black transition-all shadow-sm"
+                            className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg md:rounded-xl bg-white/5 text-slate-400 hover:bg-white hover:text-black transition-all shadow-sm"
                             title="Edit"
                           >
                             <ArrowUpRight className="h-4 w-4" />
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium text-slate-300">No assets created yet</p>
                       <p className="mt-1 text-xs text-slate-500">Start building your professional presence</p>
                     </div>
-                    <Link href="/portfolios/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-bold text-black hover:bg-blue-400 hover:text-white transition-all">
+                    <Link href="/portfolios/new" className="mt-2 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 md:px-6 md:py-3 text-xs font-bold text-black hover:bg-blue-400 hover:text-white transition-all">
                       <PlusCircle className="h-4 w-4" /> Create First Asset
                     </Link>
                   </div>
@@ -264,8 +264,8 @@ export default function DashboardPage() {
           </section>
 
           {/* Quick Actions & Subscription Sidebar */}
-          <aside className="lg:col-span-4 space-y-6">
-            <div className="overflow-hidden rounded-3xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-sm">
+          <aside className="lg:col-span-4 space-y-6 md:space-y-8">
+            <div className="overflow-hidden rounded-2xl md:rounded-3xl border border-white/5 bg-white/[0.02] p-5 md:p-6 backdrop-blur-sm">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
                   <Zap className="h-4 w-4" />
@@ -284,9 +284,9 @@ export default function DashboardPage() {
                     <Link
                       key={action.href}
                       href={action.href}
-                      className="group flex items-center gap-4 rounded-2xl border border-white/5 bg-black/20 p-4 transition-all duration-300 hover:bg-white/10 hover:border-white/10"
+                      className="group flex items-center gap-3 md:gap-4 rounded-xl md:rounded-2xl border border-white/5 bg-black/20 p-3 md:p-4 transition-all duration-300 hover:bg-white/10 hover:border-white/10"
                     >
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${action.bg} ${action.color} transition-transform duration-300 group-hover:scale-110`}>
+                      <div className={`flex h-10 w-10 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-lg md:rounded-xl ${action.bg} ${action.color} transition-transform duration-300 group-hover:scale-110`}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -302,7 +302,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent p-6">
+            <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent p-5 md:p-6">
               <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
@@ -317,15 +317,15 @@ export default function DashboardPage() {
                 
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
-                    <p className="text-4xl font-bold text-white tracking-tight uppercase">{paymentTier}</p>
-                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/20">
+                    <p className="text-3xl md:text-4xl font-bold text-white tracking-tight uppercase">{paymentTier}</p>
+                    <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[9px] md:text-[10px] font-bold text-blue-400 border border-blue-500/20">
                       {paymentStatus}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-xl bg-black/40 p-4 border border-white/5">
+                <div className="space-y-3 md:space-y-4">
+                  <div className="flex items-center justify-between rounded-xl bg-black/40 p-3 md:p-4 border border-white/5">
                     <div className="flex items-center gap-3">
                       <History className="h-4 w-4 text-slate-400" />
                       <span className="text-xs font-medium text-slate-300">Next Billing</span>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
                   
                   <Link
                     href="/pricing"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-4 text-xs font-bold text-black transition-all hover:bg-blue-400 hover:text-white active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 md:px-6 md:py-4 text-xs font-bold text-black transition-all hover:bg-blue-400 hover:text-white active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]"
                   >
                     Manage Plan <ArrowUpRight className="h-4 w-4" />
                   </Link>

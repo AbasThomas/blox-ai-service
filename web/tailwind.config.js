@@ -4,8 +4,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Manrope', 'ui-sans-serif', 'system-ui'],
-        display: ['Space Grotesk', 'ui-sans-serif', 'system-ui'],
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui'],
+        display: ['var(--font-instrument-sans)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui'],
       },
       colors: {
         brand: {

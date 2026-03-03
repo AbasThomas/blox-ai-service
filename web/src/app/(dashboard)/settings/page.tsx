@@ -202,33 +202,35 @@ export default function SettingsPage() {
       description="Manage your account, security protocols, system integrations, and explore the career hub."
       headerIcon={<Settings className="h-6 w-6" />}
     >
-      <div className="flex flex-col lg:flex-row gap-10">
+      <div className="flex flex-col lg:flex-row gap-8 md:gap-10">
         {/* Tab Navigation Sidebar */}
         <aside className="lg:w-64 shrink-0">
-          <nav className="flex flex-col gap-1 p-1 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm">
-            {[
-              { id: 'Account', icon: <User className="h-4 w-4" /> },
-              { id: 'Security', icon: <Shield className="h-4 w-4" /> },
-              { id: 'Integrations', icon: <LinkIcon className="h-4 w-4" /> },
-              { id: 'Subscription', icon: <CreditCard className="h-4 w-4" /> },
-              { id: 'Export', icon: <Download className="h-4 w-4" /> },
-              { id: 'Career', icon: <BriefcaseBusiness className="h-4 w-4" />, label: 'Career Hub' },
-            ].map((tab) => (
-              <button 
-                key={tab.id} 
-                type="button" 
-                onClick={() => setActiveTab(tab.id as Tab)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 focus:outline-none ${
-                  activeTab === tab.id 
-                    ? 'bg-[#1ECEFA] text-black shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <span className={activeTab === tab.id ? 'opacity-100' : 'opacity-60'}>{tab.icon}</span>
-                <span>{tab.id === 'Career' ? 'Career Hub' : tab.id}</span>
-              </button>
-            ))}
-          </nav>
+          <div className="lg:sticky lg:top-24">
+            <nav className="flex lg:flex-col gap-1 p-1 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm overflow-x-auto lg:overflow-x-visible">
+              {[
+                { id: 'Account', icon: <User className="h-4 w-4" /> },
+                { id: 'Security', icon: <Shield className="h-4 w-4" /> },
+                { id: 'Integrations', icon: <LinkIcon className="h-4 w-4" /> },
+                { id: 'Subscription', icon: <CreditCard className="h-4 w-4" /> },
+                { id: 'Export', icon: <Download className="h-4 w-4" /> },
+                { id: 'Career', icon: <BriefcaseBusiness className="h-4 w-4" />, label: 'Career Hub' },
+              ].map((tab) => (
+                <button 
+                  key={tab.id} 
+                  type="button" 
+                  onClick={() => setActiveTab(tab.id as Tab)}
+                  className={`flex-shrink-0 lg:flex-shrink flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 focus:outline-none ${
+                    activeTab === tab.id 
+                      ? 'bg-[#1ECEFA] text-black shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span className={activeTab === tab.id ? 'opacity-100' : 'opacity-60'}>{tab.icon}</span>
+                  <span className="whitespace-nowrap">{tab.id === 'Career' ? 'Career Hub' : tab.id}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
         </aside>
 
         {/* Tab Content */}
@@ -242,14 +244,14 @@ export default function SettingsPage() {
               </div>
 
               <form onSubmit={handleSaveAccount} className="space-y-6">
-                <div className="grid gap-6 rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl">
+                <div className="grid gap-6 rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
                   <div className="space-y-2">
                     <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Identity Name</label>
                     <input 
                       value={name} 
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your name"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
+                      className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
                     />
                   </div>
                   
@@ -260,14 +262,14 @@ export default function SettingsPage() {
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="email@example.com"
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
+                      className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <div className="space-y-2">
                       <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Persona Profile</label>
-                      <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-5 py-4">
+                      <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-white/5 bg-white/5 px-4 md:px-5 py-3 md:py-4">
                         <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{user.persona ?? 'NOT ASSIGNED'}</span>
                         <span className="ml-auto rounded-full bg-slate-800 px-2 py-0.5 text-[9px] font-black text-slate-500 uppercase border border-white/5">Immutable</span>
                       </div>
@@ -275,7 +277,7 @@ export default function SettingsPage() {
                     
                     <div className="space-y-2">
                       <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Clearance Level</label>
-                      <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/5 px-5 py-4">
+                      <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-white/5 bg-white/5 px-4 md:px-5 py-3 md:py-4">
                         <span className={`text-sm font-black uppercase tracking-wider ${
                           user.tier === PlanTier.FREE ? 'text-slate-400' :
                           user.tier === PlanTier.PRO ? 'text-[#1ECEFA]' :
@@ -288,7 +290,7 @@ export default function SettingsPage() {
                 </div>
 
                 {accountMsg && (
-                  <div className={`rounded-2xl border p-4 text-sm font-bold animate-in zoom-in-95 duration-200 ${
+                  <div className={`rounded-xl md:rounded-2xl border p-4 text-sm font-bold animate-in zoom-in-95 duration-200 ${
                     accountMsg.includes('success') 
                       ? 'border-green-500/20 bg-green-500/10 text-green-400' 
                       : 'border-red-500/20 bg-red-500/10 text-red-400'
@@ -300,7 +302,7 @@ export default function SettingsPage() {
                 <button 
                   type="submit" 
                   disabled={savingAccount}
-                  className="flex items-center justify-center gap-2 rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95 disabled:opacity-50"
                 >
                   {savingAccount ? 'SYNCHRONIZING...' : 'COMMIT CHANGES'}
                 </button>
@@ -310,14 +312,14 @@ export default function SettingsPage() {
 
           {/* Security Tab */}
           {activeTab === 'Security' && (
-            <div className="max-w-2xl space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="max-w-2xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="space-y-6">
                 <div className="space-y-1">
                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">Access Credentials</h2>
                   <p className="text-sm text-slate-400">Manage your system passcodes and authentication layers.</p>
                 </div>
 
-                <form onSubmit={handleChangePassword} className="space-y-6 rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl">
+                <form onSubmit={handleChangePassword} className="space-y-6 rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Current Passcode</label>
@@ -325,7 +327,7 @@ export default function SettingsPage() {
                         type="password" 
                         value={currentPw} 
                         onChange={(e) => setCurrentPw(e.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
+                        className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
                       />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -335,7 +337,7 @@ export default function SettingsPage() {
                           type="password" 
                           value={newPw} 
                           onChange={(e) => setNewPw(e.target.value)}
-                          className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
+                          className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
                         />
                       </div>
                       <div className="space-y-2">
@@ -344,14 +346,14 @@ export default function SettingsPage() {
                           type="password" 
                           value={confirmPw} 
                           onChange={(e) => setConfirmPw(e.target.value)}
-                          className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
+                          className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
                         />
                       </div>
                     </div>
                   </div>
 
                   {pwMsg && (
-                    <div className={`rounded-2xl border p-4 text-sm font-bold ${pwMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
+                    <div className={`rounded-xl md:rounded-2xl border p-4 text-sm font-bold ${pwMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
                       {pwMsg}
                     </div>
                   )}
@@ -359,7 +361,7 @@ export default function SettingsPage() {
                   <button 
                     type="submit" 
                     disabled={savingPw}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 hover:border-[#1ECEFA]/50 hover:text-[#1ECEFA] disabled:opacity-50"
+                    className="rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 hover:border-[#1ECEFA]/50 hover:text-[#1ECEFA] disabled:opacity-50"
                   >
                     {savingPw ? 'ENCRYPTING...' : 'ROTATE CREDENTIALS'}
                   </button>
@@ -372,9 +374,9 @@ export default function SettingsPage() {
                   <p className="text-sm text-slate-400">Add an extra layer of encryption to your access terminal.</p>
                 </div>
 
-                <div className="rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl">
+                <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
                   {!mfaSetup ? (
-                    <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
                       <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
                         <Shield className="h-8 w-8" />
                       </div>
@@ -382,7 +384,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-slate-400 leading-relaxed">Secure your terminal with a Time-based One-Time Password (TOTP). This adds a required second key during authentication.</p>
                         <button 
                           onClick={handleSetupMfa}
-                          className="mt-4 rounded-2xl border border-purple-500/30 bg-purple-500/10 px-6 py-3 text-xs font-black tracking-widest text-purple-300 transition-all hover:bg-purple-600 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+                          className="mt-4 rounded-xl md:rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-2.5 md:px-6 md:py-3 text-xs font-black tracking-widest text-purple-300 transition-all hover:bg-purple-600 hover:text-white hover:shadow-[0_0_20px_rgba(168,85,247,0.4)]"
                         >
                           INITIALIZE 2FA
                         </button>
@@ -390,11 +392,11 @@ export default function SettingsPage() {
                     </div>
                   ) : (
                     <div className="space-y-8 animate-in fade-in duration-300">
-                      <div className="grid gap-8 md:grid-cols-2">
-                        <div className="space-y-4">
+                      <div className="grid gap-6 md:gap-8 md:grid-cols-2">
+                        <div className="space-y-4 text-center md:text-left">
                           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-400">1. Scan visual matrix</p>
                           <div className="inline-block rounded-2xl border-2 border-purple-500/30 p-3 bg-white">
-                            <img src={mfaSetup.qrCode} alt="MFA QR code" className="h-40 w-40 object-contain" />
+                            <img src={mfaSetup.qrCode} alt="MFA QR code" className="h-32 w-32 md:h-40 md:w-40 object-contain" />
                           </div>
                         </div>
                         <div className="space-y-6">
@@ -411,11 +413,11 @@ export default function SettingsPage() {
                                 value={mfaCode} 
                                 onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                 placeholder="000000"
-                                className="w-full rounded-2xl border border-white/10 bg-black/60 px-5 py-4 text-center font-mono text-xl tracking-[0.3em] text-white focus:border-purple-500/50 focus:outline-none transition-all" 
+                                className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-black/60 px-4 py-3 md:px-5 md:py-4 text-center font-mono text-lg md:text-xl tracking-[0.3em] text-white focus:border-purple-500/50 focus:outline-none transition-all" 
                               />
                               <button 
                                 onClick={handleVerifyMfa}
-                                className="rounded-2xl bg-purple-600 px-8 text-sm font-black text-white hover:bg-white hover:text-purple-600 transition-all"
+                                className="rounded-xl md:rounded-2xl bg-purple-600 px-6 md:px-8 text-sm font-black text-white hover:bg-white hover:text-purple-600 transition-all"
                               >
                                 VERIFY
                               </button>
@@ -426,7 +428,7 @@ export default function SettingsPage() {
                     </div>
                   )}
                   {mfaMsg && (
-                    <div className={`mt-6 rounded-2xl border p-4 text-sm font-bold ${mfaMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
+                    <div className={`mt-6 rounded-xl md:rounded-2xl border p-4 text-sm font-bold ${mfaMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
                       {mfaMsg}
                     </div>
                   )}
@@ -443,23 +445,23 @@ export default function SettingsPage() {
                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">System Links</h2>
                   <p className="text-sm text-slate-400">Connect external nodes to synchronize your career data.</p>
                 </div>
-                <div className="flex items-center gap-2 rounded-2xl border border-blue-500/20 bg-blue-500/5 px-4 py-2 text-[10px] font-black text-blue-400 uppercase tracking-widest">
+                <div className="flex items-center gap-2 rounded-xl md:rounded-2xl border border-blue-500/20 bg-blue-500/5 px-4 py-2 text-[10px] font-black text-blue-400 uppercase tracking-widest">
                   <Shield className="h-3 w-3" /> Privacy Protocol Active
                 </div>
               </div>
 
               {loadingIntegrations ? (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-48 animate-pulse rounded-3xl border border-white/5 bg-black/20" />
+                    <div key={i} className="h-48 animate-pulse rounded-2xl md:rounded-3xl border border-white/5 bg-black/20" />
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
                   {integrations.map((integration) => (
                     <div 
                       key={integration.id} 
-                      className={`group relative flex flex-col justify-between overflow-hidden rounded-3xl border p-6 transition-all duration-300 ${
+                      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl border p-5 md:p-6 transition-all duration-300 ${
                         integration.connected 
                           ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[inset_0_0_30px_rgba(30,206,250,0.05)]' 
                           : 'border-white/10 bg-black/40 hover:border-white/20'
@@ -497,14 +499,14 @@ export default function SettingsPage() {
                       {integration.connected ? (
                         <button 
                           onClick={() => handleDisconnect(integration.id)}
-                          className="mt-6 w-full rounded-2xl border border-red-500/20 bg-red-500/5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 transition-all hover:bg-red-500 hover:text-white"
+                          className="mt-6 w-full rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 transition-all hover:bg-red-500 hover:text-white"
                         >
                           TERMINATE
                         </button>
                       ) : (
                         <button
                           onClick={() => handleConnectIntegration(integration.id)}
-                          className="mt-6 w-full rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]"
+                          className="mt-6 w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]"
                         >
                           INITIALIZE LINK
                         </button>
@@ -514,7 +516,7 @@ export default function SettingsPage() {
                 </div>
               )}
               {integrationMsg && (
-                <div className="inline-block rounded-2xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-5 py-4 text-xs font-bold tracking-wide text-[#1ECEFA]">
+                <div className="inline-block rounded-xl md:rounded-2xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-5 py-4 text-xs font-bold tracking-wide text-[#1ECEFA]">
                   {integrationMsg}
                 </div>
               )}
@@ -530,23 +532,23 @@ export default function SettingsPage() {
               </div>
 
               {loadingSub ? (
-                <div className="h-64 animate-pulse rounded-3xl border border-white/5 bg-black/20" />
+                <div className="h-64 animate-pulse rounded-2xl md:rounded-3xl border border-white/5 bg-black/20" />
               ) : subscription ? (
                 <div className="space-y-8">
-                  <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0C0F13] via-black to-purple-900/10 p-10 shadow-2xl">
+                  <div className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0C0F13] via-black to-purple-900/10 p-8 md:p-10 shadow-2xl">
                     <div className="absolute right-0 top-0 h-96 w-96 -translate-y-1/2 translate-x-1/3 rounded-full bg-purple-500/10 blur-[100px] pointer-events-none" />
                     
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">
                           <Zap className="h-3 w-3 fill-current" /> Active Protocol
                         </div>
-                        <h3 className="text-5xl font-black text-white tracking-tighter">{subscription.tier}</h3>
+                        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tighter">{subscription.tier}</h3>
                         <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{subscription.cycle} CYCLE</p>
                       </div>
                       
-                      <div className="flex flex-col items-end gap-3">
-                        <span className={`inline-flex items-center gap-2 rounded-2xl border px-5 py-2.5 text-xs font-black uppercase tracking-widest shadow-inner ${
+                      <div className="flex flex-col items-start md:items-end gap-3">
+                        <span className={`inline-flex items-center gap-2 rounded-xl md:rounded-2xl border px-4 py-2 md:px-5 md:py-2.5 text-xs font-black uppercase tracking-widest shadow-inner ${
                           subscription.status === 'ACTIVE' ? 'border-green-500/20 bg-green-500/10 text-green-400' :
                           'border-red-500/20 bg-red-500/10 text-red-400'
                         }`}>
@@ -561,10 +563,10 @@ export default function SettingsPage() {
                   {subscription.invoices && subscription.invoices.length > 0 && (
                     <div className="space-y-4">
                       <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Ledger History</h4>
-                      <div className="rounded-3xl border border-white/10 bg-black/30 p-2 overflow-hidden">
+                      <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-2 overflow-hidden">
                         {subscription.invoices.slice(0, 5).map((inv) => (
-                          <div key={inv.id} className="flex items-center justify-between rounded-2xl px-6 py-4 transition-all hover:bg-white/5">
-                            <div className="flex items-center gap-4">
+                          <div key={inv.id} className="flex items-center justify-between rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 transition-all hover:bg-white/5">
+                            <div className="flex items-center gap-3 md:gap-4">
                               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/5">
                                 <CreditCard className="h-5 w-5 text-slate-500" />
                               </div>
@@ -582,7 +584,7 @@ export default function SettingsPage() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <a 
                       href="/pricing"
-                      className="flex-1 flex items-center justify-center rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95"
+                      className="flex-1 flex items-center justify-center rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)] active:scale-95"
                     >
                       ELEVATE CLEARANCE
                     </a>
@@ -590,7 +592,7 @@ export default function SettingsPage() {
                       <button 
                         onClick={handleCancelSubscription} 
                         disabled={cancelling}
-                        className="flex-1 rounded-2xl border border-red-500/20 bg-red-500/5 px-8 py-4 text-sm font-black uppercase tracking-widest text-red-400 transition-all hover:bg-red-500 hover:text-white disabled:opacity-50"
+                        className="flex-1 rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-red-400 transition-all hover:bg-red-500 hover:text-white disabled:opacity-50"
                       >
                         {cancelling ? 'PROCESSING...' : 'ABORT SUBSCRIPTION'}
                       </button>
@@ -598,15 +600,15 @@ export default function SettingsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-16 text-center">
-                  <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white/5 text-slate-700">
-                    <Shield className="h-10 w-10" strokeWidth={1.5} />
+                <div className="flex flex-col items-center justify-center rounded-2xl md:rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-12 md:p-16 text-center">
+                  <div className="mb-6 flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl md:rounded-3xl bg-white/5 text-slate-700">
+                    <Shield className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-xl font-black text-white tracking-tight uppercase">No Active Protocols</h3>
+                  <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase">No Active Protocols</h3>
                   <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">Your system is currently operating on standard free-tier boundaries.</p>
                   <a 
                     href="/pricing" 
-                    className="mt-8 rounded-2xl bg-white px-8 py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
+                    className="mt-8 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-[0_0_25px_rgba(30,206,250,0.5)]"
                   >
                     VIEW UPGRADE PROTOCOLS
                   </a>
@@ -617,7 +619,7 @@ export default function SettingsPage() {
 
           {/* Export Tab */}
           {activeTab === 'Export' && (
-            <div className="max-w-2xl space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="max-w-2xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="space-y-6">
                 <div className="space-y-1">
                   <h2 className="text-2xl font-black text-white tracking-tight uppercase">Data Extraction</h2>
@@ -630,13 +632,13 @@ export default function SettingsPage() {
                     { id: 'pdf', label: 'PDF RENDER PIPELINE', desc: 'Print-ready vectorized output compiled from active assets.', icon: <Download className="h-5 w-5" /> },
                     { id: 'docx', label: 'DOCX EXTRACTION', desc: 'Word compatible format stripped of advanced styling.', icon: <Download className="h-5 w-5" /> },
                   ].map((opt) => (
-                    <div key={opt.id} className="group relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 p-1 transition-all hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl backdrop-blur-md">
-                      <div className="flex items-center justify-between rounded-[1.4rem] bg-black/40 p-6">
-                        <div className="space-y-1">
+                    <div key={opt.id} className="group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/10 bg-black/40 p-1 transition-all hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl backdrop-blur-md">
+                      <div className="flex flex-col md:flex-row items-center justify-between rounded-xl md:rounded-[1.4rem] bg-black/40 p-4 md:p-6">
+                        <div className="space-y-1 text-center md:text-left mb-4 md:mb-0">
                           <p className="text-sm font-black text-white group-hover:text-[#1ECEFA] transition-colors uppercase tracking-tight">{opt.label}</p>
                           <p className="text-xs text-slate-500">{opt.desc}</p>
                         </div>
-                        <button className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-slate-400 transition-all hover:bg-[#1ECEFA] hover:text-black group-hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]">
+                        <button className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 text-slate-400 transition-all hover:bg-[#1ECEFA] hover:text-black group-hover:shadow-[0_0_20px_rgba(30,206,250,0.4)]">
                           {opt.icon}
                         </button>
                       </div>
@@ -646,7 +648,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-red-500/20 bg-red-500/5 p-8 backdrop-blur-sm">
+              <div className="rounded-2xl md:rounded-3xl border border-red-500/20 bg-red-500/5 p-6 md:p-8 backdrop-blur-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <Shield className="h-5 w-5 text-red-500" />
                   <h3 className="text-sm font-black uppercase tracking-[0.2em] text-red-500">Terminal Purge Sequence</h3>
@@ -654,7 +656,7 @@ export default function SettingsPage() {
                 <p className="mb-8 text-xs text-red-400/70 leading-relaxed max-w-lg">
                   Initiating this sequence will permanently purge your identity context, compiled nodes, and credentials from our servers. This action is irreversible.
                 </p>
-                <button className="rounded-2xl border border-red-500 bg-red-500/10 px-8 py-4 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                <button className="rounded-xl md:rounded-2xl border border-red-500 bg-red-500/10 px-6 md:px-8 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-[0_0_20px_rgba(239,68,68,0.2)]">
                   INITIATE PURGE
                 </button>
               </div>
@@ -663,13 +665,13 @@ export default function SettingsPage() {
 
           {/* Career Hub Tab */}
           {activeTab === 'Career' && (
-            <div className="max-w-4xl space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="max-w-4xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
               <div className="space-y-1">
-                <h2 className="text-3xl font-black text-white tracking-tighter uppercase">Career Hub</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">Career Hub</h2>
                 <p className="text-sm text-slate-400">Advanced career tools to optimize your professional trajectory.</p>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-4 md:gap-6 md:grid-cols-2">
                 {[
                   {
                     title: 'Career Coach',
@@ -703,14 +705,14 @@ export default function SettingsPage() {
                   <a
                     key={item.href}
                     href={item.href}
-                    className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
+                    className="group relative overflow-hidden rounded-2xl md:rounded-[2rem] border border-white/10 bg-black/40 p-6 md:p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
                   >
                     <div className="relative z-10 flex flex-col h-full">
-                      <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/5 border border-white/5 text-slate-400 group-hover:bg-[#1ECEFA] group-hover:text-black transition-all duration-300">
+                      <div className="mb-6 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-slate-400 group-hover:bg-[#1ECEFA] group-hover:text-black transition-all duration-300">
                         {item.icon}
                       </div>
                       <div className="mt-auto">
-                        <h3 className="text-xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{item.title}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{item.title}</h3>
                         <p className="mt-2 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
                       </div>
                       <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1ECEFA] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -723,13 +725,13 @@ export default function SettingsPage() {
                 ))}
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-black to-[#1ECEFA]/5 p-8">
-                <div className="flex flex-col md:flex-row items-center gap-8">
-                  <div className="shrink-0 rounded-2xl bg-[#1ECEFA]/10 p-5 border border-[#1ECEFA]/20">
-                    <Zap className="h-8 w-8 text-[#1ECEFA]" />
+              <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-gradient-to-br from-black to-[#1ECEFA]/5 p-6 md:p-8">
+                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                  <div className="shrink-0 rounded-xl md:rounded-2xl bg-[#1ECEFA]/10 p-4 md:p-5 border border-[#1ECEFA]/20">
+                    <Zap className="h-6 w-6 md:h-8 md:w-8 text-[#1ECEFA]" />
                   </div>
                   <div className="flex-1 text-center md:text-left space-y-2">
-                    <h4 className="text-lg font-black text-white tracking-tight uppercase">Career Roadmap</h4>
+                    <h4 className="text-base md:text-lg font-black text-white tracking-tight uppercase">Career Roadmap</h4>
                     <p className="text-sm text-slate-500 leading-relaxed">Your professional trajectory is being analyzed. Complete more assets to unlock personalized roadmap milestones.</p>
                   </div>
                   <div className="w-full md:w-48 bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">

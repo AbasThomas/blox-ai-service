@@ -119,7 +119,7 @@ export default function ResumesPage() {
             <body>
               <h1>${escapeHtml(title)}</h1>
               <p>Exported on ${escapeHtml(new Date().toLocaleString())}</p>
-              <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;">${escapeHtml(body)}</pre>
+              <pre style="white-space:pre-wrap;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;">${escapeHtml(body)}</pre>
             </body>
           </html>
         `;
@@ -141,10 +141,10 @@ export default function ResumesPage() {
             <head>
               <title>${escapeHtml(title)} - PDF Export</title>
               <style>
-                body { font-family: Arial, sans-serif; padding: 32px; color: #111; }
+                body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 32px; color: #111; }
                 h1 { margin-bottom: 8px; }
                 p { color: #444; margin-bottom: 20px; }
-                pre { white-space: pre-wrap; line-height: 1.5; font-family: Arial, sans-serif; }
+                pre { white-space: pre-wrap; line-height: 1.5; font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; }
               </style>
             </head>
             <body>

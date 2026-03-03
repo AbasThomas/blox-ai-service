@@ -48,19 +48,19 @@ export default function CoachPage() {
       minTier={PlanTier.PREMIUM}
       headerIcon={<Target className="h-6 w-6" />}
     >
-      <div className="space-y-10 animate-in fade-in duration-500">
+      <div className="space-y-8 md:space-y-10 animate-in fade-in duration-500">
         {/* Trajectory Progress */}
-        <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/40 p-10 shadow-2xl">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/10 bg-black/40 p-6 md:p-10 shadow-2xl">
           <div className="absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-[#1ECEFA]/10 blur-[80px] pointer-events-none" />
           
           <div className="relative z-10 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#1ECEFA]">Trajectory Progress</h2>
-                <p className="text-3xl font-black text-white tracking-tight uppercase">Roadmap Completion</p>
+                <p className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase">Roadmap Completion</p>
               </div>
-              <div className="text-right">
-                <span className="text-5xl font-black text-white tracking-tighter">{progress}%</span>
+              <div className="text-left sm:text-right">
+                <span className="text-4xl md:text-5xl font-black text-white tracking-tighter">{progress}%</span>
               </div>
             </div>
             
@@ -77,7 +77,7 @@ export default function CoachPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm max-w-fit">
+        <div className="flex flex-wrap gap-2 p-1.5 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm max-w-fit mx-auto sm:mx-0">
           {[
             { id: 'skills', label: 'Skill Gaps', icon: <Target className="h-4 w-4" /> },
             { id: 'milestones', label: 'Milestones', icon: <Milestone className="h-4 w-4" /> },
@@ -86,14 +86,14 @@ export default function CoachPage() {
             <button 
               key={tab.id} 
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all duration-200 ${
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 md:px-5 md:py-2.5 text-xs font-black uppercase tracking-widest transition-all duration-200 ${
                 activeTab === tab.id 
                   ? 'bg-[#1ECEFA] text-black shadow-[0_0_15px_rgba(30,206,250,0.4)]' 
                   : 'text-slate-500 hover:bg-white/5 hover:text-white'
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
@@ -101,9 +101,9 @@ export default function CoachPage() {
         {/* Tab Content */}
         <div className="min-h-[400px]">
           {activeTab === 'skills' && (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {['Technical', 'Soft Skills', 'Career'].map((cat) => (
-                <div key={cat} className="rounded-3xl border border-white/10 bg-black/30 p-8 shadow-xl space-y-8">
+                <div key={cat} className="rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl space-y-8">
                   <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] border-b border-white/5 pb-4">{cat}</h3>
                   <div className="space-y-8">
                     {SKILL_GAPS.filter((s) => s.category === cat).map((skill) => (
@@ -133,7 +133,7 @@ export default function CoachPage() {
                 <button 
                   key={m.title} 
                   onClick={() => toggleMilestone(i)}
-                  className={`group w-full rounded-[1.5rem] border p-6 text-left transition-all duration-300 flex items-center gap-6 ${
+                  className={`group w-full rounded-2xl md:rounded-[1.5rem] border p-4 md:p-6 text-left transition-all duration-300 flex items-center gap-4 md:gap-6 ${
                     m.done 
                       ? 'border-green-500/20 bg-green-500/5' 
                       : 'border-white/10 bg-black/40 hover:border-white/20 hover:bg-black/60 shadow-lg'
@@ -146,8 +146,8 @@ export default function CoachPage() {
                   }`}>
                     {m.done ? <Check className="h-5 w-5" /> : <div className="h-2 w-2 rounded-full bg-slate-800" />}
                   </div>
-                  <div className="flex-1">
-                    <p className={`text-sm font-black uppercase tracking-tight transition-all ${m.done ? 'text-slate-500 line-through' : 'text-white'}`}>{m.title}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-black uppercase tracking-tight transition-all truncate ${m.done ? 'text-slate-500 line-through' : 'text-white'}`}>{m.title}</p>
                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] mt-1">Deadline: {new Date(m.dueDate).toLocaleDateString()}</p>
                   </div>
                   {!m.done && <ArrowUpRight className="h-4 w-4 text-slate-700 group-hover:text-white transition-colors" />}
@@ -157,16 +157,16 @@ export default function CoachPage() {
           )}
 
           {activeTab === 'paths' && (
-            <div className="grid gap-6 md:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid gap-4 md:gap-6 sm:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {LEARNING_PATHS.map((path) => (
-                <div key={path.title} className="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/40 p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl">
+                <div key={path.title} className="group relative overflow-hidden rounded-2xl md:rounded-[2rem] border border-white/10 bg-black/40 p-6 md:p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl">
                   <div className="relative z-10 flex flex-col h-full">
                     <div className="flex items-start justify-between mb-6">
                       <div className="space-y-1">
-                        <h3 className="text-xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors leading-tight">{path.title}</h3>
+                        <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors leading-tight">{path.title}</h3>
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{path.provider} • {path.duration}</p>
                       </div>
-                      <span className="rounded-lg bg-white/5 border border-white/5 px-3 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest">{path.type}</span>
+                      <span className="hidden sm:block rounded-lg bg-white/5 border border-white/5 px-3 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest">{path.type}</span>
                     </div>
                     
                     <div className="mt-auto pt-6 flex items-center justify-between border-t border-white/5">

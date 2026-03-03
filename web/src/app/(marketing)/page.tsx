@@ -841,7 +841,7 @@ export default function HomePage() {
       >
         <h1 
           className="text-[22vw] leading-[0.7] select-none text-[rgba(30,206,250,0.06)] tracking-tighter mix-blend-screen scale-y-110 reveal-on-scroll"
-          style={{ fontFamily: '"Rubik Maze", system-ui' }}
+          style={{ fontFamily: 'var(--font-instrument-sans), var(--font-inter), system-ui' }}
         >
           BLOX
         </h1>
