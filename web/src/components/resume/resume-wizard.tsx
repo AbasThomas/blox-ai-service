@@ -12,12 +12,12 @@ import {
   ArrowUpRight,
   CheckCircle,
   Sparkles,
-  BriefcaseBusiness,
-  Globe,
-  BarChart3,
   X,
   PlusCircle,
-  Settings,
+  Target,
+  BriefcaseBusiness,
+  Users,
+  GraduationCap,
 } from '@/components/ui/icons';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -78,13 +78,13 @@ const TEMPLATES = [
 ];
 
 const PERSONAS = [
-  { id: 'job-seeker', label: 'Job Seeker', emoji: '🎯', desc: 'Traditional employment' },
-  { id: 'freelancer', label: 'Freelancer', emoji: '💼', desc: 'Independent contractor' },
-  { id: 'executive', label: 'Executive', emoji: '🏢', desc: 'Senior leadership' },
-  { id: 'academic', label: 'Academic', emoji: '🎓', desc: 'Research / teaching' },
+  { id: 'job-seeker', label: 'Job Seeker', icon: Target, desc: 'Traditional employment' },
+  { id: 'freelancer', label: 'Freelancer', icon: BriefcaseBusiness, desc: 'Independent contractor' },
+  { id: 'executive', label: 'Executive', icon: Users, desc: 'Senior leadership' },
+  { id: 'academic', label: 'Academic', icon: GraduationCap, desc: 'Research / teaching' },
 ];
 
-const STEP_LABELS = ['Template', 'Fill Data', 'AI Tailor', 'Review'];
+const STEP_LABELS = ['Template', 'Content', 'Optimize', 'Review'];
 
 const SKILL_SUGGESTIONS: Record<string, string[]> = {
   'job-seeker': ['Communication', 'Problem Solving', 'Teamwork', 'Adaptability'],
@@ -93,12 +93,14 @@ const SKILL_SUGGESTIONS: Record<string, string[]> = {
   academic: ['Research Methods', 'Academic Writing', 'Grant Writing', 'Peer Review'],
 };
 
-const AI_SUGGESTIONS = [
-  'Shorten your summary to 3 sentences for better readability.',
-  'Add quantified achievements — "Increased revenue by 23%".',
-  'Start each bullet with a strong action verb.',
-  'Include more role-specific keywords from the job description.',
-  'Add a "Core Competencies" section for quick ATS scanning.',
+// Dynamic tips — shown in Step 3 based on what's missing
+const SCORE_TIPS = [
+  { id: 'summary', check: (d: ResumeData) => d.summary.replace(/<[^>]+>/g, '').trim().length > 30, tip: 'Add a 2–3 sentence professional summary.' },
+  { id: 'exp', check: (d: ResumeData) => d.experience.length >= 2, tip: 'Include at least 2 work experience entries.' },
+  { id: 'skills', check: (d: ResumeData) => d.skills.length >= 5, tip: 'List at least 5 relevant skills.' },
+  { id: 'edu', check: (d: ResumeData) => d.education.length >= 1, tip: 'Include your highest level of education.' },
+  { id: 'contact', check: (d: ResumeData) => !!(d.contact.name && d.contact.email), tip: 'Complete your name and email address.' },
+  { id: 'job', check: (d: ResumeData) => d.jobDesc.trim().length > 20, tip: 'Paste a job description to unlock AI keyword matching.' },
 ];
 
 const DRAFT_KEY = 'blox_resume_wizard_draft';
@@ -130,16 +132,16 @@ function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }
       style={{ width: `${210 * scale}px`, minHeight: `${297 * scale}px`, fontSize: `${11 * scale}px` }}
     >
       {/* Header */}
-      <div className="border-b-2 border-[#1a1a1a] px-6 py-5" style={{ padding: `${20 * scale}px ${24 * scale}px` }}>
+      <div className="border-b-2 border-[#1a1a1a]" style={{ padding: `${20 * scale}px ${24 * scale}px` }}>
         <h1 className="font-sans font-bold text-[#1a1a1a]" style={{ fontSize: `${20 * scale}px`, lineHeight: 1.2 }}>
           {data.contact.name || data.title || 'Your Name'}
         </h1>
         {data.targetRole && (
-          <p className="mt-0.5 font-sans font-medium text-[#555]" style={{ fontSize: `${11 * scale}px`, marginTop: `${4 * scale}px` }}>
+          <p className="font-sans font-medium text-[#555]" style={{ fontSize: `${11 * scale}px`, marginTop: `${4 * scale}px` }}>
             {data.targetRole}
           </p>
         )}
-        <div className="mt-1 flex flex-wrap gap-x-3 font-sans text-[#666]" style={{ fontSize: `${9 * scale}px`, marginTop: `${6 * scale}px` }}>
+        <div className="flex flex-wrap gap-x-3 font-sans text-[#666]" style={{ fontSize: `${9 * scale}px`, marginTop: `${6 * scale}px` }}>
           {data.contact.email && <span>{data.contact.email}</span>}
           {data.contact.phone && <span>{data.contact.phone}</span>}
           {data.contact.location && <span>{data.contact.location}</span>}
@@ -148,21 +150,14 @@ function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }
       </div>
 
       <div style={{ padding: `${14 * scale}px ${24 * scale}px`, gap: `${14 * scale}px`, display: 'flex', flexDirection: 'column' }}>
-        {/* Summary */}
         {data.summary && (
           <section>
             <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
               Professional Summary
             </h2>
-            <div
-              className="text-[#333] leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: data.summary.replace(/<[^>]+>/g, (tag) => tag) }}
-              style={{ fontSize: `${10 * scale}px` }}
-            />
+            <div className="text-[#333] leading-relaxed" dangerouslySetInnerHTML={{ __html: data.summary }} style={{ fontSize: `${10 * scale}px` }} />
           </section>
         )}
-
-        {/* Experience */}
         {data.experience.length > 0 && (
           <section>
             <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
@@ -175,19 +170,11 @@ function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }
                   <span className="text-[#555]">{exp.startDate}{exp.endDate ? ` – ${exp.current ? 'Present' : exp.endDate}` : ''}</span>
                 </div>
                 <p className="font-sans italic text-[#555]" style={{ fontSize: `${9 * scale}px` }}>{exp.company}</p>
-                {exp.bullets && (
-                  <div
-                    className="mt-1 text-[#333]"
-                    dangerouslySetInnerHTML={{ __html: exp.bullets }}
-                    style={{ fontSize: `${9.5 * scale}px` }}
-                  />
-                )}
+                {exp.bullets && <div className="mt-1 text-[#333]" dangerouslySetInnerHTML={{ __html: exp.bullets }} style={{ fontSize: `${9.5 * scale}px` }} />}
               </div>
             ))}
           </section>
         )}
-
-        {/* Skills */}
         {skillsText && (
           <section>
             <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
@@ -196,8 +183,6 @@ function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }
             <p className="text-[#333]" style={{ fontSize: `${10 * scale}px`, lineHeight: 1.6 }}>{skillsText}</p>
           </section>
         )}
-
-        {/* Education */}
         {data.education.length > 0 && (
           <section>
             <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
@@ -245,9 +230,52 @@ function AtsScoreRing({ score }: { score: number }) {
         <text x="54" y="66" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="sans-serif">ATS Score</text>
       </svg>
       <span className="text-xs font-medium" style={{ color }}>
-        {score >= 80 ? 'Excellent' : score >= 60 ? 'Good — Keep editing' : 'Needs improvement'}
+        {score >= 80 ? 'Excellent' : score >= 60 ? 'Good — keep editing' : 'Needs improvement'}
       </span>
     </div>
+  );
+}
+
+// ─── Mini ATS bar (compact, for Step 2 sidebar) ───────────────────────────────
+
+function MiniAtsBar({ score }: { score: number }) {
+  const color = score >= 70 ? 'text-emerald-400' : score >= 40 ? 'text-amber-400' : 'text-rose-400';
+  const barColor = score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-rose-500';
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-slate-400">ATS Readiness</span>
+        <span className={`text-sm font-black ${color}`}>{score}</span>
+      </div>
+      <div className="h-1.5 rounded-full bg-white/8">
+        <div className={`h-1.5 rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${score}%` }} />
+      </div>
+      <p className={`text-[11px] ${color}`}>
+        {score >= 70 ? 'Looking strong' : score >= 40 ? 'Getting there' : 'Keep adding content'}
+      </p>
+    </div>
+  );
+}
+
+// ─── Toggle ───────────────────────────────────────────────────────────────────
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full p-0.5 transition-colors duration-200 focus:outline-none ${
+        checked ? 'bg-indigo-500' : 'bg-white/10'
+      }`}
+    >
+      <span
+        className={`h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
   );
 }
 
@@ -270,7 +298,6 @@ const DEFAULT_DATA: ResumeData = {
 
 export function ResumeWizard() {
   const router = useRouter();
-  const userId = useBloxStore((s) => s.user.id);
   const userName = useBloxStore((s) => s.user.name);
   const userEmail = useBloxStore((s) => s.user.email ?? '');
 
@@ -289,10 +316,11 @@ export function ResumeWizard() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiSuggIdx, setAiSuggIdx] = useState(0);
   const [skillInput, setSkillInput] = useState('');
   const [openAccordion, setOpenAccordion] = useState<string>('summary');
   const [exported, setExported] = useState(false);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioHint, setPortfolioHint] = useState('');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Hydrate contact from user store on first load ──
@@ -322,29 +350,86 @@ export function ResumeWizard() {
     });
   }, [persistDraft]);
 
+  // ── Portfolio pre-fill ──
+  const applyPortfolioPrefill = useCallback(async () => {
+    setPortfolioLoading(true);
+    setPortfolioHint('');
+    try {
+      // Step 1: list to find the most recent portfolio (list omits content for perf)
+      const portfolios = await assetsApi.list('PORTFOLIO') as Array<{ id: string; title: string }>;
+      const first = Array.isArray(portfolios) ? portfolios[0] : undefined;
+
+      if (!first) {
+        setPortfolioHint('No portfolio found — fill in manually below.');
+        update('pullFromPortfolio', false);
+        return;
+      }
+
+      // Step 2: fetch full asset to get content
+      const full = await assetsApi.getById(first.id) as {
+        id: string;
+        title: string;
+        content?: {
+          about?: string;
+          skills?: string[];
+          experience?: string[];
+          heroHeading?: string;
+          heroBody?: string;
+        };
+      };
+
+      const c = full.content ?? {};
+
+      setData((prev) => {
+        const next: ResumeData = { ...prev };
+        if (c.about?.trim()) next.summary = c.about;
+        if (Array.isArray(c.skills) && c.skills.length > 0) next.skills = c.skills;
+        if (Array.isArray(c.experience) && c.experience.length > 0) {
+          next.experience = c.experience.map((item, i) => ({
+            id: `${Date.now()}-${i}`,
+            role: '',
+            company: '',
+            startDate: '',
+            endDate: '',
+            current: false,
+            bullets: item,
+          }));
+        }
+        persistDraft(next);
+        return next;
+      });
+
+      setPortfolioHint(`Pre-filled from "${full.title}". Review and adjust each section.`);
+    } catch (err) {
+      setPortfolioHint(
+        err instanceof Error && err.message
+          ? `Could not load portfolio: ${err.message}`
+          : 'Could not load portfolio — fill in manually below.',
+      );
+      update('pullFromPortfolio', false);
+    } finally {
+      setPortfolioLoading(false);
+    }
+  }, [persistDraft, update]);
+
   const atsScore = calcAtsScore(data);
 
   // ── Experience helpers ──
   const addExperience = () => {
-    const newExp: ExperienceItem = { id: Date.now().toString(), role: '', company: '', startDate: '', endDate: '', current: false, bullets: '' };
-    update('experience', [...data.experience, newExp]);
+    update('experience', [...data.experience, { id: Date.now().toString(), role: '', company: '', startDate: '', endDate: '', current: false, bullets: '' }]);
   };
-
   const updateExp = (id: string, field: keyof ExperienceItem, value: string | boolean) => {
     update('experience', data.experience.map((e) => e.id === id ? { ...e, [field]: value } : e));
   };
-
   const removeExp = (id: string) => update('experience', data.experience.filter((e) => e.id !== id));
 
   // ── Education helpers ──
   const addEducation = () => {
     update('education', [...data.education, { id: Date.now().toString(), degree: '', institution: '', year: '', gpa: '' }]);
   };
-
   const updateEdu = (id: string, field: keyof EducationItem, value: string) => {
     update('education', data.education.map((e) => e.id === id ? { ...e, [field]: value } : e));
   };
-
   const removeEdu = (id: string) => update('education', data.education.filter((e) => e.id !== id));
 
   // ── Skills helpers ──
@@ -354,20 +439,19 @@ export function ResumeWizard() {
     update('skills', [...data.skills, trimmed]);
     setSkillInput('');
   };
-
   const removeSkill = (skill: string) => update('skills', data.skills.filter((s) => s !== skill));
 
-  // ── Simulate AI scan ──
+  // ── Run ATS scan (Step 3 button) ──
   const runAiScan = async () => {
     setAiLoading(true);
     try {
       await scannerApi.atsScore({ content: data.summary, jobDesc: data.jobDesc });
-    } catch { /* fall through — score is computed locally */ }
-    await new Promise((r) => setTimeout(r, 1200));
+    } catch { /* score is computed locally */ }
+    await new Promise((r) => setTimeout(r, 900));
     setAiLoading(false);
   };
 
-  // ── Final create & navigate ──
+  // ── Final create ──
   const handleCreate = async () => {
     setCreating(true);
     setCreateError('');
@@ -387,7 +471,7 @@ export function ResumeWizard() {
       }) as { id: string };
       localStorage.removeItem(DRAFT_KEY);
       setExported(true);
-      setTimeout(() => router.push(`/resumes/${created.id}/edit`), 1800);
+      setTimeout(() => router.push(`/resumes/${created.id}/edit`), 1600);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Could not create résumé.');
     } finally {
@@ -395,8 +479,13 @@ export function ResumeWizard() {
     }
   };
 
+  // Computed pending tips for Step 3
+  const pendingTips = SCORE_TIPS.filter((t) => !t.check(data)).slice(0, 3);
+
   // ── Input helper ──
-  const InputField = ({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) => (
+  const InputField = ({
+    label, value, onChange, placeholder, type = 'text',
+  }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) => (
     <div>
       <label className="mb-1.5 block text-xs font-medium text-slate-400">{label}</label>
       <input
@@ -404,7 +493,7 @@ export function ResumeWizard() {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-purple-500/40 focus:bg-white/5 transition-colors"
+        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 focus:bg-white/5 transition-colors"
       />
     </div>
   );
@@ -418,20 +507,14 @@ export function ResumeWizard() {
       {/* ── Progress header ── */}
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={() => router.push('/resumes')}
-            className="text-xs font-medium text-slate-500 hover:text-slate-300 transition-colors"
-          >
+          <button type="button" onClick={() => router.push('/resumes')}
+            className="text-xs font-medium text-slate-500 hover:text-slate-300 transition-colors">
             ← All Résumés
           </button>
           <div className="flex items-center gap-2">
             {saving && <span className="text-[10px] text-slate-500">Saving draft…</span>}
-            <button
-              type="button"
-              onClick={() => { localStorage.removeItem(DRAFT_KEY); router.push('/resumes'); }}
-              className="text-xs text-slate-500 hover:text-rose-400 transition-colors"
-            >
+            <button type="button" onClick={() => { localStorage.removeItem(DRAFT_KEY); router.push('/resumes'); }}
+              className="text-xs text-slate-500 hover:text-rose-400 transition-colors">
               Discard
             </button>
           </div>
@@ -450,11 +533,7 @@ export function ResumeWizard() {
                 onClick={() => num < step && setStep(num)}
                 disabled={num > step}
                 className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                  active
-                    ? 'bg-purple-500 text-white'
-                    : done
-                    ? 'cursor-pointer bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
-                    : 'bg-white/5 text-slate-500 cursor-not-allowed'
+                  active ? 'bg-purple-500 text-white' : done ? 'cursor-pointer bg-purple-500/20 text-purple-300 hover:bg-purple-500/30' : 'bg-white/5 text-slate-500 cursor-not-allowed'
                 }`}
               >
                 <span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${active ? 'bg-white/20' : done ? 'bg-purple-400/30' : 'bg-white/10'}`}>
@@ -481,50 +560,47 @@ export function ResumeWizard() {
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 12 }}
+          initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -12 }}
-          transition={{ duration: 0.18 }}
+          exit={{ opacity: 0, x: -10 }}
+          transition={{ duration: 0.15 }}
         >
 
           {/* ═══════════════════════════════════════════════════
-              STEP 1 — Template Selection
+              STEP 1 — Template & Intent
           ═══════════════════════════════════════════════════ */}
           {step === 1 && (
             <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
               {/* Left */}
               <div className="space-y-8">
-                {/* Title */}
                 <div>
                   <h1 className="text-xl font-bold text-white">Create your résumé</h1>
-                  <p className="mt-1 text-sm text-slate-400">Choose a template and set your preferences to get started.</p>
+                  <p className="mt-1 text-sm text-slate-400">Choose a template and set your intent — we'll handle the rest.</p>
                 </div>
 
-                {/* Resume title */}
                 <InputField label="Résumé title" value={data.title} onChange={(v) => update('title', v)} placeholder="e.g. Senior Engineer Resume" />
-
-                {/* Target role */}
                 <InputField label="Target role" value={data.targetRole} onChange={(v) => update('targetRole', v)} placeholder="e.g. Senior Frontend Engineer" />
 
                 {/* Persona */}
                 <div>
                   <p className="mb-3 text-xs font-medium text-slate-400">Your profile type</p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {PERSONAS.map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => update('persona', p.id)}
-                        className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center transition-all ${
-                          data.persona === p.id
-                            ? 'border-purple-500/40 bg-purple-500/10 text-white'
-                            : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-white/10 hover:text-slate-200'
-                        }`}
-                      >
-                        <span className="text-xl">{p.emoji}</span>
-                        <span className="text-xs font-semibold">{p.label}</span>
-                      </button>
-                    ))}
+                    {PERSONAS.map((p) => {
+                      const Icon = p.icon;
+                      const active = data.persona === p.id;
+                      return (
+                        <button key={p.id} type="button" onClick={() => update('persona', p.id)}
+                          className={`flex flex-col items-center gap-2 rounded-xl border p-3.5 text-center transition-all ${
+                            active
+                              ? 'border-indigo-500/40 bg-indigo-500/10 text-white'
+                              : 'border-white/5 bg-white/[0.02] text-slate-400 hover:border-white/10 hover:text-slate-200'
+                          }`}>
+                          <Icon className={`h-5 w-5 ${active ? 'text-indigo-300' : 'text-slate-500'}`} />
+                          <span className="text-xs font-semibold leading-tight">{p.label}</span>
+                          <span className="text-[10px] text-slate-500 leading-tight">{p.desc}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -533,29 +609,21 @@ export function ResumeWizard() {
                   <p className="mb-3 text-xs font-medium text-slate-400">Template</p>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {TEMPLATES.map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => update('selectedTemplate', t.id)}
+                      <button key={t.id} type="button" onClick={() => update('selectedTemplate', t.id)}
                         className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all ${
-                          data.selectedTemplate === t.id
-                            ? 'border-purple-500/50 ring-1 ring-purple-500/30'
-                            : 'border-white/5 hover:border-white/15'
-                        }`}
-                      >
-                        {/* Wireframe preview */}
+                          data.selectedTemplate === t.id ? 'border-indigo-500/50 ring-1 ring-indigo-500/30' : 'border-white/5 hover:border-white/15'
+                        }`}>
                         <div className="flex h-24 flex-col gap-1.5 bg-white p-3">
                           {t.preview.map((cls, i) => (
                             <div key={i} className={`rounded-full bg-slate-300 ${cls}`} />
                           ))}
                         </div>
-                        {/* Footer */}
                         <div className="bg-[#0C0F13] px-2 py-2">
                           <p className="truncate text-[11px] font-semibold text-slate-200">{t.name}</p>
                           <span className={`mt-0.5 inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${t.accent}`}>{t.badge}</span>
                         </div>
                         {data.selectedTemplate === t.id && (
-                          <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-purple-500 text-[10px] text-white">✓</div>
+                          <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white">✓</div>
                         )}
                       </button>
                     ))}
@@ -565,48 +633,60 @@ export function ResumeWizard() {
                 {/* Toggles */}
                 <div className="space-y-3">
                   {/* Pull from portfolio */}
-                  <div className="flex items-start justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3.5">
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">Pull from Portfolio</p>
-                      <p className="mt-0.5 text-xs text-slate-500">Auto-fill bio, projects, skills & contact from your existing portfolio.</p>
+                  <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3.5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">Pull from Portfolio</p>
+                        <p className="mt-0.5 text-xs text-slate-500">Auto-fill your summary, skills, and experience from an existing portfolio.</p>
+                      </div>
+                      <Toggle
+                        checked={data.pullFromPortfolio}
+                        onChange={() => {
+                          const next = !data.pullFromPortfolio;
+                          update('pullFromPortfolio', next);
+                          if (next) void applyPortfolioPrefill();
+                        }}
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => update('pullFromPortfolio', !data.pullFromPortfolio)}
-                      className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${data.pullFromPortfolio ? 'bg-purple-500' : 'bg-white/10'}`}
-                    >
-                      <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${data.pullFromPortfolio ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                    </button>
+                    {portfolioLoading && (
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+                        <div className="h-3 w-3 rounded-full border border-indigo-400 border-t-transparent animate-spin" />
+                        Loading from portfolio…
+                      </div>
+                    )}
+                    {portfolioHint && !portfolioLoading && (
+                      <div className={`mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed ${
+                        portfolioHint.startsWith('No') || portfolioHint.startsWith('Could')
+                          ? 'border-amber-500/20 bg-amber-500/8 text-amber-300'
+                          : 'border-indigo-500/20 bg-indigo-500/8 text-indigo-300'
+                      }`}>
+                        {portfolioHint.startsWith('No') || portfolioHint.startsWith('Could') ? '⚠ ' : '✦ '}{portfolioHint}
+                      </div>
+                    )}
                   </div>
 
                   {/* Tailor to job */}
                   <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3.5">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-medium text-slate-200">Tailor to Job Description</p>
-                        <p className="mt-0.5 text-xs text-slate-500">AI scans the job posting and injects keywords into your résumé.</p>
+                        <p className="text-sm font-medium text-slate-200">Tailor to a Job</p>
+                        <p className="mt-0.5 text-xs text-slate-500">Paste a job description — AI will match keywords in Step 3.</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => update('tailorToJob', !data.tailorToJob)}
-                        className={`relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors ${data.tailorToJob ? 'bg-purple-500' : 'bg-white/10'}`}
-                      >
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${data.tailorToJob ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                      </button>
+                      <Toggle
+                        checked={data.tailorToJob}
+                        onChange={() => update('tailorToJob', !data.tailorToJob)}
+                      />
                     </div>
                     <AnimatePresence>
                       {data.tailorToJob && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                          <textarea
-                            value={data.jobDesc}
-                            onChange={(e) => update('jobDesc', e.target.value)}
+                          <textarea value={data.jobDesc} onChange={(e) => update('jobDesc', e.target.value)}
                             placeholder="Paste the full job description here…"
                             rows={5}
-                            className="mt-3 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-purple-500/40 resize-none transition-colors"
-                          />
-                          <p className="mt-1.5 text-[11px] text-purple-400/70">
-                            ✦ AI will match keywords in Step 3
-                          </p>
+                            className="mt-3 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 resize-none transition-colors" />
+                          {data.jobDesc.trim().length > 20 && (
+                            <p className="mt-1.5 text-[11px] text-indigo-400/80">✦ Keywords will be matched in Step 3.</p>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -614,17 +694,17 @@ export function ResumeWizard() {
                 </div>
               </div>
 
-              {/* Right — selected template preview */}
+              {/* Right — preview */}
               <div className="hidden lg:block">
                 <div className="sticky top-4">
                   <p className="mb-3 text-xs font-medium text-slate-400">Preview</p>
                   <ResumePreview data={data} scale={0.55} />
-                  <div className="mt-4 rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3">
-                    <p className="text-xs font-semibold text-purple-300">✦ AI Tip</p>
+                  <div className="mt-4 rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3">
+                    <p className="text-xs font-semibold text-indigo-300">What happens next</p>
                     <p className="mt-1 text-xs text-slate-400 leading-relaxed">
                       {data.pullFromPortfolio
-                        ? 'We\'ll auto-fill your bio, projects, and skills from your portfolio in the next step.'
-                        : 'Toggle "Pull from Portfolio" to save time — no manual entry needed.'}
+                        ? 'Step 2 will be pre-filled from your portfolio — just review and refine.'
+                        : 'In Step 2 you\u2019ll fill in your experience, skills, and education.'}
                     </p>
                   </div>
                 </div>
@@ -633,18 +713,18 @@ export function ResumeWizard() {
           )}
 
           {/* ═══════════════════════════════════════════════════
-              STEP 2 — Data Import & Auto-Fill
+              STEP 2 — Refine Content
           ═══════════════════════════════════════════════════ */}
           {step === 2 && (
-            <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+            <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
               {/* Left — Accordion sections */}
               <div className="space-y-3">
                 <div className="mb-6">
-                  <h1 className="text-xl font-bold text-white">Fill your résumé</h1>
-                  <p className="mt-1 text-sm text-slate-400">Review and edit each section. All fields support rich formatting.</p>
+                  <h1 className="text-xl font-bold text-white">Refine your content</h1>
+                  <p className="mt-1 text-sm text-slate-400">Review each section. Pre-filled fields are marked — adjust freely.</p>
                 </div>
 
-                {/* ── Contact ── */}
+                {/* Contact */}
                 <AccordionSection title="Contact Information" isOpen={openAccordion === 'contact'} onToggle={() => setOpenAccordion(openAccordion === 'contact' ? '' : 'contact')} badge={data.contact.name ? '✓' : undefined}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <InputField label="Full name" value={data.contact.name} onChange={(v) => update('contact', { ...data.contact, name: v })} placeholder="Jane Smith" />
@@ -656,7 +736,7 @@ export function ResumeWizard() {
                   </div>
                 </AccordionSection>
 
-                {/* ── Summary ── */}
+                {/* Summary */}
                 <AccordionSection title="Professional Summary" isOpen={openAccordion === 'summary'} onToggle={() => setOpenAccordion(openAccordion === 'summary' ? '' : 'summary')} badge={data.summary ? '✓' : undefined}>
                   <SectionEditor
                     content={data.summary}
@@ -667,7 +747,7 @@ export function ResumeWizard() {
                   <p className="mt-2 text-[11px] text-slate-500">Keep it to 3–5 sentences. Avoid personal pronouns (I, my).</p>
                 </AccordionSection>
 
-                {/* ── Experience ── */}
+                {/* Experience */}
                 <AccordionSection title="Work Experience" isOpen={openAccordion === 'experience'} onToggle={() => setOpenAccordion(openAccordion === 'experience' ? '' : 'experience')} badge={data.experience.length > 0 ? `${data.experience.length}` : undefined}>
                   <div className="space-y-5">
                     {data.experience.map((exp, idx) => (
@@ -685,7 +765,7 @@ export function ResumeWizard() {
                           <div>
                             <InputField label="End date" value={exp.endDate} onChange={(v) => updateExp(exp.id, 'endDate', v)} placeholder="Present" />
                             <label className="mt-1.5 flex items-center gap-2 text-xs text-slate-500">
-                              <input type="checkbox" checked={exp.current} onChange={(e) => updateExp(exp.id, 'current', e.target.checked)} className="accent-purple-500" />
+                              <input type="checkbox" checked={exp.current} onChange={(e) => updateExp(exp.id, 'current', e.target.checked)} className="accent-indigo-500" />
                               Currently working here
                             </label>
                           </div>
@@ -698,20 +778,20 @@ export function ResumeWizard() {
                             placeholder="• Led a team of 5 engineers to deliver X feature, resulting in 30% performance improvement…"
                             minHeight="90px"
                           />
-                          <p className="mt-1.5 text-[11px] text-purple-400/70">✦ Start each bullet with an action verb: Led, Built, Increased, Reduced…</p>
+                          <p className="mt-1.5 text-[11px] text-slate-500">Start each bullet with an action verb: Led, Built, Increased, Reduced…</p>
                         </div>
                       </div>
                     ))}
-                    <button type="button" onClick={addExperience} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 py-3 text-sm font-medium text-slate-400 hover:border-purple-500/40 hover:text-purple-300 transition-colors">
+                    <button type="button" onClick={addExperience}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 py-3 text-sm font-medium text-slate-400 hover:border-indigo-500/40 hover:text-indigo-300 transition-colors">
                       <PlusCircle className="h-4 w-4" /> Add Position
                     </button>
                   </div>
                 </AccordionSection>
 
-                {/* ── Skills ── */}
+                {/* Skills */}
                 <AccordionSection title="Skills" isOpen={openAccordion === 'skills'} onToggle={() => setOpenAccordion(openAccordion === 'skills' ? '' : 'skills')} badge={data.skills.length > 0 ? `${data.skills.length}` : undefined}>
                   <div className="space-y-3">
-                    {/* Tag chips */}
                     {data.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {data.skills.map((sk) => (
@@ -722,21 +802,17 @@ export function ResumeWizard() {
                         ))}
                       </div>
                     )}
-                    {/* Input */}
                     <div className="flex gap-2">
-                      <input
-                        value={skillInput}
-                        onChange={(e) => setSkillInput(e.target.value)}
+                      <input value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(skillInput); } }}
                         placeholder="Type a skill and press Enter…"
-                        className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-purple-500/40 transition-colors"
-                      />
-                      <button type="button" onClick={() => addSkill(skillInput)} className="rounded-xl bg-purple-500/20 px-3 text-sm font-medium text-purple-300 hover:bg-purple-500/30 transition-colors">Add</button>
+                        className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 transition-colors" />
+                      <button type="button" onClick={() => addSkill(skillInput)} className="rounded-xl bg-indigo-500/20 px-3 text-sm font-medium text-indigo-300 hover:bg-indigo-500/30 transition-colors">Add</button>
                     </div>
-                    {/* Suggestions */}
                     <div className="flex flex-wrap gap-1.5">
                       {(SKILL_SUGGESTIONS[data.persona] ?? []).filter((s) => !data.skills.includes(s)).map((s) => (
-                        <button key={s} type="button" onClick={() => addSkill(s)} className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-xs text-slate-400 hover:border-purple-500/30 hover:text-purple-300 transition-colors">
+                        <button key={s} type="button" onClick={() => addSkill(s)}
+                          className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-xs text-slate-400 hover:border-indigo-500/30 hover:text-indigo-300 transition-colors">
                           + {s}
                         </button>
                       ))}
@@ -744,7 +820,7 @@ export function ResumeWizard() {
                   </div>
                 </AccordionSection>
 
-                {/* ── Education ── */}
+                {/* Education */}
                 <AccordionSection title="Education" isOpen={openAccordion === 'education'} onToggle={() => setOpenAccordion(openAccordion === 'education' ? '' : 'education')} badge={data.education.length > 0 ? `${data.education.length}` : undefined}>
                   <div className="space-y-4">
                     {data.education.map((edu, idx) => (
@@ -761,22 +837,25 @@ export function ResumeWizard() {
                         </div>
                       </div>
                     ))}
-                    <button type="button" onClick={addEducation} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 py-3 text-sm font-medium text-slate-400 hover:border-purple-500/40 hover:text-purple-300 transition-colors">
+                    <button type="button" onClick={addEducation}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 py-3 text-sm font-medium text-slate-400 hover:border-indigo-500/40 hover:text-indigo-300 transition-colors">
                       <PlusCircle className="h-4 w-4" /> Add Education
                     </button>
                   </div>
                 </AccordionSection>
               </div>
 
-              {/* Right — Live preview */}
+              {/* Right — compact ATS + live preview */}
               <div className="hidden lg:block">
                 <div className="sticky top-4 space-y-4">
+                  {/* Mini ATS bar */}
+                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
+                    <MiniAtsBar score={atsScore} />
+                  </div>
+
                   <p className="text-xs font-medium text-slate-400">Live Preview</p>
                   <div className="overflow-hidden rounded-xl border border-white/5">
                     <ResumePreview data={data} scale={0.5} />
-                  </div>
-                  <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
-                    <AtsScoreRing score={atsScore} />
                   </div>
                 </div>
               </div>
@@ -784,96 +863,73 @@ export function ResumeWizard() {
           )}
 
           {/* ═══════════════════════════════════════════════════
-              STEP 3 — AI Tailoring
+              STEP 3 — Optimize with AI
           ═══════════════════════════════════════════════════ */}
           {step === 3 && (
             <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
               {/* Left */}
               <div className="space-y-6">
                 <div>
-                  <h1 className="text-xl font-bold text-white">AI Tailoring & Optimization</h1>
-                  <p className="mt-1 text-sm text-slate-400">Let AI optimize your résumé for ATS systems and the specific role.</p>
+                  <h1 className="text-xl font-bold text-white">Optimize with AI</h1>
+                  <p className="mt-1 text-sm text-slate-400">Review your ATS score, address any gaps, and optionally tailor to a specific role.</p>
                 </div>
 
                 {/* ATS score card */}
                 <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.02] p-6 sm:flex-row sm:items-start">
                   <AtsScoreRing score={atsScore} />
-                  <div className="flex-1 space-y-3 text-center sm:text-left">
-                    <p className="text-sm font-semibold text-white">ATS Readiness Score</p>
-                    <div className="space-y-2">
-                      {[
-                        { label: 'Summary present', done: !!data.summary.replace(/<[^>]+>/g, '').trim() },
-                        { label: 'Work experience', done: data.experience.length >= 1 },
-                        { label: '5+ skills listed', done: data.skills.length >= 5 },
-                        { label: 'Education added', done: data.education.length >= 1 },
-                        { label: 'Contact complete', done: !!(data.contact.name && data.contact.email) },
-                        { label: 'Job description linked', done: data.jobDesc.trim().length > 20 },
-                      ].map(({ label, done }) => (
-                        <div key={label} className="flex items-center gap-2 text-xs">
-                          <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[9px] font-bold ${done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600'}`}>
-                            {done ? '✓' : '–'}
-                          </span>
-                          <span className={done ? 'text-slate-300' : 'text-slate-500'}>{label}</span>
-                        </div>
-                      ))}
+                  <div className="flex-1 space-y-4 text-center sm:text-left">
+                    <div>
+                      <p className="text-sm font-semibold text-white">ATS Readiness</p>
+                      <p className="mt-0.5 text-xs text-slate-500">Based on the content you've entered so far.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void runAiScan()}
-                      disabled={aiLoading}
-                      className="inline-flex items-center gap-2 rounded-xl bg-purple-500/20 px-4 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-500/30 disabled:opacity-60 transition-colors"
-                    >
+
+                    {/* Dynamic tips — only show what's missing */}
+                    {pendingTips.length > 0 ? (
+                      <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 px-4 py-3 space-y-2">
+                        <p className="text-[11px] font-semibold text-indigo-300">To improve your score:</p>
+                        <ul className="space-y-1.5">
+                          {pendingTips.map((t) => (
+                            <li key={t.id} className="flex items-start gap-2 text-xs text-slate-300">
+                              <span className="mt-0.5 shrink-0 text-indigo-400">›</span>
+                              {t.tip}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-4 py-3">
+                        <p className="text-xs font-semibold text-emerald-300">All sections complete!</p>
+                        <p className="mt-0.5 text-[11px] text-emerald-400/70">Your resume is well-structured. Tailor it to a specific job for an even higher score.</p>
+                      </div>
+                    )}
+
+                    <button type="button" onClick={() => void runAiScan()} disabled={aiLoading}
+                      className="inline-flex items-center gap-2 rounded-xl bg-indigo-500/15 border border-indigo-500/25 px-4 py-2 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/25 disabled:opacity-60 transition-colors">
                       <Sparkles className="h-3.5 w-3.5" />
-                      {aiLoading ? 'Scanning…' : 'Run AI Scan'}
+                      {aiLoading ? 'Scanning…' : 'Run ATS Scan'}
                     </button>
                   </div>
                 </div>
 
-                {/* Job desc (if tailor toggle off in step 1) */}
+                {/* Job description */}
                 <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400">Job Description (for keyword injection)</label>
-                  <textarea
-                    value={data.jobDesc}
-                    onChange={(e) => update('jobDesc', e.target.value)}
+                  <label className="text-xs font-medium text-slate-400">Job Description</label>
+                  <textarea value={data.jobDesc} onChange={(e) => update('jobDesc', e.target.value)}
                     placeholder="Paste a job description to unlock AI keyword matching and tailored rewrites…"
                     rows={5}
-                    className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-purple-500/40 transition-colors"
-                  />
+                    className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 transition-colors" />
                   {data.jobDesc.trim().length > 20 && (
-                    <p className="text-[11px] text-purple-400/70">✦ AI will match keywords from this job description against your résumé.</p>
+                    <p className="text-[11px] text-indigo-400/80">✦ AI will match keywords from this description against your résumé.</p>
                   )}
                 </div>
 
-                {/* AI Suggestions carousel */}
-                <div className="rounded-2xl border border-purple-500/15 bg-purple-500/5 p-5">
-                  <div className="mb-3 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-400" />
-                    <span className="text-xs font-semibold text-purple-300">AI Suggestions</span>
-                    <span className="ml-auto text-[10px] text-slate-500">{aiSuggIdx + 1} / {AI_SUGGESTIONS.length}</span>
-                  </div>
-                  <p className="text-sm text-slate-200 leading-relaxed">{AI_SUGGESTIONS[aiSuggIdx]}</p>
-                  <div className="mt-4 flex gap-2">
-                    <button type="button" onClick={() => setAiSuggIdx((i) => Math.max(0, i - 1))} disabled={aiSuggIdx === 0} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/5 disabled:opacity-40 transition-colors">← Prev</button>
-                    <button type="button" onClick={() => setAiSuggIdx((i) => Math.min(AI_SUGGESTIONS.length - 1, i + 1))} disabled={aiSuggIdx === AI_SUGGESTIONS.length - 1} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:bg-white/5 disabled:opacity-40 transition-colors">Next →</button>
-                  </div>
-                </div>
-
                 {/* ATS warning */}
-                <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3">
-                  <span className="text-base">⚠️</span>
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/15 bg-amber-500/5 px-4 py-3">
+                  <span className="text-base shrink-0">⚠</span>
                   <div>
                     <p className="text-xs font-semibold text-amber-300">ATS Compatibility Note</p>
-                    <p className="mt-0.5 text-xs text-amber-400/70 leading-relaxed">Avoid using tables, images, columns, or text boxes in your résumé. These break ATS parsing. Stick to single-column layouts and plain bullet points.</p>
+                    <p className="mt-0.5 text-xs text-amber-400/70 leading-relaxed">Avoid tables, images, columns, or text boxes. ATS parsers work best with single-column layouts and plain bullet points.</p>
                   </div>
-                </div>
-
-                {/* Summary editor */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-slate-400">Edit Summary</label>
-                    <span className="text-[10px] text-slate-600">{data.summary.replace(/<[^>]+>/g, '').length} chars</span>
-                  </div>
-                  <SectionEditor content={data.summary} onChange={(html) => update('summary', html)} placeholder="Professional summary…" minHeight="110px" />
                 </div>
               </div>
 
@@ -890,17 +946,17 @@ export function ResumeWizard() {
           )}
 
           {/* ═══════════════════════════════════════════════════
-              STEP 4 — Review & Export
+              STEP 4 — Review & Save
           ═══════════════════════════════════════════════════ */}
           {step === 4 && (
             <div className="space-y-8">
               <div>
-                <h1 className="text-xl font-bold text-white">Review & Finalise</h1>
-                <p className="mt-1 text-sm text-slate-400">Everything looks good? Publish or export your résumé.</p>
+                <h1 className="text-xl font-bold text-white">Review & Save</h1>
+                <p className="mt-1 text-sm text-slate-400">Everything looks good? Create your résumé and open it in the full editor.</p>
               </div>
 
               <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
-                {/* Left — checklist + actions */}
+                {/* Left */}
                 <div className="space-y-6">
                   {/* ATS score summary */}
                   <div className="flex items-center gap-6 rounded-2xl border border-white/5 bg-white/[0.02] p-6">
@@ -925,8 +981,8 @@ export function ResumeWizard() {
                         { label: 'ATS score ≥ 70', done: atsScore >= 70 },
                       ].map(({ label, done }) => (
                         <div key={label} className="flex items-center gap-3 text-sm">
-                          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
-                            {done ? '✓' : '✕'}
+                          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600'}`}>
+                            {done ? '✓' : '–'}
                           </span>
                           <span className={done ? 'text-slate-300' : 'text-slate-500'}>{label}</span>
                         </div>
@@ -934,56 +990,44 @@ export function ResumeWizard() {
                     </div>
                   </div>
 
-                  {/* Export options */}
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5">
-                    <p className="mb-4 text-xs font-semibold text-slate-400">Save & Export</p>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {[
-                        { label: 'Save & Edit', desc: 'Open in full editor', icon: FileText, primary: true, action: () => void handleCreate() },
-                        { label: 'Export PDF', desc: 'Free with watermark', icon: ArrowUpRight, primary: false, action: () => void handleCreate() },
-                        { label: 'Export DOCX', desc: 'Pro only', icon: Settings, primary: false, action: () => void handleCreate() },
-                      ].map((opt) => {
-                        const Icon = opt.icon;
-                        return (
-                          <button
-                            key={opt.label}
-                            type="button"
-                            onClick={opt.action}
-                            disabled={creating}
-                            className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all disabled:opacity-60 ${
-                              opt.primary
-                                ? 'border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-white'
-                                : 'border-white/5 bg-white/[0.02] hover:bg-white/5 text-slate-300'
-                            }`}
-                          >
-                            <Icon className="h-5 w-5" />
-                            <span className="text-sm font-semibold">{creating && opt.primary ? 'Creating…' : opt.label}</span>
-                            <span className="text-[10px] text-slate-500">{opt.desc}</span>
-                          </button>
-                        );
-                      })}
+                  {/* Low score warning */}
+                  {atsScore < 60 && (
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3">
+                      <span className="shrink-0 text-amber-400">⚠</span>
+                      <div>
+                        <p className="text-xs font-semibold text-amber-300">Your ATS score is below 60</p>
+                        <p className="mt-0.5 text-[11px] text-amber-400/70 leading-relaxed">
+                          Consider going back to Step 3 to address the flagged items before saving.{' '}
+                          <button type="button" onClick={() => setStep(3)} className="underline hover:text-amber-300 transition-colors">Back to Optimize</button>
+                        </p>
+                      </div>
                     </div>
-                    {createError && (
-                      <p className="mt-3 text-xs text-rose-400">{createError}</p>
-                    )}
+                  )}
+
+                  {/* Primary CTA */}
+                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6 text-center space-y-3">
+                    <button type="button" onClick={() => void handleCreate()} disabled={creating || exported}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-8 py-3 text-sm font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-50 transition-colors">
+                      {creating ? 'Creating…' : exported ? 'Created!' : 'Create & Save'}
+                      {!creating && !exported && <ArrowUpRight className="h-4 w-4" />}
+                    </button>
+                    <p className="text-xs text-slate-500">Opens in the full editor — you can export PDF or DOCX from there.</p>
+                    {createError && <p className="text-xs text-rose-400">{createError}</p>}
                   </div>
 
                   {exported && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3"
-                    >
+                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
                       <CheckCircle className="h-5 w-5 text-emerald-400 shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-emerald-300">Résumé created!</p>
-                        <p className="text-xs text-emerald-400/70">Redirecting to editor…</p>
+                        <p className="text-sm font-semibold text-emerald-300">Résumé created</p>
+                        <p className="text-xs text-emerald-400/70">Opening editor…</p>
                       </div>
                     </motion.div>
                   )}
                 </div>
 
-                {/* Right — Preview */}
+                {/* Right — Final preview */}
                 <div>
                   <p className="mb-3 text-xs font-medium text-slate-400">Final Preview</p>
                   <div className="overflow-hidden rounded-xl border border-white/5 shadow-xl">
@@ -998,34 +1042,24 @@ export function ResumeWizard() {
 
       {/* ── Navigation footer ── */}
       <div className="mt-10 flex items-center justify-between border-t border-white/5 pt-6">
-        <button
-          type="button"
-          onClick={() => setStep((s) => Math.max(1, s - 1))}
-          disabled={step === 1}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 disabled:opacity-40 transition-colors"
-        >
+        <button type="button" onClick={() => setStep((s) => Math.max(1, s - 1))} disabled={step === 1}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 disabled:opacity-40 transition-colors">
           ← Back
         </button>
 
         <span className="text-xs text-slate-600">{step < 4 ? 'Auto-saved' : ''}</span>
 
         {step < 4 ? (
-          <button
-            type="button"
+          <button type="button"
             onClick={() => { if (step === 3) void runAiScan(); setStep((s) => s + 1); }}
             disabled={step === 1 && !data.title.trim()}
-            className="inline-flex items-center gap-2 rounded-xl bg-purple-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-purple-400 disabled:opacity-50 transition-colors"
-          >
+            className="inline-flex items-center gap-2 rounded-xl bg-purple-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-purple-400 disabled:opacity-50 transition-colors">
             {step === 3 ? 'Review →' : 'Continue →'}
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={() => void handleCreate()}
-            disabled={creating || exported}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-6 py-2.5 text-sm font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-50 transition-colors"
-          >
-            {creating ? 'Creating…' : 'Create Résumé'}
+          <button type="button" onClick={() => void handleCreate()} disabled={creating || exported}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-6 py-2.5 text-sm font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-50 transition-colors">
+            {creating ? 'Creating…' : 'Create & Save'}
             <ArrowUpRight className="h-4 w-4" />
           </button>
         )}
@@ -1037,11 +1071,7 @@ export function ResumeWizard() {
 // ─── Accordion helper ─────────────────────────────────────────────────────────
 
 function AccordionSection({
-  title,
-  isOpen,
-  onToggle,
-  badge,
-  children,
+  title, isOpen, onToggle, badge, children,
 }: {
   title: string;
   isOpen: boolean;
@@ -1051,30 +1081,19 @@ function AccordionSection({
 }) {
   return (
     <div className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-white/[0.03] transition-colors"
-      >
+      <button type="button" onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-white/[0.03] transition-colors">
         <div className="flex items-center gap-3">
           <span className="text-sm font-semibold text-slate-200">{title}</span>
           {badge && (
-            <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300">{badge}</span>
+            <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10px] font-semibold text-indigo-300">{badge}</span>
           )}
         </div>
-        <span className={`text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-          ▾
-        </span>
+        <span className={`text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>▾</span>
       </button>
       <AnimatePresence initial={false}>
         {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="border-t border-white/5 px-5 pb-5 pt-4">
               {children}
             </div>

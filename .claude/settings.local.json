@@ -21,7 +21,10 @@
       "Bash(kill 1756:*)",
       "Bash(npx nx:*)",
       "Bash(python3:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(npx tsc:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npx prisma:*)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { analyticsApi, assetsApi } from '@/lib/api';
@@ -124,8 +124,9 @@ function sanitizeUrl(raw: string) {
   return `https://${value}`;
 }
 
-export default function AnalyticsPage({ params }: { params: { id: string } }) {
+export default function AnalyticsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
@@ -143,22 +144,22 @@ export default function AnalyticsPage({ params }: { params: { id: string } }) {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - parseInt(period, 10));
       const [analytics, asset] = await Promise.all([
-        analyticsApi.getAssetAnalytics(params.id, {
+        analyticsApi.getAssetAnalytics(id, {
           from: fromDate.toISOString(),
         }),
-        assetsApi.getById(params.id) as Promise<{
+        assetsApi.getById(id) as Promise<{
           title: string;
           publishedUrl?: string;
         }>,
       ]);
-      setData(normalizeAnalytics(params.id, analytics));
+      setData(normalizeAnalytics(id, analytics));
       setAssetTitle(asset.title);
       setAssetUrl(asset.publishedUrl ?? '');
       setNewLinkTarget(
         (previous) =>
           previous ||
           asset.publishedUrl ||
-          `${window.location.origin}/preview/${params.id}`,
+          `${window.location.origin}/preview/${id}`,
       );
     } catch (error) {
       setData(null);
@@ -168,7 +169,7 @@ export default function AnalyticsPage({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false);
     }
-  }, [params.id, period]);
+  }, [id, period]);
 
   useEffect(() => {
     void load();
@@ -182,7 +183,7 @@ export default function AnalyticsPage({ params }: { params: { id: string } }) {
     setMessage('');
     try {
       const created = (await analyticsApi.createShortLink(
-        params.id,
+        id,
         source,
         targetUrl,
       )) as LinkTracker;
@@ -262,14 +263,14 @@ export default function AnalyticsPage({ params }: { params: { id: string } }) {
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
           <button
             type="button"
-            onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+            onClick={() => router.push(`/portfolios/${id}/edit`)}
             className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
           >
             Open editor
           </button>
           <button
             type="button"
-            onClick={() => router.push(`/preview/${params.id}`)}
+            onClick={() => router.push(`/preview/${id}`)}
             className="rounded-md border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-3 py-2 text-xs font-semibold text-[#1ECEFA]"
           >
             Publish settings

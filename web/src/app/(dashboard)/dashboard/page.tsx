@@ -198,53 +198,73 @@ export default function DashboardPage() {
                       className="group relative w-full overflow-hidden rounded-2xl border border-white/5 bg-[#0C0F13] transition-all duration-300 hover:border-white/15 hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                     >
                       {/* Preview area */}
-                      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-[#1ECEFA]/6 via-[#0C0F13] to-purple-500/8">
-                        <div className="absolute inset-0 flex flex-col">
-                          <div className="h-7 border-b border-white/5 bg-white/[0.03] flex items-center gap-1.5 px-3 shrink-0">
-                            <span className="h-1.5 w-1.5 rounded-full bg-red-500/40" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500/40" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/40" />
-                            <div className="ml-2 h-3 w-28 rounded-full bg-white/5" />
-                          </div>
-                          <div className="flex-1 p-4 space-y-2 opacity-20 group-hover:opacity-40 transition-opacity duration-300">
-                            <div className="h-3 w-3/4 rounded-full bg-white/20" />
-                            <div className="h-2 w-1/2 rounded-full bg-white/10" />
-                            <div className="mt-2 h-2 w-full rounded-full bg-white/10" />
-                            <div className="h-2 w-5/6 rounded-full bg-white/10" />
+                      <div className="relative aspect-video overflow-hidden bg-[#0C0F13]">
+                        {/* Browser chrome bar */}
+                        <div className="absolute top-0 left-0 right-0 z-10 flex h-7 items-center gap-1.5 border-b border-white/5 bg-[#0C0F13]/80 px-3 backdrop-blur-sm">
+                          <span className="h-1.5 w-1.5 rounded-full bg-red-500/50" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500/50" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
+                          <div className="ml-2 h-3 w-24 rounded-full bg-white/5 truncate text-[8px] text-slate-600 flex items-center px-1.5">
+                            {isLive && portfolio.publishedUrl
+                              ? portfolio.publishedUrl.replace('https://', '')
+                              : 'draft · not published'}
                           </div>
                         </div>
 
+                        {/* Live: scaled iframe preview */}
+                        {isLive && portfolio.publishedUrl ? (
+                          <div className="absolute inset-0 top-7 overflow-hidden">
+                            <iframe
+                              src={portfolio.publishedUrl}
+                              title={`Preview of ${portfolio.title}`}
+                              loading="lazy"
+                              sandbox="allow-scripts allow-same-origin"
+                              tabIndex={-1}
+                              aria-hidden="true"
+                              className="absolute left-0 top-0 origin-top-left border-0 pointer-events-none"
+                              style={{ width: 1280, height: 800, transform: 'scale(0.305)', transformOrigin: 'top left' }}
+                            />
+                          </div>
+                        ) : (
+                          /* Draft: themed gradient placeholder with title */
+                          <div className="absolute inset-0 top-7 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-500/8 via-[#0C0F13] to-purple-500/8">
+                            <div className="text-center px-4">
+                              <p className="text-xs font-semibold text-slate-300 line-clamp-2">{portfolio.title}</p>
+                              <p className="mt-1 text-[10px] text-slate-600">Not published yet</p>
+                            </div>
+                            <div className="flex gap-1.5 opacity-30">
+                              <div className="h-1 w-8 rounded-full bg-slate-500" />
+                              <div className="h-1 w-12 rounded-full bg-slate-500" />
+                              <div className="h-1 w-6 rounded-full bg-slate-500" />
+                            </div>
+                          </div>
+                        )}
+
                         {/* Status badge */}
-                        <div className="absolute top-9 right-3">
+                        <div className="absolute top-9 right-3 z-20">
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm ${
                             isLive
                               ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                              : 'border-slate-600/20 bg-slate-600/10 text-slate-500'
+                              : 'border-slate-600/20 bg-slate-700/60 text-slate-400'
                           }`}>
                             <span className={`h-1 w-1 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-slate-500'}`} />
                             {isLive ? 'Live' : 'Draft'}
                           </span>
                         </div>
 
-                        {/* Hover cue */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 backdrop-blur-[1px]">
-                          <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1.5 text-xs font-medium text-white">
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/40 backdrop-blur-[2px]">
+                          <span className="rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs font-medium text-white">
                             Manage
                           </span>
                         </div>
                       </div>
 
-                      {/* Footer */}
-                      <div className="px-4 py-3 border-t border-white/5 flex items-center justify-between gap-2 text-left">
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-semibold text-slate-200 truncate group-hover:text-white transition-colors">
-                            {portfolio.title}
-                          </h3>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {formatRelativeTime(portfolio.updatedAt)}
-                          </p>
-                        </div>
-                        <Globe className="h-3.5 w-3.5 shrink-0 text-slate-600 group-hover:text-[#1ECEFA] transition-colors" />
+                      {/* Footer: title only */}
+                      <div className="px-4 py-3 border-t border-white/5 text-left">
+                        <h3 className="text-sm font-semibold text-slate-200 truncate group-hover:text-white transition-colors">
+                          {portfolio.title}
+                        </h3>
                       </div>
                     </button>
                   );

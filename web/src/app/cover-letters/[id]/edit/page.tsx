@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
@@ -23,8 +23,9 @@ const TONES: Array<{ id: Tone; label: string; desc: string }> = [
   { id: 'enthusiastic', label: 'Enthusiastic', desc: 'Energetic and passionate' },
 ];
 
-export default function CoverLetterEditPage({ params }: { params: { id: string } }) {
+export default function CoverLetterEditPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const searchParams = useSearchParams();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<CoverLetterContent>({
@@ -44,7 +45,7 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
 
   const loadAsset = useCallback(async () => {
     try {
-      const asset = await assetsApi.getById(params.id) as {
+      const asset = await assetsApi.getById(id) as {
         title: string;
         content: CoverLetterContent;
         generatingStatus?: string;
@@ -53,7 +54,7 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
       if (asset.content) setContent(asset.content);
       setGeneratingStatus(asset.generatingStatus ?? '');
     } catch { /* ignore */ }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { loadAsset(); }, [loadAsset]);
 
@@ -88,7 +89,7 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
     setSaving(true);
     setSaveMsg('');
     try {
-      await assetsApi.update(params.id, { title, content });
+      await assetsApi.update(id, { title, content });
       setSaveMsg('Saved');
       setTimeout(() => setSaveMsg(''), 2000);
     } catch (err) {
@@ -101,8 +102,8 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
     setGenerating(true);
     try {
       // Save job desc + tone first
-      await assetsApi.update(params.id, { content });
-      await assetsApi.generate(params.id, `Generate a ${content.tone} cover letter for: ${content.jobDescription?.slice(0, 200)}`);
+      await assetsApi.update(id, { content });
+      await assetsApi.generate(id, `Generate a ${content.tone} cover letter for: ${content.jobDescription?.slice(0, 200)}`);
       setGeneratingStatus('queued');
       setActiveSection('edit');
     } catch { /* ignore */ }
@@ -243,7 +244,7 @@ export default function CoverLetterEditPage({ params }: { params: { id: string }
               className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50">
               {generating ? 'Generating...' : 'Re-generate'}
             </button>
-            <button onClick={() => router.push(`/preview/${params.id}`)}
+            <button onClick={() => router.push(`/preview/${id}`)}
               className="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
               Preview &amp; export
             </button>

@@ -59,6 +59,8 @@ interface BloxState {
 
   // Notifications
   notifications: NotificationItem[];
+  unreadNotificationCount: number;
+  setUnreadNotificationCount: (count: number) => void;
 
   // Gamification
   badges: Badge[];
@@ -110,10 +112,9 @@ export const useBloxStore = create<BloxState>()(
       lastVisitedRoute: '/',
 
       // Notifications
-      notifications: [
-        { id: 'notif-renewal', title: 'Your trial ends in 3 days', read: false },
-        { id: 'notif-seo', title: 'Portfolio SEO score improved to 84', read: false },
-      ],
+      notifications: [],
+      unreadNotificationCount: 0,
+      setUnreadNotificationCount: (count) => set({ unreadNotificationCount: count }),
 
       // Gamification
       badges: [

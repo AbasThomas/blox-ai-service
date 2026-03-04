@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi, billingApi } from '@/lib/api';
 import { PlanTier } from '@nextjs-blox/shared-types';
@@ -24,7 +24,8 @@ interface Transaction {
   buyerEmail?: string;
 }
 
-export default function EcommercePage({ params }: { params: { id: string } }) {
+export default function EcommercePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [title, setTitle] = useState('');
   const [services, setServices] = useState<Service[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -37,7 +38,7 @@ export default function EcommercePage({ params }: { params: { id: string } }) {
 
   const load = useCallback(async () => {
     try {
-      const asset = await assetsApi.getById(params.id) as {
+      const asset = await assetsApi.getById(id) as {
         title: string;
         content?: { services?: Service[]; transactions?: Transaction[] };
       };
@@ -46,7 +47,7 @@ export default function EcommercePage({ params }: { params: { id: string } }) {
       setTransactions(asset.content?.transactions ?? []);
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -54,7 +55,7 @@ export default function EcommercePage({ params }: { params: { id: string } }) {
     setSaving(true);
     setSaveMsg('');
     try {
-      await assetsApi.update(params.id, { title, content: { services, transactions } });
+      await assetsApi.update(id, { title, content: { services, transactions } });
       setSaveMsg('Saved');
       setTimeout(() => setSaveMsg(''), 2000);
     } catch (err) {
@@ -83,7 +84,7 @@ export default function EcommercePage({ params }: { params: { id: string } }) {
     try {
       const data = await billingApi.createCheckout({
         serviceId: svc.id,
-        assetId: params.id,
+        assetId: id,
         amount: Math.round(svc.price * 100),
         currency: svc.currency,
       }) as { authorizationUrl: string };

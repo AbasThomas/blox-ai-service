@@ -177,6 +177,10 @@ export class BillingService {
         userId,
         type: 'subscription_cancelled',
         title: 'Subscription cancelled',
+        message: immediate
+          ? 'Your subscription has been cancelled immediately. You have been moved to the Free plan.'
+          : 'Your subscription will be cancelled at the end of the current billing period.',
+        link: '/billing',
         payload: { tier: sub.tier, mode: immediate ? 'immediate' : 'end_of_cycle' },
       },
     });
@@ -233,6 +237,8 @@ export class BillingService {
                 userId: sub.userId,
                 type: 'payment_failed',
                 title: 'Payment failed',
+                message: 'We could not process your payment. Please update your payment method to keep your plan active.',
+                link: '/billing',
                 payload: { subscriptionId: sub.id },
               },
             });
@@ -297,7 +303,9 @@ export class BillingService {
         data: {
           userId,
           type: 'subscription_activated',
-          title: `Your ${tier} plan is now active!`,
+          title: `${tier} plan activated`,
+          message: `Your ${tier} plan (${cycle.toLowerCase()}) is now active. Enjoy all your new features!`,
+          link: '/billing',
           payload: { tier, cycle, periodEndAt: periodEndAt.toISOString() },
         },
       });

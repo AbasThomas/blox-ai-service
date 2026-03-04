@@ -129,10 +129,22 @@ export function SectionEditor({
         </ToolbarBtn>
 
         {/* ATS badge */}
-        <div className="ml-auto flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          ATS Safe
-        </div>
+        {(() => {
+          const riskyAlign = editor.isActive({ textAlign: 'center' }) || editor.isActive({ textAlign: 'right' });
+          return (
+            <div
+              title={riskyAlign ? 'Centered or right-aligned text can confuse ATS parsers — use left-align for best results.' : 'This content is ATS-safe'}
+              className={`ml-auto flex cursor-help items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                riskyAlign
+                  ? 'border-amber-500/20 bg-amber-500/10 text-amber-400'
+                  : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
+              }`}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${riskyAlign ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+              {riskyAlign ? 'ATS Caution' : 'ATS Safe'}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Editor area */}

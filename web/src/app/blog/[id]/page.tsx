@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
@@ -16,8 +16,9 @@ interface BlogContent {
   status?: 'draft' | 'published' | 'scheduled';
 }
 
-export default function BlogPage({ params }: { params: { id: string } }) {
+export default function BlogPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { id } = use(params);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<BlogContent>({ draft: '', tags: [], status: 'draft' });
   const [saving, setSaving] = useState(false);
@@ -28,11 +29,11 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
   const load = useCallback(async () => {
     try {
-      const asset = await assetsApi.getById(params.id) as { title: string; content: BlogContent };
+      const asset = await assetsApi.getById(id) as { title: string; content: BlogContent };
       setTitle(asset.title);
       if (asset.content) setContent(asset.content);
     } catch { /* ignore */ }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -46,7 +47,7 @@ export default function BlogPage({ params }: { params: { id: string } }) {
     setSaving(true);
     setSaveMsg('');
     try {
-      await assetsApi.update(params.id, { title, content });
+      await assetsApi.update(id, { title, content });
       setSaveMsg('Saved');
       setTimeout(() => setSaveMsg(''), 2000);
     } catch (err) {

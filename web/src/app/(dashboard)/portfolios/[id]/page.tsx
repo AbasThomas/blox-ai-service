@@ -1,9 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { assetsApi, analyticsApi, publishApi } from '@/lib/api';
+import { assetsApi, analyticsApi } from '@/lib/api';
+import { AppLoadingScreen } from '@/components/shared/app-loading-screen';
+import { PreviewPublishTab } from '@/components/portfolio/preview-publish-tab';
 import {
   X,
   Globe,
@@ -16,58 +18,47 @@ import {
   CheckCircle,
 } from '@/components/ui/icons';
 
-type Tab = 'overview' | 'edit' | 'publish' | 'analytics' | 'share' | 'settings';
+type Tab = 'overview' | 'edit' | 'preview' | 'analytics' | 'share' | 'settings';
 
 const TABS: Array<{ id: Tab; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>> }> = [
   { id: 'overview', label: 'Overview', Icon: Globe },
   { id: 'edit', label: 'Edit', Icon: Sparkles },
-  { id: 'publish', label: 'Publish', Icon: ArrowUpRight },
+  { id: 'preview', label: 'Preview & Publish', Icon: ArrowUpRight },
   { id: 'analytics', label: 'Analytics', Icon: BarChart3 },
   { id: 'share', label: 'Share', Icon: Globe },
   { id: 'settings', label: 'Settings', Icon: Settings },
 ];
 
-function normalizeSubdomain(raw: string): string {
-  return raw
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 40);
-}
-
-function resolvePublicUrl(publishedUrl: string | null | undefined, subdomain: string): string {
-  if (typeof window === 'undefined') return '';
-  if (!publishedUrl && !subdomain) return '';
-  if (!publishedUrl) return `${window.location.origin}/${subdomain}`;
+// Resolves the publishedUrl to a displayable URL (excludes localhost)
+function resolvePublicUrl(publishedUrl: string | null | undefined): string {
+  if (typeof window === 'undefined' || !publishedUrl) return '';
   try {
     const parsed = new URL(publishedUrl);
-    const isLocal =
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1' ||
-      parsed.hostname.endsWith('.localhost');
-    if (isLocal && subdomain) return `${window.location.origin}/${subdomain}`;
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') return '';
     return parsed.toString();
   } catch {
-    return subdomain ? `${window.location.origin}/${subdomain}` : (publishedUrl ?? '');
+    return publishedUrl ?? '';
   }
 }
 
-export default function PortfolioDetailPage({ params }: { params: { id: string } }) {
+export default function PortfolioDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const searchParams = useSearchParams();
+  const { id } = use(params);
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = searchParams.get('tab');
+    const valid: Tab[] = ['overview', 'edit', 'preview', 'analytics', 'share', 'settings'];
+    return (valid.includes(tab as Tab) ? tab : 'overview') as Tab;
+  });
   const [asset, setAsset] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [subdomain, setSubdomain] = useState('');
-  const [publishing, setPublishing] = useState(false);
-  const [unpublishing, setUnpublishing] = useState(false);
-  const [publishMsg, setPublishMsg] = useState('');
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const [analytics, setAnalytics] = useState<Record<string, unknown> | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
+  const [navigating, setNavigating] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
@@ -76,31 +67,27 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
   const loadAsset = useCallback(async () => {
     setLoading(true);
     try {
-      const data = (await assetsApi.getById(params.id)) as Record<string, unknown>;
+      const data = (await assetsApi.getById(id)) as Record<string, unknown>;
       setAsset(data);
-      const slug = typeof data.slug === 'string' ? data.slug : '';
-      const title = typeof data.title === 'string' ? data.title : '';
-      const seeded = normalizeSubdomain(slug || title);
-      if (seeded) setSubdomain(seeded);
       if (typeof data.publishedUrl === 'string') setPublishedUrl(data.publishedUrl);
     } catch {
       setAsset(null);
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     try {
-      const data = (await analyticsApi.getAssetAnalytics(params.id)) as Record<string, unknown>;
+      const data = (await analyticsApi.getAssetAnalytics(id)) as Record<string, unknown>;
       setAnalytics(data);
     } catch {
       setAnalytics({});
     } finally {
       setAnalyticsLoading(false);
     }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { void loadAsset(); }, [loadAsset]);
   useEffect(() => { if (activeTab === 'analytics') void loadAnalytics(); }, [activeTab, loadAnalytics]);
@@ -112,48 +99,13 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
     ? new Date(updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : '';
 
-  const publicUrl = useMemo(() => resolvePublicUrl(publishedUrl, subdomain), [publishedUrl, subdomain]);
-
-  const handlePublish = async () => {
-    const normalized = normalizeSubdomain(subdomain);
-    if (!normalized) { setPublishMsg('Enter a valid subdomain.'); return; }
-    setPublishing(true);
-    setPublishMsg('');
-    try {
-      const res = (await publishApi.publish({ assetId: params.id, subdomain: normalized })) as Record<string, unknown>;
-      const newSub = normalizeSubdomain((res.subdomain as string) ?? normalized);
-      setSubdomain(newSub);
-      if (typeof res.publishedUrl === 'string') setPublishedUrl(res.publishedUrl);
-      await loadAsset();
-      setPublishMsg(res.status === 'scheduled' ? 'Publish scheduled.' : 'Published successfully!');
-    } catch (error) {
-      setPublishMsg(error instanceof Error ? error.message : 'Publish failed.');
-    } finally {
-      setPublishing(false);
-    }
-  };
-
-  const handleUnpublish = async () => {
-    if (!window.confirm('Unpublish this portfolio?')) return;
-    setUnpublishing(true);
-    setPublishMsg('');
-    try {
-      await publishApi.unpublish(params.id);
-      setPublishedUrl(null);
-      await loadAsset();
-      setPublishMsg('Unpublished successfully.');
-    } catch (error) {
-      setPublishMsg(error instanceof Error ? error.message : 'Unpublish failed.');
-    } finally {
-      setUnpublishing(false);
-    }
-  };
+  const publicUrl = useMemo(() => resolvePublicUrl(publishedUrl), [publishedUrl]);
 
   const handleDuplicate = async () => {
     setDuplicating(true);
     setActionMsg('');
     try {
-      await assetsApi.duplicate(params.id);
+      await assetsApi.duplicate(id);
       setActionMsg('Portfolio duplicated. Check your portfolios list.');
     } catch (error) {
       setActionMsg(error instanceof Error ? error.message : 'Could not duplicate.');
@@ -167,12 +119,17 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
     setDeleting(true);
     setActionMsg('');
     try {
-      await assetsApi.delete(params.id);
+      await assetsApi.delete(id);
       router.push('/portfolios');
     } catch (error) {
       setActionMsg(error instanceof Error ? error.message : 'Could not delete.');
       setDeleting(false);
     }
+  };
+
+  const navigateToEditor = () => {
+    setNavigating(true);
+    router.push(`/portfolios/${id}/edit`);
   };
 
   const handleCopyUrl = () => {
@@ -184,6 +141,8 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
   };
 
   return (
+    <>
+    {navigating && <AppLoadingScreen message="Opening editor\u2026" />}
     <div>
       {/* ── Breadcrumb ── */}
       <button
@@ -231,7 +190,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
 
         <button
           type="button"
-          onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+          onClick={navigateToEditor}
           className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-2.5 text-sm font-semibold text-[#0C0F13] hover:bg-white transition-colors"
         >
           Open Editor <ArrowUpRight className="h-4 w-4" />
@@ -355,7 +314,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+                  onClick={navigateToEditor}
                   className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-2.5 text-sm font-semibold text-[#0C0F13] hover:bg-white transition-colors"
                 >
                   Open Editor <ArrowUpRight className="h-4 w-4" />
@@ -372,7 +331,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
                 )}
                 <button
                   type="button"
-                  onClick={() => setActiveTab('publish')}
+                  onClick={() => setActiveTab('preview')}
                   className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/5 transition-colors"
                 >
                   {isLive ? 'Republish' : 'Publish Now'}
@@ -389,7 +348,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
               </p>
               <button
                 type="button"
-                onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+                onClick={navigateToEditor}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-5 py-3 text-sm font-semibold text-[#0C0F13] hover:bg-white transition-colors"
               >
                 Open Full Editor <ArrowUpRight className="h-4 w-4" />
@@ -405,7 +364,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+                    onClick={navigateToEditor}
                     className="flex items-start gap-4 rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left hover:bg-white/5 hover:border-white/10 transition-all group"
                   >
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${item.color}`}>
@@ -421,70 +380,8 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
             </div>
           )}
 
-          {/* ── Publish ── */}
-          {activeTab === 'publish' && (
-            <div className="max-w-xl space-y-5">
-              <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-slate-400">Subdomain</label>
-                <div className="flex overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] focus-within:border-white/20 transition-colors">
-                  <input
-                    value={subdomain}
-                    onChange={(e) => setSubdomain(normalizeSubdomain(e.target.value))}
-                    placeholder="my-portfolio"
-                    className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm text-slate-100 outline-none placeholder:text-slate-600"
-                  />
-                  <span className="flex items-center border-l border-white/10 px-4 text-xs text-slate-500 whitespace-nowrap">
-                    .blox.app
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => void handlePublish()}
-                disabled={publishing}
-                className="w-full rounded-xl bg-[#1ECEFA] px-4 py-3 text-sm font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors"
-              >
-                {publishing ? 'Publishing...' : isLive ? 'Republish' : 'Publish Now'}
-              </button>
-
-              {isLive && (
-                <button
-                  type="button"
-                  onClick={() => void handleUnpublish()}
-                  disabled={unpublishing}
-                  className="w-full rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-60 transition-colors"
-                >
-                  {unpublishing ? 'Unpublishing...' : 'Unpublish'}
-                </button>
-              )}
-
-              {publishMsg && (
-                <p className={`text-sm ${publishMsg.includes('success') || publishMsg.includes('scheduled') ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {publishMsg}
-                </p>
-              )}
-
-              {publicUrl && (
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-5 py-4">
-                  <p className="text-xs font-medium text-slate-500 mb-1.5">Public URL</p>
-                  <a href={publicUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-emerald-300 break-all hover:underline">
-                    {publicUrl}
-                  </a>
-                </div>
-              )}
-
-              <div className="border-t border-white/5 pt-4">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/preview/${params.id}`)}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors"
-                >
-                  Advanced publish & SEO settings <ArrowUpRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          {/* ── Preview & Publish ── */}
+          {activeTab === 'preview' && <PreviewPublishTab assetId={id} />}
 
           {/* ── Analytics ── */}
           {activeTab === 'analytics' && (
@@ -511,7 +408,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
               ) : null}
               <button
                 type="button"
-                onClick={() => router.push(`/analytics/${params.id}`)}
+                onClick={() => router.push(`/analytics/${id}`)}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/5 transition-colors"
               >
                 Open Full Analytics <BarChart3 className="h-4 w-4" />
@@ -554,7 +451,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
                   </div>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('publish')}
+                    onClick={() => setActiveTab('preview')}
                     className="inline-flex items-center gap-2 rounded-xl bg-amber-500/20 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 transition-colors"
                   >
                     Go to Publish <ArrowUpRight className="h-3.5 w-3.5" />
@@ -589,7 +486,7 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
 
                 <button
                   type="button"
-                  onClick={() => router.push(`/preview/${params.id}`)}
+                  onClick={() => router.push(`/preview/${id}`)}
                   className="w-full flex items-center gap-4 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3.5 text-left hover:bg-white/[0.06] hover:border-white/12 transition-all group"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
@@ -630,5 +527,6 @@ export default function PortfolioDetailPage({ params }: { params: { id: string }
         </motion.div>
       )}
     </div>
+    </>
   );
 }

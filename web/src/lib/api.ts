@@ -2,6 +2,44 @@ import { useBloxStore } from './store/app-store';
 
 const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333'}/v1`;
 
+// Singleton refresh promise — prevents multiple simultaneous refresh calls
+let _tokenRefreshPromise: Promise<string | null> | null = null;
+
+async function tryRefreshToken(): Promise<string | null> {
+  if (_tokenRefreshPromise) return _tokenRefreshPromise;
+  _tokenRefreshPromise = (async () => {
+    try {
+      const rt =
+        (typeof window !== 'undefined' ? localStorage.getItem('blox_refresh_token') : null) ??
+        useBloxStore.getState().refreshToken;
+      if (!rt) return null;
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: rt }),
+        cache: 'no-store',
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as { accessToken?: string; refreshToken?: string };
+      if (!data.accessToken) return null;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('blox_access_token', data.accessToken);
+        if (data.refreshToken) localStorage.setItem('blox_refresh_token', data.refreshToken);
+      }
+      useBloxStore.setState({
+        accessToken: data.accessToken,
+        ...(data.refreshToken ? { refreshToken: data.refreshToken } : {}),
+      });
+      return data.accessToken;
+    } catch {
+      return null;
+    } finally {
+      _tokenRefreshPromise = null;
+    }
+  })();
+  return _tokenRefreshPromise;
+}
+
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
 
@@ -44,6 +82,21 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
     }
 
     if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/')) {
+      // Try to silently refresh the access token, then retry
+      const newToken = await tryRefreshToken();
+      if (newToken) {
+        const retryRes = await fetch(`${BASE_URL}${path}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${newToken}`,
+            ...(options?.headers ?? {}),
+          },
+          cache: 'no-store',
+        });
+        if (retryRes.ok) return retryRes.json() as Promise<T>;
+      }
+      // Refresh failed — clear session and redirect
       useBloxStore.getState().logout();
       if (!window.location.pathname.startsWith('/login')) {
         window.location.replace('/login');
@@ -166,6 +219,20 @@ export const integrationsApi = {
   connect: (provider: string) => post(`/integrations/connect/${provider}`, {}),
   disconnect: (provider: string) => del(`/integrations/${provider}`),
   getProviders: () => get('/integrations/providers'),
+};
+
+// Notifications
+export const notificationsApi = {
+  list: (params?: { page?: number; limit?: number; filter?: string }) => {
+    const qs = params ? '?' + new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v !== undefined)
+        .map(([k, v]) => [k, String(v)])
+    ).toString() : '';
+    return get(`/notifications${qs}`);
+  },
+  unreadCount: () => get<{ count: number }>('/notifications/unread-count'),
+  markRead: (ids?: string[]) => patch('/notifications/mark-read', { ids }),
 };
 
 // Onboarding import flow

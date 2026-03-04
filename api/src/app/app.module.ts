@@ -23,6 +23,7 @@ import { ScannerModule } from './scanner/scanner.module';
 import { CollaborationModule } from './collaboration/collaboration.module';
 import { AdminModule } from './admin/admin.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     CollaborationModule,
     AdminModule,
     OnboardingModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

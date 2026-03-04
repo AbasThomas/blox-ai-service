@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { collabApi, assetsApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
@@ -14,7 +14,8 @@ interface Comment {
   user: { id: string; fullName: string };
 }
 
-export default function CollaboratePage({ params }: { params: { id: string } }) {
+export default function CollaboratePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const user = useBloxStore((s) => s.user);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,15 +28,15 @@ export default function CollaboratePage({ params }: { params: { id: string } }) 
   const load = useCallback(async () => {
     try {
       const [commentsData, asset] = await Promise.all([
-        collabApi.getComments(params.id) as Promise<Comment[]>,
-        assetsApi.getById(params.id) as Promise<{ title: string; publishedUrl?: string }>,
+        collabApi.getComments(id) as Promise<Comment[]>,
+        assetsApi.getById(id) as Promise<{ title: string; publishedUrl?: string }>,
       ]);
       setComments(commentsData);
       setAssetTitle(asset.title);
       setShareLink(asset.publishedUrl ?? '');
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -43,7 +44,7 @@ export default function CollaboratePage({ params }: { params: { id: string } }) 
     if (!newComment.trim()) return;
     setPosting(true);
     try {
-      const comment = await collabApi.addComment(params.id, newComment) as Comment;
+      const comment = await collabApi.addComment(id, newComment) as Comment;
       setComments((prev) => [comment, ...prev]);
       setNewComment('');
     } catch { /* ignore */ }
