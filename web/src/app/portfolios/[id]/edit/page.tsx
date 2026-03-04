@@ -493,55 +493,64 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
   return (
     <FeaturePage
       title={title || 'Edit Portfolio'}
-      description="Guided editing flow with AI optimization and publishing tools."
+      description="Edit content, run AI optimizations, preview, and publish."
     >
       <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 overflow-x-hidden">
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
-          <button
-            type="button"
-            onClick={() => router.push('/portfolios')}
-            className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
-          >
-            Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/analytics/${params.id}`)}
-            className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
-          >
-            Analytics
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push(`/preview/${params.id}`)}
-            className="rounded-md border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-3 py-2 text-xs font-semibold text-[#1ECEFA]"
-          >
-            Preview & Publish
-          </button>
-          <div className="ml-auto inline-flex items-center gap-2 rounded-md border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-3 py-1.5 text-xs text-[#8CEBFF]">
-            <Clock className="h-3.5 w-3.5" />
-            <span>Step {step}/5</span>
+        {/* Top action bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-[#0d0d16] px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push('/portfolios')}
+              className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              ← All Portfolios
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/analytics/${params.id}`)}
+              className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              Analytics
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(`/preview/${params.id}`)}
+              className="rounded-xl bg-[#1ECEFA] px-3 py-1.5 text-xs font-semibold text-[#0C0F13] hover:bg-white transition-colors"
+            >
+              Preview & Publish
+            </button>
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-          <div className="mb-3 h-1.5 rounded-full bg-white/10">
-            <div className="h-1.5 rounded-full bg-[#1ECEFA] transition-all" style={{ width: `${progressPercent}%` }} />
+        {/* Step navigator */}
+        <div className="rounded-2xl border border-white/5 bg-[#0d0d16] p-4">
+          {/* Progress bar */}
+          <div className="mb-4 h-1 w-full rounded-full bg-white/5">
+            <div
+              className="h-1 rounded-full bg-purple-500 transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
-          <div className="grid gap-2 sm:grid-cols-5">
+          {/* Step tabs */}
+          <div
+            className="flex items-center gap-1.5 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {STEPS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setStep(item.id)}
-                className={`rounded-lg border px-3 py-2 text-left ${
+                className={`inline-flex shrink-0 flex-col items-start rounded-full px-4 py-2 transition-all ${
                   step === item.id
-                    ? 'border-[#1ECEFA]/40 bg-[#1ECEFA]/10'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10'
+                    ? 'bg-purple-500 text-white'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <p className="text-xs font-semibold text-slate-100">{item.label}</p>
-                <p className="mt-0.5 text-[11px] text-slate-400">{item.description}</p>
+                <span className="text-sm font-medium">{item.label}</span>
               </button>
             ))}
           </div>
@@ -559,7 +568,7 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
           </div>
         ) : null}
 
-        <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+        <div className="rounded-2xl border border-white/5 bg-[#0C0F13] p-5">
           {step === 1 ? (
             <div className="space-y-4">
               <h2 className="text-base font-semibold text-slate-100">Quick Start</h2>
@@ -614,16 +623,16 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
 
           {step === 2 ? (
             <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {(['profile', 'projects', 'certifications'] as ContentTab[]).map((tab) => (
                   <button
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
-                    className={`rounded-md px-3 py-2 text-xs font-semibold capitalize ${
+                    className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition-all ${
                       activeTab === tab
-                        ? 'bg-[#1ECEFA] text-black'
-                        : 'border border-white/10 text-slate-300 hover:bg-white/5'
+                        ? 'bg-purple-500 text-white'
+                        : 'text-gray-400 hover:text-white hover:bg-white/5'
                     }`}
                   >
                     {tab}
@@ -863,12 +872,12 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/5 bg-[#0d0d16] px-4 py-3">
           <button
             type="button"
             disabled={step === 1}
             onClick={() => setStep((prev) => (prev > 1 ? ((prev - 1) as Step) : prev))}
-            className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
           >
             Previous
           </button>
@@ -877,7 +886,7 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
               type="button"
               onClick={() => void handleSave()}
               disabled={saving}
-              className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60"
+              className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-white/5 disabled:opacity-60 transition-colors"
             >
               {saving ? 'Saving...' : saveMsg || 'Save'}
             </button>
@@ -885,7 +894,7 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
               <button
                 type="button"
                 onClick={() => void handleNext()}
-                className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black"
+                className="rounded-xl bg-[#1ECEFA] px-5 py-2 text-sm font-semibold text-[#0C0F13] hover:bg-white transition-colors"
               >
                 {step === 4 ? 'Continue to Publish' : 'Next Step'}
               </button>
@@ -893,7 +902,7 @@ export default function PortfolioEditPage({ params }: { params: { id: string } }
               <button
                 type="button"
                 onClick={() => router.push('/portfolios')}
-                className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black"
+                className="rounded-xl bg-[#1ECEFA] px-5 py-2 text-sm font-semibold text-[#0C0F13] hover:bg-white transition-colors"
               >
                 Finish
               </button>

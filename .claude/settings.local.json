@@ -20,7 +20,8 @@
       "Bash(cmd:*)",
       "Bash(kill 1756:*)",
       "Bash(npx nx:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

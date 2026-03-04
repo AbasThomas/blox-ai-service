@@ -1083,41 +1083,70 @@ export default function PortfolioNewPage() {
         headerIcon={<Sparkles size={24} />}
       >
         <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6 overflow-x-hidden px-3 pb-20 sm:px-4 lg:px-0">
-          {/* Progress Bar Header */}
-          <div className="sticky top-0 z-30 rounded-2xl border border-white/10 bg-[#0C0F13]/80 p-4 backdrop-blur-md shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 text-[#1ECEFA]">
-                  <span className="text-sm font-black">{step}</span>
+          {/* Progress + Step Navigator */}
+          <div className="sticky top-0 z-30 rounded-2xl border border-white/5 bg-[#0d0d16]/95 p-4 backdrop-blur-md">
+            {/* Header row */}
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400">
+                  <span className="text-sm font-semibold">{step}</span>
                 </div>
                 <div>
-                  <h3 className="font-display text-sm font-bold text-white">
-                    Step {step} of 5
-                  </h3>
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">
+                  <p className="text-sm font-semibold text-white">
                     {step === 1 && 'Persona Selection'}
                     {step === 2 && 'Import Hub'}
                     {step === 3 && 'AI Optimization'}
                     {step === 4 && 'Review & Finalize'}
                     {step === 5 && 'Publish & Share'}
                   </p>
+                  <p className="text-xs text-slate-500">Step {step} of 5</p>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push('/portfolios')}
-                  className="rounded-lg border border-white/10 px-4 py-2 text-xs font-bold text-slate-400 hover:bg-white/5"
-                >
-                  Save & Exit
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => router.push('/portfolios')}
+                className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+              >
+                Save & Exit
+              </button>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-white/5">
+            {/* Progress bar */}
+            <div className="h-1 w-full rounded-full bg-white/5">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#1ECEFA] to-[#0A4F78] transition-all duration-700 shadow-[0_0_10px_rgba(30,206,250,0.5)]"
+                className="h-1 rounded-full bg-purple-500 transition-all duration-700"
                 style={{ width: `${(step / 5) * 100}%` }}
               />
+            </div>
+            {/* Step pills */}
+            <div
+              className="mt-3 flex items-center gap-1.5 overflow-x-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {([
+                { id: 1, label: 'Persona' },
+                { id: 2, label: 'Import' },
+                { id: 3, label: 'AI Optimize' },
+                { id: 4, label: 'Review' },
+                { id: 5, label: 'Publish' },
+              ] as Array<{ id: Step; label: string }>).map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    if (s.id <= step) setStep(s.id);
+                  }}
+                  disabled={s.id > step}
+                  className={`inline-flex shrink-0 items-center rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                    step === s.id
+                      ? 'bg-purple-500 text-white'
+                      : s.id < step
+                      ? 'bg-white/5 text-slate-300 hover:bg-white/10'
+                      : 'text-slate-600 cursor-not-allowed'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1188,14 +1217,14 @@ export default function PortfolioNewPage() {
                       onClick={() => setPersona(option.value)}
                       className={`group relative flex flex-col items-center rounded-2xl border p-6 text-center transition-all duration-300 ${
                         persona === option.value
-                          ? 'border-[#1ECEFA] bg-[#1ECEFA]/10 shadow-[0_0_20px_rgba(30,206,250,0.15)]'
+                          ? 'border-purple-500/40 bg-purple-500/10'
                           : 'border-white/5 bg-white/5 hover:border-white/20'
                       }`}
                     >
                       <div
                         className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-300 ${
                           persona === option.value
-                            ? 'bg-[#1ECEFA] text-black'
+                            ? 'bg-purple-500 text-white'
                             : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'
                         }`}
                       >
@@ -1208,7 +1237,7 @@ export default function PortfolioNewPage() {
                         {option.desc}
                       </p>
                       {persona === option.value && (
-                        <div className="absolute -top-2 -right-2 rounded-full bg-[#1ECEFA] p-1 text-black shadow-lg">
+                        <div className="absolute -top-2 -right-2 rounded-full bg-purple-500 p-1 text-white">
                           <Check size={12} strokeWidth={4} />
                         </div>
                       )}
@@ -1224,13 +1253,13 @@ export default function PortfolioNewPage() {
                           setSetupMethod('manual');
                           setStep(2);
                         }}
-                        className="rounded-xl border border-white/10 bg-white/5 py-4 px-8 text-sm font-bold text-white hover:bg-white/10"
+                        className="rounded-xl border border-white/10 bg-white/5 py-3 px-6 text-sm font-medium text-white hover:bg-white/10 transition-colors"
                       >
-                        Skip to Manual
+                        Skip to Manual Entry
                       </button>
                       <button
                         onClick={() => setStep(2)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] py-4 px-8 text-sm font-semibold text-black shadow-[0_0_20px_rgba(30,206,250,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                        className="flex items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] py-3 px-6 text-sm font-semibold text-black hover:bg-white transition-colors"
                       >
                         Continue
                       </button>
@@ -1249,17 +1278,17 @@ export default function PortfolioNewPage() {
                     <h2 className="font-display text-2xl font-black text-white">
                       Unified Import Hub
                     </h2>
-                    <div className="flex rounded-xl bg-black/40 p-1">
+                    <div className="flex items-center gap-1 rounded-2xl bg-[#0d0d16] p-1">
                       {(
                         ['profile', 'projects', 'certifications'] as ImportTab[]
                       ).map((tab) => (
                         <button
                           key={tab}
                           onClick={() => setActiveTab(tab)}
-                          className={`rounded-lg px-4 py-2 text-xs font-bold uppercase transition-all ${
+                          className={`rounded-full px-3.5 py-1.5 text-xs font-medium capitalize transition-all ${
                             activeTab === tab
-                              ? 'bg-[#1ECEFA] text-black shadow-lg'
-                              : 'text-slate-400 hover:text-white'
+                              ? 'bg-purple-500 text-white'
+                              : 'text-gray-400 hover:text-white hover:bg-white/5'
                           }`}
                         >
                           {tab}
@@ -1277,7 +1306,7 @@ export default function PortfolioNewPage() {
                               <button
                                 key={mode}
                                 onClick={() => setProfileMode(mode)}
-                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-all ${
                                   profileMode === mode
                                     ? 'bg-[#1ECEFA] text-black'
                                     : 'text-slate-500 hover:text-slate-300'
@@ -1377,7 +1406,7 @@ export default function PortfolioNewPage() {
                               <button
                                 key={mode}
                                 onClick={() => setProjectMode(mode)}
-                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-all ${
                                   projectMode === mode
                                     ? 'bg-[#1ECEFA] text-black'
                                     : 'text-slate-500 hover:text-slate-300'
@@ -1536,7 +1565,7 @@ export default function PortfolioNewPage() {
                                 key={mode}
                                 onClick={() => setCertificationMode(mode)}
                                 disabled={!certificationsEnabled}
-                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-all ${
                                   certificationMode === mode
                                     ? 'bg-[#1ECEFA] text-black'
                                     : 'text-slate-500 hover:text-slate-300'
@@ -1546,7 +1575,7 @@ export default function PortfolioNewPage() {
                               </button>
                             ))}
                           </div>
-                          <p className="text-[10px] text-slate-500 font-bold uppercase">
+                          <p className="text-xs text-slate-500 font-medium">
                             Certification Sources
                           </p>
                         </div>
