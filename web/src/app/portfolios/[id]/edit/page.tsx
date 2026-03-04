@@ -4,19 +4,31 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi, scannerApi } from '@/lib/api';
+import {
+  DEFAULT_PORTFOLIO_TEMPLATE_ID,
+  PORTFOLIO_TEMPLATE_OPTIONS,
+  normalizePortfolioTemplateId,
+} from '@/lib/portfolio-templates';
+import {
+  ArrowUpRight,
+  BarChart3,
+  Bot,
+  CheckCircle,
+  Clock,
+  Globe,
+  PlusCircle,
+  Sparkles,
+  Zap,
+} from '@/components/ui/icons';
 
-type SectionKey =
-  | 'hero'
-  | 'about'
-  | 'experience'
-  | 'projects'
-  | 'skills'
-  | 'certifications'
-  | 'contact';
-
+type Step = 1 | 2 | 3 | 4 | 5;
+type ContentTab = 'profile' | 'projects' | 'certifications';
 type ContentRecord = Record<string, unknown>;
 
 interface EditorContent {
+  templateId: string;
+  focusQuestion: string;
+  profileImageUrl: string;
   heroHeading: string;
   heroBody: string;
   about: string;
@@ -42,17 +54,18 @@ interface AssetResponse {
   generatingStatus?: string;
 }
 
-const SECTION_LABELS: Record<SectionKey, string> = {
-  hero: 'Hero',
-  about: 'About',
-  experience: 'Experience',
-  projects: 'Projects',
-  skills: 'Skills',
-  certifications: 'Certifications',
-  contact: 'Contact',
-};
+const STEPS: Array<{ id: Step; label: string; description: string }> = [
+  { id: 1, label: 'Quick Start', description: 'Set direction and template.' },
+  { id: 2, label: 'Content Hub', description: 'Edit profile, projects, and certifications.' },
+  { id: 3, label: 'AI Optimize', description: 'Regenerate and run critique.' },
+  { id: 4, label: 'Review', description: 'Check quality and versions.' },
+  { id: 5, label: 'Publish', description: 'Open publish and sharing tools.' },
+];
 
 const EMPTY_EDITOR_CONTENT: EditorContent = {
+  templateId: DEFAULT_PORTFOLIO_TEMPLATE_ID,
+  focusQuestion: '',
+  profileImageUrl: '',
   heroHeading: '',
   heroBody: '',
   about: '',
@@ -76,6 +89,17 @@ function asArray(value: unknown): unknown[] {
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+async function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () =>
+      reject(reader.error ?? new Error('Could not read image file.'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function stringifyProjectItem(item: unknown): string {
@@ -105,10 +129,7 @@ function stringifyGenericItem(item: unknown): string {
   return values.join(' | ');
 }
 
-function extractItemList(
-  source: unknown,
-  kind: 'generic' | 'projects' | 'certifications',
-) {
+function extractItemList(source: unknown, kind: 'generic' | 'projects' | 'certifications') {
   const record = asRecord(source);
   const rawItems = asArray(record.items);
   const items = rawItems.length > 0 ? rawItems : asArray(source);
@@ -130,8 +151,13 @@ function normalizeContent(raw: ContentRecord | undefined): EditorContent {
   const hero = asRecord(raw.hero);
   const about = asRecord(raw.about);
   const contact = asRecord(raw.contact);
+  const profile = asRecord(raw.profile);
+  const meta = asRecord(raw.meta);
 
   return {
+    templateId: normalizePortfolioTemplateId(asString(raw.templateId)),
+    focusQuestion: asString(meta.focusQuestion),
+    profileImageUrl: asString(profile.avatarUrl),
     heroHeading: asString(hero.heading),
     heroBody: asString(hero.body),
     about: asString(about.body),
@@ -171,11 +197,17 @@ function parseCertificationLine(line: string) {
   };
 }
 
-function buildUpdatedContent(
-  previous: ContentRecord,
-  editor: EditorContent,
-): ContentRecord {
+function buildUpdatedContent(previous: ContentRecord, editor: EditorContent): ContentRecord {
   const next = { ...previous };
+  next.templateId = normalizePortfolioTemplateId(editor.templateId);
+  next.meta = {
+    ...asRecord(previous.meta),
+    focusQuestion: editor.focusQuestion.trim(),
+  };
+  next.profile = {
+    ...asRecord(previous.profile),
+    avatarUrl: editor.profileImageUrl.trim(),
+  };
   next.hero = {
     ...asRecord(previous.hero),
     heading: editor.heroHeading.trim(),
@@ -218,21 +250,17 @@ function formatVersionLabel(raw: Record<string, unknown>) {
   );
 }
 
-export default function PortfolioEditPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function PortfolioEditPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const [step, setStep] = useState<Step>(1);
+  const [activeTab, setActiveTab] = useState<ContentTab>('profile');
   const [title, setTitle] = useState('');
   const [rawContent, setRawContent] = useState<ContentRecord>({});
   const [content, setContent] = useState<EditorContent>(EMPTY_EDITOR_CONTENT);
-  const [activeSection, setActiveSection] = useState<SectionKey>('hero');
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [critiquing, setCritiquing] = useState(false);
   const [versions, setVersions] = useState<VersionRow[]>([]);
-  const [showVersions, setShowVersions] = useState(false);
   const [publishUrl, setPublishUrl] = useState('');
   const [saveMsg, setSaveMsg] = useState('');
   const [generatingStatus, setGeneratingStatus] = useState('');
@@ -247,11 +275,9 @@ export default function PortfolioEditPage({
       setTitle(asset.title || '');
       setRawContent(assetContent);
       setContent(normalizeContent(assetContent));
-      setHealthScore(
-        typeof asset.healthScore === 'number' ? asset.healthScore : 0,
-      );
+      setHealthScore(typeof asset.healthScore === 'number' ? asset.healthScore : 0);
       setPublishUrl(asset.publishedUrl ?? '');
-      setGeneratingStatus(asString(assetContent.generatingStatus));
+      setGeneratingStatus(asString(asset.generatingStatus) || asString(assetContent.generatingStatus));
     } catch {
       setNotice('Could not load portfolio data.');
     }
@@ -259,9 +285,7 @@ export default function PortfolioEditPage({
 
   const loadVersions = useCallback(async () => {
     try {
-      const rows = (await assetsApi.listVersions(params.id)) as Array<
-        Record<string, unknown>
-      >;
+      const rows = (await assetsApi.listVersions(params.id)) as Array<Record<string, unknown>>;
       setVersions(
         rows.map((row) => ({
           id: asString(row.id),
@@ -289,7 +313,7 @@ export default function PortfolioEditPage({
     return () => clearInterval(timer);
   }, [generatingStatus, loadAsset]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setSaving(true);
     setSaveMsg('');
     setNotice('');
@@ -301,13 +325,15 @@ export default function PortfolioEditPage({
       });
       setRawContent(updatedContent);
       setSaveMsg('Saved');
-      setTimeout(() => setSaveMsg(''), 1800);
+      setTimeout(() => setSaveMsg(''), 1600);
+      return true;
     } catch (error) {
       setNotice(error instanceof Error ? error.message : 'Save failed.');
+      return false;
     } finally {
       setSaving(false);
     }
-  };
+  }, [content, params.id, rawContent, title]);
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -317,9 +343,7 @@ export default function PortfolioEditPage({
       setGeneratingStatus('queued');
       setNotice('AI regeneration queued.');
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : 'AI generation failed.',
-      );
+      setNotice(error instanceof Error ? error.message : 'AI generation failed.');
     } finally {
       setGenerating(false);
     }
@@ -337,15 +361,11 @@ export default function PortfolioEditPage({
       setHealthScore(typeof res.score === 'number' ? res.score : 0);
       setCritique(
         (res.checks ?? [])
-          .filter(
-            (check) => !check.passed && typeof check.suggestion === 'string',
-          )
+          .filter((check) => !check.passed && typeof check.suggestion === 'string')
           .map((check) => check.suggestion as string),
       );
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : 'Critique request failed.',
-      );
+      setNotice(error instanceof Error ? error.message : 'Critique request failed.');
     } finally {
       setCritiquing(false);
     }
@@ -358,9 +378,7 @@ export default function PortfolioEditPage({
       await loadVersions();
       setNotice('Version saved.');
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : 'Could not save version.',
-      );
+      setNotice(error instanceof Error ? error.message : 'Could not save version.');
     }
   };
 
@@ -369,20 +387,25 @@ export default function PortfolioEditPage({
       await assetsApi.restoreVersion(params.id, versionId);
       await loadAsset();
       await loadVersions();
-      setShowVersions(false);
       setNotice('Version restored.');
     } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : 'Could not restore version.',
-      );
+      setNotice(error instanceof Error ? error.message : 'Could not restore version.');
     }
   };
 
-  const updateListItem = (
-    key: 'experience' | 'projects' | 'skills' | 'certifications',
-    index: number,
-    value: string,
-  ) => {
+  const handleProfileImageUpload = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      if (!dataUrl) return;
+      setContent((prev) => ({ ...prev, profileImageUrl: dataUrl }));
+      setNotice('Profile image added. Save to persist it.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not import profile image.');
+    }
+  };
+
+  const updateListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications', index: number, value: string) => {
     setContent((prev) => {
       const next = [...prev[key]];
       next[index] = value;
@@ -390,20 +413,24 @@ export default function PortfolioEditPage({
     });
   };
 
-  const addListItem = (
-    key: 'experience' | 'projects' | 'skills' | 'certifications',
-  ) => {
+  const addListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications') => {
     setContent((prev) => ({ ...prev, [key]: [...prev[key], ''] }));
   };
 
-  const removeListItem = (
-    key: 'experience' | 'projects' | 'skills' | 'certifications',
-    index: number,
-  ) => {
+  const removeListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications', index: number) => {
     setContent((prev) => ({
       ...prev,
       [key]: prev[key].filter((_, idx) => idx !== index),
     }));
+  };
+
+  const handleNext = async () => {
+    const shouldSave = step === 1 || step === 2 || step === 4;
+    if (shouldSave) {
+      const ok = await handleSave();
+      if (!ok) return;
+    }
+    setStep((prev) => (prev < 5 ? ((prev + 1) as Step) : prev));
   };
 
   const scoreClass = useMemo(() => {
@@ -412,22 +439,24 @@ export default function PortfolioEditPage({
     return 'text-rose-300';
   }, [healthScore]);
 
-  const listHint = useMemo(() => {
-    if (activeSection === 'projects') {
-      return 'Use format: Title | Description | URL';
-    }
-    if (activeSection === 'certifications') {
-      return 'Use format: Title | Issuer | Date';
-    }
-    return '';
-  }, [activeSection]);
+  const progressPercent = useMemo(() => ((step - 1) / (STEPS.length - 1)) * 100, [step]);
 
-  const renderListEditor = (
-    key: 'experience' | 'projects' | 'skills' | 'certifications',
-  ) => {
+  const projectsCount = content.projects.filter((item) => item.trim()).length;
+  const certificationsCount = content.certifications.filter((item) => item.trim()).length;
+  const skillsCount = content.skills.filter((item) => item.trim()).length;
+
+  const completionChecks = [
+    { label: 'Hero details added', ok: !!content.heroHeading.trim() && !!content.heroBody.trim() },
+    { label: 'At least one project', ok: projectsCount > 0 },
+    { label: 'At least three skills', ok: skillsCount >= 3 },
+    { label: 'Contact section added', ok: !!content.contact.trim() },
+  ];
+
+  const renderListEditor = (key: 'experience' | 'projects' | 'skills' | 'certifications', hint?: string) => {
     const items = content[key];
     return (
       <div className="space-y-2">
+        {hint ? <p className="text-xs text-slate-400">{hint}</p> : null}
         {items.length === 0 ? (
           <p className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-400">
             No items yet.
@@ -438,9 +467,7 @@ export default function PortfolioEditPage({
             <textarea
               rows={key === 'skills' ? 1 : 2}
               value={item}
-              onChange={(event) =>
-                updateListItem(key, index, event.target.value)
-              }
+              onChange={(event) => updateListItem(key, index, event.target.value)}
               className="min-w-0 flex-1 resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
             />
             <button
@@ -465,17 +492,17 @@ export default function PortfolioEditPage({
 
   return (
     <FeaturePage
-      title={title || 'Portfolio Editor'}
-      description="Edit AI output, run checks, and publish from one place."
+      title={title || 'Edit Portfolio'}
+      description="Guided editing flow with AI optimization and publishing tools."
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl space-y-5 overflow-x-hidden">
+      <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 overflow-x-hidden">
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
           <button
             type="button"
             onClick={() => router.push('/portfolios')}
             className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
           >
-            Back
+            Dashboard
           </button>
           <button
             type="button"
@@ -491,22 +518,33 @@ export default function PortfolioEditPage({
           >
             Preview & Publish
           </button>
-          <div className="ml-auto min-w-[220px] flex-1">
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              className="w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
-              placeholder="Portfolio title"
-            />
+          <div className="ml-auto inline-flex items-center gap-2 rounded-md border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-3 py-1.5 text-xs text-[#8CEBFF]">
+            <Clock className="h-3.5 w-3.5" />
+            <span>Step {step}/5</span>
           </div>
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={saving}
-            className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
-          >
-            {saving ? 'Saving...' : saveMsg || 'Save'}
-          </button>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+          <div className="mb-3 h-1.5 rounded-full bg-white/10">
+            <div className="h-1.5 rounded-full bg-[#1ECEFA] transition-all" style={{ width: `${progressPercent}%` }} />
+          </div>
+          <div className="grid gap-2 sm:grid-cols-5">
+            {STEPS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setStep(item.id)}
+                className={`rounded-lg border px-3 py-2 text-left ${
+                  step === item.id
+                    ? 'border-[#1ECEFA]/40 bg-[#1ECEFA]/10'
+                    : 'border-white/10 bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                <p className="text-xs font-semibold text-slate-100">{item.label}</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">{item.description}</p>
+              </button>
+            ))}
+          </div>
         </div>
 
         {notice ? (
@@ -515,220 +553,352 @@ export default function PortfolioEditPage({
           </div>
         ) : null}
 
-        {(generatingStatus === 'processing' ||
-          generatingStatus === 'queued') && (
+        {(generatingStatus === 'processing' || generatingStatus === 'queued') ? (
           <div className="rounded-lg border border-[#1ECEFA]/25 bg-[#1ECEFA]/10 px-3 py-2 text-xs text-[#8CEBFF]">
             AI is generating updates. This page refreshes automatically.
           </div>
-        )}
+        ) : null}
 
-        <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="min-w-0 space-y-4">
-            <div className="flex flex-wrap gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
-              {(Object.keys(SECTION_LABELS) as SectionKey[]).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveSection(key)}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
-                    activeSection === key
-                      ? 'bg-[#1ECEFA] text-black'
-                      : 'border border-white/10 text-slate-300 hover:bg-white/5'
-                  }`}
-                >
-                  {SECTION_LABELS[key]}
-                </button>
-              ))}
+        <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+          {step === 1 ? (
+            <div className="space-y-4">
+              <h2 className="text-base font-semibold text-slate-100">Quick Start</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block text-xs text-slate-400">
+                  Portfolio title
+                  <input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    className="mt-1 w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                  />
+                </label>
+                <label className="block text-xs text-slate-400">
+                  Template
+                  <select
+                    value={content.templateId}
+                    onChange={(event) =>
+                      setContent((prev) => ({
+                        ...prev,
+                        templateId: normalizePortfolioTemplateId(event.target.value),
+                      }))
+                    }
+                    className="mt-1 w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                  >
+                    {PORTFOLIO_TEMPLATE_OPTIONS.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="block text-xs text-slate-400">
+                Focus prompt (optional)
+                <input
+                  value={content.focusQuestion}
+                  onChange={(event) => setContent((prev) => ({ ...prev, focusQuestion: event.target.value }))}
+                  placeholder="Example: Frontend role in Lagos fintech"
+                  className="mt-1 w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                />
+              </label>
+              <label className="block text-xs text-slate-400">
+                Hero title
+                <input
+                  value={content.heroHeading}
+                  onChange={(event) => setContent((prev) => ({ ...prev, heroHeading: event.target.value }))}
+                  className="mt-1 w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                />
+              </label>
             </div>
+          ) : null}
 
-            <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-              <h2 className="text-sm font-semibold text-slate-100">
-                {SECTION_LABELS[activeSection]}
-              </h2>
-              {listHint ? (
-                <p className="mt-1 text-xs text-slate-400">{listHint}</p>
+          {step === 2 ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {(['profile', 'projects', 'certifications'] as ContentTab[]).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`rounded-md px-3 py-2 text-xs font-semibold capitalize ${
+                      activeTab === tab
+                        ? 'bg-[#1ECEFA] text-black'
+                        : 'border border-white/10 text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === 'profile' ? (
+                <div className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-[120px_minmax(0,1fr)]">
+                    <div className="h-[120px] w-[120px] overflow-hidden rounded-lg border border-white/10 bg-[#0E141D]">
+                      {content.profileImageUrl ? (
+                        <img src={content.profileImageUrl} alt="Profile preview" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center px-2 text-center text-[11px] text-slate-500">
+                          No profile image
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        value={content.profileImageUrl}
+                        onChange={(event) => setContent((prev) => ({ ...prev, profileImageUrl: event.target.value }))}
+                        placeholder="Profile image URL"
+                        className="w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                      />
+                      <label className="inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) => void handleProfileImageUpload(event.target.files?.[0] ?? null)}
+                        />
+                        Upload local image
+                      </label>
+                    </div>
+                  </div>
+
+                  <label className="block text-xs text-slate-400">
+                    Hero subtitle
+                    <textarea
+                      rows={4}
+                      value={content.heroBody}
+                      onChange={(event) => setContent((prev) => ({ ...prev, heroBody: event.target.value }))}
+                      className="mt-1 w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                    />
+                  </label>
+                  <label className="block text-xs text-slate-400">
+                    About
+                    <textarea
+                      rows={5}
+                      value={content.about}
+                      onChange={(event) => setContent((prev) => ({ ...prev, about: event.target.value }))}
+                      className="mt-1 w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                    />
+                  </label>
+                  <label className="block text-xs text-slate-400">
+                    Contact
+                    <textarea
+                      rows={3}
+                      value={content.contact}
+                      onChange={(event) => setContent((prev) => ({ ...prev, contact: event.target.value }))}
+                      className="mt-1 w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                    />
+                  </label>
+                  {renderListEditor('experience', 'Experience entries (Role | Company | Summary optional).')}
+                  {renderListEditor('skills', 'Add one skill per line.')}
+                </div>
               ) : null}
 
-              <div className="mt-3">
-                {activeSection === 'hero' && (
-                  <div className="space-y-3">
-                    <input
-                      value={content.heroHeading}
-                      onChange={(event) =>
-                        setContent((prev) => ({
-                          ...prev,
-                          heroHeading: event.target.value,
-                        }))
-                      }
-                      placeholder="Name or hero title"
-                      className="w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
-                    />
-                    <textarea
-                      rows={6}
-                      value={content.heroBody}
-                      onChange={(event) =>
-                        setContent((prev) => ({
-                          ...prev,
-                          heroBody: event.target.value,
-                        }))
-                      }
-                      placeholder="Hero subtitle or intro text"
-                      className="w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
-                    />
-                  </div>
-                )}
-
-                {activeSection === 'about' && (
-                  <textarea
-                    rows={10}
-                    value={content.about}
-                    onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        about: event.target.value,
-                      }))
-                    }
-                    placeholder="About text"
-                    className="w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
-                  />
-                )}
-
-                {activeSection === 'contact' && (
-                  <textarea
-                    rows={6}
-                    value={content.contact}
-                    onChange={(event) =>
-                      setContent((prev) => ({
-                        ...prev,
-                        contact: event.target.value,
-                      }))
-                    }
-                    placeholder="Email, socials, and contact text"
-                    className="w-full resize-y rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
-                  />
-                )}
-
-                {activeSection === 'experience' &&
-                  renderListEditor('experience')}
-                {activeSection === 'projects' && renderListEditor('projects')}
-                {activeSection === 'skills' && renderListEditor('skills')}
-                {activeSection === 'certifications' &&
-                  renderListEditor('certifications')}
-              </div>
+              {activeTab === 'projects' ? renderListEditor('projects', 'Format: Title | Description | URL') : null}
+              {activeTab === 'certifications' ? renderListEditor('certifications', 'Format: Title | Issuer | Date') : null}
             </div>
-          </section>
+          ) : null}
 
-          <aside className="min-w-0 space-y-4">
-            <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-              <p className={`text-3xl ${scoreClass}`}>{healthScore}</p>
-              <p className="text-xs text-slate-400">Health score</p>
-              <div className="mt-2 h-1.5 rounded-full bg-white/10">
-                <div
-                  className="h-1.5 rounded-full bg-[#1ECEFA]"
-                  style={{
-                    width: `${Math.max(0, Math.min(healthScore, 100))}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-              <h3 className="text-sm font-semibold text-slate-100">Actions</h3>
-              <div className="mt-3 space-y-2">
+          {step === 3 ? (
+            <div className="space-y-4">
+              <h2 className="text-base font-semibold text-slate-100">AI Optimization</h2>
+              <div className="grid gap-4 md:grid-cols-3">
                 <button
                   type="button"
                   onClick={() => void handleGenerate()}
                   disabled={generating}
-                  className="w-full rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[#1ECEFA] px-3 py-2 text-sm font-semibold text-black disabled:opacity-60"
                 >
-                  {generating ? 'Queued...' : 'Re-generate with AI'}
+                  <Bot className="h-4 w-4" />
+                  {generating ? 'Queued...' : 'Regenerate with AI'}
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleCritique()}
                   disabled={critiquing}
-                  className="w-full rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60"
                 >
-                  {critiquing ? 'Running...' : 'Run critique'}
+                  <Zap className="h-4 w-4" />
+                  {critiquing ? 'Running...' : 'Run Critique'}
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleSaveVersion()}
-                  className="w-full rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5"
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
                 >
-                  Save version
+                  <PlusCircle className="h-4 w-4" />
+                  Save Version
                 </button>
               </div>
-            </div>
 
-            {publishUrl ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                <p className="text-xs text-emerald-200">Published URL</p>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <p className={`text-3xl ${scoreClass}`}>{healthScore}</p>
+                <p className="text-xs text-slate-400">Health score</p>
+                <div className="mt-2 h-1.5 rounded-full bg-white/10">
+                  <div
+                    className="h-1.5 rounded-full bg-[#1ECEFA]"
+                    style={{ width: `${Math.max(0, Math.min(healthScore, 100))}%` }}
+                  />
+                </div>
+              </div>
+
+              {critique.length > 0 ? (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
+                  <h3 className="text-sm font-semibold text-amber-100">Suggested fixes</h3>
+                  <div className="mt-2 space-y-2">
+                    {critique.map((item) => (
+                      <p key={item} className="text-xs text-amber-100">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step === 4 ? (
+            <div className="space-y-4">
+              <h2 className="text-base font-semibold text-slate-100">Review & Finalize</h2>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-slate-400">Projects</p>
+                  <p className="text-xl font-semibold text-slate-100">{projectsCount}</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-slate-400">Skills</p>
+                  <p className="text-xl font-semibold text-slate-100">{skillsCount}</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <p className="text-xs text-slate-400">Certifications</p>
+                  <p className="text-xl font-semibold text-slate-100">{certificationsCount}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
+                {completionChecks.map((check) => (
+                  <div key={check.label} className="flex items-center gap-2 text-sm">
+                    <CheckCircle className={`h-4 w-4 ${check.ok ? 'text-emerald-300' : 'text-slate-500'}`} />
+                    <span className={check.ok ? 'text-slate-200' : 'text-slate-400'}>{check.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {versions.length > 0 ? (
+                <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <h3 className="text-sm font-semibold text-slate-100">Saved versions</h3>
+                  {versions.map((version) => (
+                    <div
+                      key={version.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-white/10 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-xs text-slate-200">{version.label}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {new Date(version.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void handleRestoreVersion(version.id)}
+                        className="rounded-md border border-white/10 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/5"
+                      >
+                        Restore
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step === 5 ? (
+            <div className="space-y-4">
+              <h2 className="text-base font-semibold text-slate-100">Publish & Share</h2>
+              <p className="text-sm text-slate-400">
+                Open the publish view to set subdomain, save SEO, and go live.
+              </p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => router.push(`/preview/${params.id}`)}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-[#1ECEFA] px-3 py-2 text-sm font-semibold text-black"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Open Publish View
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/analytics/${params.id}`)}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                  Open Analytics
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/portfolios')}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5"
+                >
+                  Dashboard
+                </button>
+              </div>
+              {publishUrl ? (
                 <a
                   href={publishUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-1 block break-all text-xs font-semibold text-emerald-100 hover:underline"
+                  className="inline-flex items-center gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-100 hover:underline"
                 >
+                  <Globe className="h-4 w-4" />
                   {publishUrl}
+                  <ArrowUpRight className="h-4 w-4" />
                 </a>
-              </div>
-            ) : null}
+              ) : (
+                <p className="text-xs text-slate-400">
+                  This portfolio is not live yet. Use the publish view to deploy.
+                </p>
+              )}
+            </div>
+          ) : null}
+        </div>
 
-            {critique.length > 0 ? (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
-                <h3 className="text-sm font-semibold text-amber-100">
-                  Suggested fixes
-                </h3>
-                <div className="mt-2 space-y-2">
-                  {critique.map((item) => (
-                    <p key={item} className="text-xs text-amber-100">
-                      {item}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {versions.length > 0 ? (
-              <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-                <button
-                  type="button"
-                  onClick={() => setShowVersions((value) => !value)}
-                  className="flex w-full items-center justify-between text-sm font-semibold text-slate-100"
-                >
-                  <span>Versions ({versions.length})</span>
-                  <span>{showVersions ? 'Hide' : 'Show'}</span>
-                </button>
-                {showVersions ? (
-                  <div className="mt-3 space-y-2">
-                    {versions.map((version) => (
-                      <div
-                        key={version.id}
-                        className="flex items-center justify-between gap-2 rounded-md border border-white/10 px-2 py-2"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate text-xs text-slate-200">
-                            {version.label}
-                          </p>
-                          <p className="text-[11px] text-slate-500">
-                            {new Date(version.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => void handleRestoreVersion(version.id)}
-                          className="rounded-md border border-white/10 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/5"
-                        >
-                          Restore
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </aside>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
+          <button
+            type="button"
+            disabled={step === 1}
+            onClick={() => setStep((prev) => (prev > 1 ? ((prev - 1) as Step) : prev))}
+            className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={saving}
+              className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60"
+            >
+              {saving ? 'Saving...' : saveMsg || 'Save'}
+            </button>
+            {step < 5 ? (
+              <button
+                type="button"
+                onClick={() => void handleNext()}
+                className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black"
+              >
+                {step === 4 ? 'Continue to Publish' : 'Next Step'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => router.push('/portfolios')}
+                className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black"
+              >
+                Finish
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </FeaturePage>

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import type { ReactNode } from 'react';
+import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import { fetchPublicProfile } from '@/lib/public-profile';
+import { normalizePortfolioTemplateId } from '@/lib/portfolio-templates';
 import { isReservedSubdomain } from '@/lib/subdomains';
 
 export const revalidate = 300;
@@ -8,7 +11,104 @@ export const revalidate = 300;
 const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'https://blox.app';
 
 interface SubdomainPageProps {
-  params: { subdomain: string };
+  params: { subdomain?: string } | Promise<{ subdomain?: string }>;
+}
+
+interface TemplateTheme {
+  wrapper: string;
+  hero: string;
+  section: string;
+  linkGrid: string;
+  projectsGrid: string;
+  certificationsGrid: string;
+  skillsWrap: string;
+  skillChip: string;
+  contactButton: string;
+  sectionOrder: Array<
+    | 'about'
+    | 'experience'
+    | 'projects'
+    | 'certifications'
+    | 'skills'
+    | 'links'
+    | 'contact'
+  >;
+}
+
+const TEMPLATE_THEMES: Record<string, TemplateTheme> = {
+  'portfolio-modern-001': {
+    wrapper: 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8',
+    hero: 'border-b border-slate-100 pb-6',
+    section: 'space-y-3 rounded-xl border border-slate-200 bg-white p-5',
+    linkGrid: 'grid gap-3 sm:grid-cols-2',
+    projectsGrid: 'grid gap-4 sm:grid-cols-2',
+    certificationsGrid: 'grid gap-3 sm:grid-cols-2',
+    skillsWrap: 'flex flex-wrap gap-2',
+    skillChip: 'rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700',
+    contactButton:
+      'inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700',
+    sectionOrder: ['about', 'experience', 'projects', 'certifications', 'skills', 'links', 'contact'],
+  },
+  'portfolio-freelance-conversion': {
+    wrapper: 'rounded-2xl border border-amber-200 bg-amber-50/30 p-6 shadow-sm sm:p-8',
+    hero: 'rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5',
+    section: 'space-y-3 rounded-xl border border-slate-200 bg-white p-5',
+    linkGrid: 'grid gap-2 sm:grid-cols-2',
+    projectsGrid: 'grid gap-4 sm:grid-cols-2',
+    certificationsGrid: 'grid gap-3 sm:grid-cols-2',
+    skillsWrap: 'flex flex-wrap gap-2',
+    skillChip: 'rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800',
+    contactButton:
+      'inline-flex items-center rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600',
+    sectionOrder: ['projects', 'about', 'skills', 'experience', 'certifications', 'links', 'contact'],
+  },
+  'portfolio-timeline-dev': {
+    wrapper: 'rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm sm:p-8',
+    hero: 'border-b border-indigo-100 pb-6',
+    section: 'space-y-3 rounded-xl border border-indigo-100 bg-white p-5',
+    linkGrid: 'grid gap-2 sm:grid-cols-2',
+    projectsGrid: 'grid gap-3 sm:grid-cols-2',
+    certificationsGrid: 'grid gap-3 sm:grid-cols-2',
+    skillsWrap: 'flex flex-wrap gap-2',
+    skillChip: 'rounded-full border border-indigo-200 px-3 py-1 text-xs font-medium text-indigo-700',
+    contactButton:
+      'inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100',
+    sectionOrder: ['experience', 'projects', 'about', 'skills', 'certifications', 'links', 'contact'],
+  },
+  'portfolio-minimal-clean': {
+    wrapper: 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8',
+    hero: 'pb-4',
+    section: 'space-y-3 py-1',
+    linkGrid: 'space-y-1',
+    projectsGrid: 'space-y-3',
+    certificationsGrid: 'space-y-2',
+    skillsWrap: 'flex flex-wrap gap-2',
+    skillChip: 'rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700',
+    contactButton:
+      'inline-flex items-center text-sm font-semibold text-slate-900 underline underline-offset-4',
+    sectionOrder: ['about', 'projects', 'experience', 'skills', 'certifications', 'contact', 'links'],
+  },
+  'portfolio-grid-showcase': {
+    wrapper: 'rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8',
+    hero: 'rounded-xl border border-slate-200 bg-slate-50 p-5',
+    section: 'space-y-3 rounded-xl border border-slate-200 bg-white p-5',
+    linkGrid: 'flex flex-wrap gap-2',
+    projectsGrid: 'grid gap-4 md:grid-cols-2 xl:grid-cols-3',
+    certificationsGrid: 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3',
+    skillsWrap: 'flex flex-wrap gap-2',
+    skillChip: 'rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700',
+    contactButton:
+      'inline-flex items-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700',
+    sectionOrder: ['projects', 'about', 'experience', 'certifications', 'skills', 'links', 'contact'],
+  },
+};
+
+function normalizeSubdomain(value: string | undefined): string {
+  return (value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 function absoluteUrl(url: string): string | null {
@@ -18,7 +118,15 @@ function absoluteUrl(url: string): string | null {
   return null;
 }
 
-/** Returns a guaranteed-absolute OG image URL, falling back to our /og generator. */
+function imageUrl(url: string | undefined): string | null {
+  const value = (url ?? '').trim();
+  if (!value) return null;
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:image/')) {
+    return value;
+  }
+  return null;
+}
+
 function resolveOgImage(
   ogImageUrl: string | undefined | null,
   title: string,
@@ -34,9 +142,167 @@ function resolveOgImage(
   return `${BASE_URL}/og?${params.toString()}`;
 }
 
+function sectionTitle(title: string) {
+  return <h2 className="text-xl font-semibold text-slate-900">{title}</h2>;
+}
+
+function contactLink(profile: PublicProfilePayload) {
+  return (
+    profile.sections.links.find(
+      (link) =>
+        link.kind === 'contact' ||
+        link.url.startsWith('mailto:') ||
+        link.url.startsWith('tel:'),
+    ) ?? profile.sections.links[0]
+  );
+}
+
+function renderTemplate(profile: PublicProfilePayload, subdomain: string) {
+  const templateId = normalizePortfolioTemplateId(profile.templateId);
+  const theme = TEMPLATE_THEMES[templateId] ?? TEMPLATE_THEMES['portfolio-modern-001'];
+  const avatar = imageUrl(profile.user.avatarUrl);
+  const primaryContact = contactLink(profile);
+
+  const sections: Record<TemplateTheme['sectionOrder'][number], ReactNode> = {
+    about: profile.sections.about ? (
+      <section className={theme.section}>
+        {sectionTitle('About')}
+        <p className="text-sm leading-7 text-slate-700">{profile.sections.about}</p>
+      </section>
+    ) : null,
+    experience: profile.sections.experience.length > 0 ? (
+      <section className={theme.section}>
+        {sectionTitle('Experience')}
+        <ul className={templateId === 'portfolio-timeline-dev' ? 'space-y-5 border-l-2 border-indigo-100 pl-4' : 'space-y-3'}>
+          {profile.sections.experience.map((item, index) => (
+            <li key={`${item.role}-${index}`} className={templateId === 'portfolio-timeline-dev' ? 'relative' : 'rounded-lg border border-slate-200 p-3'}>
+              {templateId === 'portfolio-timeline-dev' ? (
+                <span className="absolute -left-[1.42rem] top-2 h-2.5 w-2.5 rounded-full bg-indigo-400" />
+              ) : null}
+              <h3 className="text-sm font-semibold text-slate-900">{item.role}</h3>
+              {item.company ? <p className="text-xs text-slate-500">{item.company}</p> : null}
+              {item.summary ? <p className="mt-1 text-sm text-slate-700">{item.summary}</p> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+    projects: profile.sections.projects.length > 0 ? (
+      <section className={theme.section}>
+        {sectionTitle('Projects')}
+        <ul className={theme.projectsGrid}>
+          {profile.sections.projects.map((project, index) => (
+            <li key={`${project.title}-${index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              {project.imageUrl && templateId !== 'portfolio-minimal-clean' ? (
+                <img src={project.imageUrl} alt={`${project.title} preview`} className="h-36 w-full object-cover" loading="lazy" />
+              ) : null}
+              <div className="space-y-2 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{project.title}</h3>
+                {project.description ? <p className="text-sm text-slate-700">{project.description}</p> : null}
+                {project.url ? (
+                  <a href={project.url} className="inline-flex text-xs font-semibold text-blue-700 hover:underline" target="_blank" rel="noopener noreferrer">
+                    View project
+                  </a>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+    certifications: profile.sections.certifications.length > 0 ? (
+      <section className={theme.section}>
+        {sectionTitle('Certifications')}
+        <ul className={theme.certificationsGrid}>
+          {profile.sections.certifications.map((item, index) => (
+            <li key={`${item.title}-${index}`} className="rounded-lg border border-slate-200 p-3">
+              <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+              {item.issuer ? <p className="text-xs text-slate-500">{item.issuer}</p> : null}
+              {item.date ? <p className="text-xs text-slate-500">{item.date}</p> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+    skills: profile.sections.skills.length > 0 ? (
+      <section className={theme.section}>
+        {sectionTitle('Skills')}
+        <ul className={theme.skillsWrap}>
+          {profile.sections.skills.map((skill) => (
+            <li key={skill} className={theme.skillChip}>
+              {skill}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+    links: profile.sections.links.length > 0 ? (
+      <section className={theme.section}>
+        {sectionTitle('Links')}
+        <ul className={theme.linkGrid}>
+          {profile.sections.links.map((link) => (
+            <li key={link.url}>
+              <a
+                href={link.url}
+                className="block rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                target={link.url.startsWith('http') ? '_blank' : undefined}
+                rel={link.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null,
+    contact: profile.sections.contact ? (
+      <section className={theme.section}>
+        {sectionTitle('Contact')}
+        <p className="text-sm text-slate-700">{profile.sections.contact}</p>
+      </section>
+    ) : null,
+  };
+
+  return (
+    <article className={`mx-auto w-full max-w-6xl space-y-6 overflow-x-hidden ${theme.wrapper}`}>
+      <header className={theme.hero}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt={`${profile.user.fullName} profile image`}
+              className="h-16 w-16 rounded-full object-cover ring-2 ring-slate-100"
+              loading="lazy"
+            />
+          ) : null}
+          <div className="min-w-0 flex-1">
+            <p className="text-xs text-slate-500">{subdomain}.blox.app</p>
+            <h1 className="mt-1 text-3xl font-semibold text-slate-900 sm:text-4xl">
+              {profile.sections.hero.heading}
+            </h1>
+            <p className="mt-2 text-sm leading-7 text-slate-600">{profile.sections.hero.body}</p>
+          </div>
+          {primaryContact ? (
+            <a
+              href={primaryContact.url}
+              className={theme.contactButton}
+              target={primaryContact.url.startsWith('http') ? '_blank' : undefined}
+              rel={primaryContact.url.startsWith('http') ? 'noopener noreferrer' : undefined}
+            >
+              Contact
+            </a>
+          ) : null}
+        </div>
+      </header>
+      {theme.sectionOrder.map((key) => (sections[key] ? <div key={key}>{sections[key]}</div> : null))}
+    </article>
+  );
+}
+
 export async function generateMetadata({ params }: SubdomainPageProps): Promise<Metadata> {
-  const subdomain = params.subdomain.toLowerCase();
-  if (isReservedSubdomain(subdomain)) {
+  const resolvedParams = await params;
+  const subdomain = normalizeSubdomain(resolvedParams?.subdomain);
+  if (!subdomain || isReservedSubdomain(subdomain)) {
     return { robots: { index: false, follow: false } };
   }
 
@@ -73,7 +339,7 @@ export async function generateMetadata({ params }: SubdomainPageProps): Promise<
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: profile.seo.imageAltMap?.hero ?? `${profile.user.fullName} – portfolio cover`,
+          alt: profile.seo.imageAltMap?.hero ?? `${profile.user.fullName} - portfolio cover`,
         },
       ],
     },
@@ -87,8 +353,9 @@ export async function generateMetadata({ params }: SubdomainPageProps): Promise<
 }
 
 export default async function SubdomainProfilePage({ params }: SubdomainPageProps) {
-  const subdomain = params.subdomain.toLowerCase();
-  if (isReservedSubdomain(subdomain)) notFound();
+  const resolvedParams = await params;
+  const subdomain = normalizeSubdomain(resolvedParams?.subdomain);
+  if (!subdomain || isReservedSubdomain(subdomain)) notFound();
 
   const profile = await fetchPublicProfile(subdomain);
   if (!profile) notFound();
@@ -102,12 +369,7 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
   const sameAsLinks = profile.sections.links
     .map((link) => absoluteUrl(link.url))
     .filter((url): url is string => !!url && url.startsWith('http'));
-  const contactLink =
-    profile.sections.links.find(
-      (link) => link.kind === 'contact' || link.url.startsWith('mailto:') || link.url.startsWith('tel:'),
-    ) ?? profile.sections.links[0];
 
-  // Person + ProfilePage schema
   const profileJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
@@ -129,13 +391,12 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
     },
   };
 
-  // CreativeWork entries for every project
   const projectsJsonLd =
     profile.sections.projects.length > 0
       ? {
           '@context': 'https://schema.org',
           '@type': 'ItemList',
-          name: `${profile.user.fullName} – Projects`,
+          name: `${profile.user.fullName} - Projects`,
           url: canonical,
           itemListElement: profile.sections.projects.map((project, index) => ({
             '@type': 'ListItem',
@@ -156,208 +417,12 @@ export default async function SubdomainProfilePage({ params }: SubdomainPageProp
       : null;
 
   return (
-    <article className="mx-auto w-full max-w-4xl space-y-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }}
-      />
+    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-4 py-8 sm:px-6 lg:px-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profileJsonLd) }} />
       {projectsJsonLd ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(projectsJsonLd) }}
-        />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(projectsJsonLd) }} />
       ) : null}
-
-      <header className="space-y-3 border-b border-slate-100 pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-          {subdomain}.blox.app
-        </p>
-        <h1 className="text-4xl font-black text-slate-900">{profile.sections.hero.heading}</h1>
-        <p className="max-w-3xl text-base text-slate-600">{profile.sections.hero.body}</p>
-        {contactLink ? (
-          <div className="pt-2">
-            <a
-              href={contactLink.url}
-              className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-white transition hover:bg-slate-700"
-              target={contactLink.url.startsWith('http') ? '_blank' : undefined}
-              rel={contactLink.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-            >
-              Contact
-            </a>
-          </div>
-        ) : null}
-      </header>
-
-      {profile.sections.links.length > 0 ? (
-        <nav aria-label="Primary links">
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {profile.sections.links.map((link) => (
-              <li key={link.url}>
-                <a
-                  href={link.url}
-                  className="block rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
-                  target={link.url.startsWith('http') ? '_blank' : undefined}
-                  rel={link.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      ) : null}
-
-      <main className="space-y-8">
-        {profile.sections.about ? (
-          <section aria-labelledby="about-heading" className="space-y-2">
-            <h2 id="about-heading" className="text-xl font-bold text-slate-900">About</h2>
-            <p className="text-sm leading-7 text-slate-700">{profile.sections.about}</p>
-          </section>
-        ) : null}
-
-        {profile.sections.experience.length > 0 ? (
-          <section aria-labelledby="experience-heading" className="space-y-3">
-            <h2 id="experience-heading" className="text-xl font-bold text-slate-900">Experience</h2>
-            <ul className="space-y-3">
-              {profile.sections.experience.map((item, index) => (
-                <li key={`${item.role}-${index}`} className="rounded-lg border border-slate-200 p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">{item.role}</h3>
-                  {item.company ? <p className="text-xs text-slate-500">{item.company}</p> : null}
-                  {item.summary ? <p className="mt-2 text-sm text-slate-700">{item.summary}</p> : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {profile.sections.projects.length > 0 ? (
-          <section aria-labelledby="projects-heading" className="space-y-3">
-            <h2 id="projects-heading" className="text-xl font-bold text-slate-900">Projects</h2>
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {profile.sections.projects.map((project, index) => (
-                <li key={`${project.title}-${index}`} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                  {project.imageUrl ? (
-                    <img
-                      src={project.imageUrl}
-                      alt={`${project.title} preview`}
-                      className="h-36 w-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : null}
-                  <div className="space-y-2 p-4">
-                    <h3 className="text-sm font-semibold text-slate-900">{project.title}</h3>
-                    {Array.isArray(project.tags) && project.tags.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {project.tags.slice(0, 6).map((tag) => (
-                          <span
-                            key={`${project.title}-${tag}`}
-                            className="rounded-full border border-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    {project.description ? (
-                      <p className="mt-2 text-sm text-slate-700">{project.description}</p>
-                    ) : null}
-                    {project.caseStudy ? (
-                      <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-                          View Case Study
-                        </summary>
-                        <p className="mt-2 text-sm text-slate-700">{project.caseStudy}</p>
-                      </details>
-                    ) : null}
-                    {project.url ? (
-                      <p className="mt-2">
-                        <a
-                          href={project.url}
-                          className="text-xs font-semibold text-blue-700 hover:underline"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          View project
-                        </a>
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {profile.sections.certifications.length > 0 ? (
-          <section aria-labelledby="certifications-heading" className="space-y-3">
-            <h2 id="certifications-heading" className="text-xl font-bold text-slate-900">
-              Certifications &amp; Badges
-            </h2>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {profile.sections.certifications.map((item, index) => (
-                <li key={`${item.title}-${index}`} className="rounded-lg border border-slate-200 p-4">
-                  <div className="flex items-start gap-3">
-                    {item.imageUrl ? (
-                      <img
-                        src={item.imageUrl}
-                        alt={`${item.title} certificate`}
-                        className="h-14 w-14 rounded-md object-cover"
-                        loading="lazy"
-                      />
-                    ) : null}
-                    <div>
-                      <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
-                      {item.issuer ? <p className="text-xs text-slate-500">{item.issuer}</p> : null}
-                      {item.date ? <p className="text-xs text-slate-500">{item.date}</p> : null}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {profile.sections.skills.length > 0 ? (
-          <section aria-labelledby="skills-heading" className="space-y-3">
-            <h2 id="skills-heading" className="text-xl font-bold text-slate-900">Skills</h2>
-            <ul className="flex flex-wrap gap-2">
-              {profile.sections.skills.map((skill) => (
-                <li
-                  key={skill}
-                  className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-700"
-                >
-                  {skill}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </main>
-
-      {profile.sections.contact || profile.sections.links.length > 0 ? (
-        <footer className="border-t border-slate-100 pt-6">
-          <h2 className="text-base font-bold text-slate-900">Contact</h2>
-          {profile.sections.contact ? (
-            <p className="mt-2 text-sm text-slate-700">{profile.sections.contact}</p>
-          ) : null}
-          {profile.sections.links.length > 0 ? (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {profile.sections.links.map((link) => (
-                <li key={`contact-${link.url}`}>
-                  <a
-                    href={link.url}
-                    className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400"
-                    target={link.url.startsWith('http') ? '_blank' : undefined}
-                    rel={link.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </footer>
-      ) : null}
-    </article>
+      {renderTemplate(profile, subdomain)}
+    </div>
   );
 }

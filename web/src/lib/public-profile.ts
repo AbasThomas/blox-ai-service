@@ -8,7 +8,7 @@ function getApiBaseUrl(): string {
 }
 
 export const fetchPublicProfile = cache(async (subdomain: string): Promise<PublicProfilePayload | null> => {
-  const slug = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const slug = (subdomain ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
   if (!slug || isReservedSubdomain(slug)) return null;
 
   const response = await fetch(`${getApiBaseUrl()}/v1/public/${encodeURIComponent(slug)}`, {

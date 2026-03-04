@@ -8,7 +8,7 @@ export class PublicProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getBySubdomain(subdomain: string): Promise<PublicProfilePayload | null> {
-    const slug = subdomain.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    const slug = (subdomain ?? '').toLowerCase().replace(/[^a-z0-9-]/g, '-');
     if (!slug) return null;
 
     const target = await this.prisma.publishTarget.findFirst({

@@ -56,6 +56,7 @@ export interface PublicProfileSections {
 
 export interface PublicProfilePayload {
   subdomain: string;
+  templateId?: string;
   canonicalUrl: string;
   user: {
     fullName: string;

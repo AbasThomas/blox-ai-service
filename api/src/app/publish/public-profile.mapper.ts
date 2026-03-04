@@ -274,6 +274,7 @@ export function mapAssetToPublicProfile(input: {
   const { subdomain, asset } = input;
   const content = asRecord(asset.content);
   const seoConfig = asRecord(asset.seoConfig);
+  const templateId = asString(content.templateId) || 'portfolio-modern-001';
 
   const hero = asRecord(content.hero);
   const about = asRecord(content.about);
@@ -352,6 +353,7 @@ export function mapAssetToPublicProfile(input: {
 
   return {
     subdomain,
+    templateId,
     canonicalUrl: `https://${subdomain}.${getAppHost()}`,
     user: {
       fullName: asset.user.fullName,

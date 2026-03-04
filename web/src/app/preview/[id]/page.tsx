@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi, publishApi, scannerApi } from '@/lib/api';
+import {
+  DEFAULT_PORTFOLIO_TEMPLATE_ID,
+  PORTFOLIO_TEMPLATE_OPTIONS,
+  normalizePortfolioTemplateId,
+} from '@/lib/portfolio-templates';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -169,8 +174,10 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
   const [asset, setAsset] = useState<AssetPayload | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const [subdomain, setSubdomain] = useState('');
+  const [templateId, setTemplateId] = useState(DEFAULT_PORTFOLIO_TEMPLATE_ID);
   const [publishing, setPublishing] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const [publishMsg, setPublishMsg] = useState('');
   const [seoAudit, setSeoAudit] = useState<SeoAudit | null>(null);
   const [auditing, setAuditing] = useState(false);
@@ -201,6 +208,9 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
         asString(data.slug) || data.title || '',
       );
       if (seeded) setSubdomain(seeded);
+      setTemplateId(
+        normalizePortfolioTemplateId(asString(toRecord(data.content).templateId)),
+      );
       hydrateSeoForm(data.seoConfig);
     } catch (error) {
       setPublishMsg(
@@ -285,6 +295,36 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
       );
     } finally {
       setUnpublishing(false);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!asset) return;
+    setSavingTemplate(true);
+    setPublishMsg('');
+    try {
+      const nextTemplateId = normalizePortfolioTemplateId(templateId);
+      const nextContent = {
+        ...toRecord(asset.content),
+        templateId: nextTemplateId,
+      };
+      await assetsApi.update(params.id, { content: nextContent });
+      setTemplateId(nextTemplateId);
+      setAsset((previous) =>
+        previous
+          ? {
+              ...previous,
+              content: nextContent,
+            }
+          : previous,
+      );
+      setPublishMsg('Template saved. Publish to apply it on live page.');
+    } catch (error) {
+      setPublishMsg(
+        error instanceof Error ? error.message : 'Could not save template.',
+      );
+    } finally {
+      setSavingTemplate(false);
     }
   };
 
@@ -476,6 +516,43 @@ export default function PreviewPage({ params }: { params: { id: string } }) {
                 Publish settings
               </h2>
               <div className="mt-3 space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs text-slate-400">
+                    Template
+                  </label>
+                  <div className="space-y-2">
+                    <select
+                      value={templateId}
+                      onChange={(event) =>
+                        setTemplateId(
+                          normalizePortfolioTemplateId(event.target.value),
+                        )
+                      }
+                      className="w-full rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-xs text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                    >
+                      {PORTFOLIO_TEMPLATE_OPTIONS.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-slate-500">
+                      {
+                        PORTFOLIO_TEMPLATE_OPTIONS.find(
+                          (template) => template.id === templateId,
+                        )?.description
+                      }
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveTemplate()}
+                      disabled={savingTemplate}
+                      className="w-full rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60"
+                    >
+                      {savingTemplate ? 'Saving template...' : 'Save template'}
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label className="mb-1 block text-xs text-slate-400">
                     Subdomain

@@ -35,6 +35,7 @@ describe('mapAssetToPublicProfile', () => {
     });
 
     expect(payload.subdomain).toBe('alicia');
+    expect(payload.templateId).toBe('portfolio-modern-001');
     expect(payload.sections.hero.heading).toBe('Alicia Stone');
     expect(payload.sections.projects).toHaveLength(2);
     expect(payload.sections.skills).toEqual(['Figma', 'TypeScript']);
