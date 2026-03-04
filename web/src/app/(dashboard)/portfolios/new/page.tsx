@@ -12,7 +12,31 @@ import {
   publishApi,
 } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
-import { Check, Zap, Bot, ArrowUpRight, Plus } from '@/components/ui/icons';
+import {
+  Check,
+  Zap,
+  Bot,
+  ArrowUpRight,
+  Plus,
+  GraduationCap,
+  BriefcaseBusiness,
+  User,
+  Star,
+  Target,
+  Sparkles,
+  Search,
+  ExternalLink,
+  Github,
+  Linkedin,
+  Globe,
+  LayoutDashboard,
+  SidebarRight,
+  CheckCircle,
+  Clock,
+  PlusCircle,
+  Download,
+  X,
+} from '@/components/ui/icons';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type ImportMode = 'social' | 'manual' | 'hybrid';
@@ -88,34 +112,43 @@ const AUTH_ERROR_PATTERN =
   /(401|403|unauthorized|forbidden|expired token|jwt)/i;
 const PORTFOLIO_DRAFT_STORAGE_PREFIX = 'blox_portfolio_new_draft_5step';
 
-const PERSONA_OPTIONS: Array<{ value: Persona; label: string; desc: string }> =
-  [
-    {
-      value: Persona.FREELANCER,
-      label: 'Freelancer (Developer/Designer)',
-      desc: 'Conversion-first storytelling.',
-    },
-    {
-      value: Persona.JOB_SEEKER,
-      label: 'Job Seeker',
-      desc: 'ATS-friendly recruiter narrative.',
-    },
-    {
-      value: Persona.STUDENT,
-      label: 'Student',
-      desc: 'Potential, internships, and growth.',
-    },
-    {
-      value: Persona.PROFESSIONAL,
-      label: 'Professional',
-      desc: 'Clean and credible positioning.',
-    },
-    {
-      value: Persona.EXECUTIVE,
-      label: 'Executive',
-      desc: 'Strategic leadership outcomes.',
-    },
-  ];
+const PERSONA_OPTIONS: Array<{
+  value: Persona;
+  label: string;
+  desc: string;
+  icon: any;
+}> = [
+  {
+    value: Persona.FREELANCER,
+    label: 'Freelancer',
+    desc: 'Conversion-first storytelling.',
+    icon: Star,
+  },
+  {
+    value: Persona.JOB_SEEKER,
+    label: 'Job Seeker',
+    desc: 'ATS-friendly recruiter narrative.',
+    icon: Search,
+  },
+  {
+    value: Persona.STUDENT,
+    label: 'Student',
+    desc: 'Potential, internships, and growth.',
+    icon: GraduationCap,
+  },
+  {
+    value: Persona.PROFESSIONAL,
+    label: 'Professional',
+    desc: 'Clean and credible positioning.',
+    icon: BriefcaseBusiness,
+  },
+  {
+    value: Persona.EXECUTIVE,
+    label: 'Executive',
+    desc: 'Strategic leadership outcomes.',
+    icon: Target,
+  },
+];
 
 const PERSONA_AI_TIPS: Record<string, string> = {
   [Persona.FREELANCER]:
@@ -310,6 +343,8 @@ export default function PortfolioNewPage() {
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>(
     'desktop',
   );
+  const [showDraftRestoration, setShowDraftRestoration] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<any>(null);
 
   const manualSkillList = useMemo(
     () => toSkillList(manualSkills),
@@ -503,163 +538,106 @@ export default function PortfolioNewPage() {
     if (!isAuthenticated || !accessToken || draftHydrated) return;
     let cancelled = false;
 
-    const hydrateDraft = async () => {
+    const checkDrafts = async () => {
       try {
-        const latest = (await onboardingApi.getLatestImport()) as {
-          runId?: string;
-          status?: ImportStatus['status'];
-          progressPct?: number;
-          message?: string | null;
-          draftAssetId?: string | null;
-        } | null;
+        const latest = (await onboardingApi.getLatestImport()) as any;
         if (!cancelled && latest?.runId) {
-          const shouldRestore = window.confirm(
-            'Unfinished AI import found. Restore and continue?',
-          );
-          if (shouldRestore) {
-            setRunId(latest.runId);
-            setStatus({
-              runId: latest.runId,
-              status: (latest.status ?? 'queued') as ImportStatus['status'],
-              progressPct: latest.progressPct ?? 10,
-              message: latest.message ?? undefined,
-              draftAssetId: latest.draftAssetId ?? undefined,
-            });
-            setStep(latest.status === 'completed' ? 5 : 4);
-            if (
-              latest.status === 'awaiting_review' ||
-              latest.status === 'partial'
-            ) {
-              try {
-                const previewRes = (await onboardingApi.getImportPreview(
-                  latest.runId,
-                )) as { preview?: Record<string, unknown> };
-                const nextConflicts = (previewRes.preview?.conflicts ??
-                  []) as ImportConflict[];
-                setConflicts(Array.isArray(nextConflicts) ? nextConflicts : []);
-              } catch {
-                // ignore preview fetch issues during hydration
-              }
-            }
-            setDraftHydrated(true);
-            return;
-          }
+          setPendingDraft({ type: 'ai', data: latest });
+          setShowDraftRestoration(true);
+          return;
         }
       } catch {
-        // continue to local draft fallback
+        // continue to local draft
       }
 
       if (!cancelled && user.id && typeof window !== 'undefined') {
-        try {
-          const raw = localStorage.getItem(portfolioDraftKey(user.id));
-          if (raw) {
-            const parsed = JSON.parse(raw) as {
-              step?: Step;
-              setupMethod?: SetupMethod;
-              activeTab?: ImportTab;
-              persona?: Persona | `${Persona}`;
-              focusQuestion?: string;
-              profileMode?: ImportMode;
-              projectMode?: ImportMode;
-              certificationMode?: ImportMode;
-              certificationsEnabled?: boolean;
-              personalSiteUrl?: string;
-              locationHint?: string;
-              manualFullName?: string;
-              manualProfessionalTitle?: string;
-              manualBio?: string;
-              manualSkills?: string;
-              manualContactEmail?: string;
-              manualProjects?: Array<{
-                id?: string;
-                title?: string;
-                description?: string;
-                tools?: string;
-                caseStudy?: string;
-                link?: string;
-              }>;
-              manualCertifications?: Array<{
-                id?: string;
-                title?: string;
-                issuer?: string;
-                date?: string;
-                proofName?: string;
-              }>;
-            };
-            const shouldRestore = window.confirm(
-              'Saved local draft found. Restore it now?',
-            );
-            if (shouldRestore) {
-              if (parsed.step) setStep(parsed.step);
-              if (parsed.setupMethod) setSetupMethod(parsed.setupMethod);
-              if (parsed.activeTab) setActiveTab(parsed.activeTab);
-              if (parsed.persona) setPersona(parsed.persona);
-              if (parsed.focusQuestion) setFocusQuestion(parsed.focusQuestion);
-              if (parsed.profileMode) setProfileMode(parsed.profileMode);
-              if (parsed.projectMode) setProjectMode(parsed.projectMode);
-              if (parsed.certificationMode)
-                setCertificationMode(parsed.certificationMode);
-              if (typeof parsed.certificationsEnabled === 'boolean')
-                setCertificationsEnabled(parsed.certificationsEnabled);
-              if (parsed.personalSiteUrl)
-                setPersonalSiteUrl(parsed.personalSiteUrl);
-              if (parsed.locationHint) setLocationHint(parsed.locationHint);
-              if (parsed.manualFullName)
-                setManualFullName(parsed.manualFullName);
-              if (parsed.manualProfessionalTitle)
-                setManualProfessionalTitle(parsed.manualProfessionalTitle);
-              if (parsed.manualBio) setManualBio(parsed.manualBio);
-              if (parsed.manualSkills) setManualSkills(parsed.manualSkills);
-              if (parsed.manualContactEmail)
-                setManualContactEmail(parsed.manualContactEmail);
-              if (
-                Array.isArray(parsed.manualProjects) &&
-                parsed.manualProjects.length > 0
-              ) {
-                setManualProjects(
-                  parsed.manualProjects.map((item) => ({
-                    id: item.id || crypto.randomUUID(),
-                    title: item.title ?? '',
-                    description: item.description ?? '',
-                    tools: item.tools ?? '',
-                    caseStudy: item.caseStudy ?? '',
-                    link: item.link ?? '',
-                    imageUrl: '',
-                  })),
-                );
-              }
-              if (
-                Array.isArray(parsed.manualCertifications) &&
-                parsed.manualCertifications.length > 0
-              ) {
-                setManualCertifications(
-                  parsed.manualCertifications.map((item) => ({
-                    id: item.id || crypto.randomUUID(),
-                    title: item.title ?? '',
-                    issuer: item.issuer ?? '',
-                    date: item.date ?? '',
-                    imageUrl: '',
-                    proofUrl: '',
-                    proofName: item.proofName ?? '',
-                  })),
-                );
-              }
-              setStatusNote('Local draft restored.');
-            }
+        const raw = localStorage.getItem(portfolioDraftKey(user.id));
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            setPendingDraft({ type: 'local', data: parsed });
+            setShowDraftRestoration(true);
+          } catch {
+            // ignore malformed
           }
-        } catch {
-          // ignore malformed local draft
         }
       }
-
       setDraftHydrated(true);
     };
 
-    void hydrateDraft();
+    void checkDrafts();
     return () => {
       cancelled = true;
     };
   }, [accessToken, draftHydrated, isAuthenticated, user.id]);
+
+  const restoreDraft = useCallback(async () => {
+    if (!pendingDraft) return;
+    const { type, data } = pendingDraft;
+
+    if (type === 'ai') {
+      setRunId(data.runId);
+      setStatus({
+        runId: data.runId,
+        status: (data.status ?? 'queued') as ImportStatus['status'],
+        progressPct: data.progressPct ?? 10,
+        message: data.message ?? undefined,
+        draftAssetId: data.draftAssetId ?? undefined,
+      });
+      setStep(data.status === 'completed' ? 5 : 4);
+      if (data.status === 'awaiting_review' || data.status === 'partial') {
+        try {
+          const previewRes = (await onboardingApi.getImportPreview(
+            data.runId,
+          )) as any;
+          const nextConflicts = (previewRes.preview?.conflicts ??
+            []) as ImportConflict[];
+          setConflicts(Array.isArray(nextConflicts) ? nextConflicts : []);
+        } catch {
+          /* ignore */
+        }
+      }
+    } else {
+      if (data.step) setStep(data.step);
+      if (data.setupMethod) setSetupMethod(data.setupMethod);
+      if (data.activeTab) setActiveTab(data.activeTab);
+      if (data.persona) setPersona(data.persona);
+      if (data.focusQuestion) setFocusQuestion(data.focusQuestion);
+      if (data.profileMode) setProfileMode(data.profileMode);
+      if (data.projectMode) setProjectMode(data.projectMode);
+      if (data.certificationMode) setCertificationMode(data.certificationMode);
+      if (typeof data.certificationsEnabled === 'boolean')
+        setCertificationsEnabled(data.certificationsEnabled);
+      if (data.personalSiteUrl) setPersonalSiteUrl(data.personalSiteUrl);
+      if (data.locationHint) setLocationHint(data.locationHint);
+      if (data.manualFullName) setManualFullName(data.manualFullName);
+      if (data.manualProfessionalTitle)
+        setManualProfessionalTitle(data.manualProfessionalTitle);
+      if (data.manualBio) setManualBio(data.manualBio);
+      if (data.manualSkills) setManualSkills(data.manualSkills);
+      if (data.manualContactEmail)
+        setManualContactEmail(data.manualContactEmail);
+      if (Array.isArray(data.manualProjects)) {
+        setManualProjects(
+          data.manualProjects.map((item: any) => ({
+            ...DEFAULT_MANUAL_PROJECT(),
+            ...item,
+          })),
+        );
+      }
+      if (Array.isArray(data.manualCertifications)) {
+        setManualCertifications(
+          data.manualCertifications.map((item: any) => ({
+            ...DEFAULT_MANUAL_CERTIFICATION(),
+            ...item,
+          })),
+        );
+      }
+      setStatusNote('Local draft restored.');
+    }
+    setShowDraftRestoration(false);
+    setPendingDraft(null);
+  }, [pendingDraft]);
 
   useEffect(() => {
     if (!draftHydrated || !user.id || step > 3 || typeof window === 'undefined')
@@ -703,7 +681,7 @@ export default function PortfolioNewPage() {
         JSON.stringify(snapshot),
       );
     } catch {
-      // ignore storage issues
+      /* ignore */
     }
   }, [
     activeTab,
@@ -740,9 +718,9 @@ export default function PortfolioNewPage() {
         if (stopped) return;
         setStatus(next);
         if (next.status === 'awaiting_review' || next.status === 'partial') {
-          const previewRes = (await onboardingApi.getImportPreview(runId)) as {
-            preview?: Record<string, unknown>;
-          };
+          const previewRes = (await onboardingApi.getImportPreview(
+            runId,
+          )) as any;
           if (stopped) return;
           const nextConflicts = (previewRes.preview?.conflicts ??
             []) as ImportConflict[];
@@ -867,7 +845,7 @@ export default function PortfolioNewPage() {
       const res = (await onboardingApi.confirmImport(runId, {
         overrides,
         acceptAutoMerge: true,
-      })) as { draftAssetId?: string | null };
+      })) as any;
       setStatus((prev) =>
         prev
           ? {
@@ -929,76 +907,6 @@ export default function PortfolioNewPage() {
       ),
     );
   };
-
-  const persistDraftSnapshot = useCallback(
-    (withNote = false) => {
-      if (!user.id || typeof window === 'undefined') return;
-      const snapshot = {
-        step,
-        setupMethod,
-        activeTab,
-        persona,
-        focusQuestion,
-        profileMode,
-        projectMode,
-        certificationMode,
-        certificationsEnabled,
-        personalSiteUrl,
-        locationHint,
-        manualFullName,
-        manualProfessionalTitle,
-        manualBio,
-        manualSkills,
-        manualContactEmail,
-        manualProjects: manualProjects.map((item) => ({
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          tools: item.tools,
-          caseStudy: item.caseStudy,
-          link: item.link,
-        })),
-        manualCertifications: manualCertifications.map((item) => ({
-          id: item.id,
-          title: item.title,
-          issuer: item.issuer,
-          date: item.date,
-          proofName: item.proofName,
-        })),
-      };
-      try {
-        localStorage.setItem(
-          portfolioDraftKey(user.id),
-          JSON.stringify(snapshot),
-        );
-        if (withNote)
-          setStatusNote('Draft saved. You can resume from dashboard.');
-      } catch {
-        // ignore storage issues
-      }
-    },
-    [
-      activeTab,
-      certificationMode,
-      certificationsEnabled,
-      focusQuestion,
-      locationHint,
-      manualBio,
-      manualCertifications,
-      manualContactEmail,
-      manualFullName,
-      manualProfessionalTitle,
-      manualProjects,
-      manualSkills,
-      persona,
-      profileMode,
-      projectMode,
-      setupMethod,
-      step,
-      user.id,
-      personalSiteUrl,
-    ],
-  );
 
   const copyPublishedLink = async () => {
     if (
@@ -1079,45 +987,48 @@ export default function PortfolioNewPage() {
   };
 
   const renderProviderCards = (providers: Provider[]) => (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
       {providers.map((provider) => {
         const integration = integrations.find((item) => item.id === provider);
         const meta = PROVIDER_META[provider];
-        if (!integration)
-          return (
-            <div
-              key={provider}
-              className="rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-500"
-            >
-              {meta.label} unavailable
-            </div>
-          );
+        if (!integration) return null;
         return (
           <div
             key={provider}
-            className={`rounded-xl border p-3 ${integration.connected ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}
+            className={`group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 ${
+              integration.connected
+                ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-[0_0_15px_rgba(30,206,250,0.1)]'
+                : 'border-white/10 bg-white/5 hover:border-white/20'
+            }`}
           >
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <img
-                  src={meta.logoUrl}
-                  alt={`${meta.label} logo`}
-                  className="h-4 w-4"
-                />
-                <p className="text-xs font-semibold text-slate-800">
-                  {meta.label}
-                </p>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 p-2">
+                  <img
+                    src={meta.logoUrl}
+                    alt={meta.label}
+                    className="h-6 w-6 object-contain"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">{meta.label}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {integration.connected ? 'Connected' : 'Not Linked'}
+                  </p>
+                </div>
               </div>
-              <span className="text-[10px] text-slate-500">
-                {integration.connected ? 'Connected' : 'Not Connected'}
-              </span>
+              {integration.connected && (
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1ECEFA]/20 text-[#1ECEFA]">
+                  <Check size={12} strokeWidth={3} />
+                </div>
+              )}
             </div>
             {integration.connected ? (
               <button
                 type="button"
                 onClick={() => void disconnectProvider(provider)}
                 disabled={disconnectingProvider === provider}
-                className="w-full rounded-md border border-rose-200 bg-rose-50 py-1 text-xs font-semibold text-rose-700"
+                className="w-full rounded-lg border border-rose-500/30 bg-rose-500/10 py-2 text-xs font-bold text-rose-400 transition-colors hover:bg-rose-500/20"
               >
                 Disconnect
               </button>
@@ -1126,9 +1037,9 @@ export default function PortfolioNewPage() {
                 type="button"
                 onClick={() => void connectProvider(provider)}
                 disabled={connectingProvider === provider}
-                className="w-full rounded-md bg-indigo-600 py-1 text-xs font-semibold text-white"
+                className="w-full rounded-lg bg-[#1ECEFA] py-2 text-xs font-bold text-black transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                Connect
+                Connect {meta.label}
               </button>
             )}
           </div>
@@ -1152,8 +1063,7 @@ export default function PortfolioNewPage() {
         (normalizedManualProjects.length > 0 ? 8 : 0),
     ),
   );
-  const personaTip =
-    PERSONA_AI_TIPS[String(persona)] ?? PERSONA_AI_TIPS.default;
+
   const aiSuggestions = [
     `Refine your bio for ${String(persona).toLowerCase()} positioning`,
     focusQuestion
@@ -1169,1185 +1079,1311 @@ export default function PortfolioNewPage() {
     <AuthGuard>
       <FeaturePage
         title="Create New Portfolio"
-        description="Refined 5-step flow with hybrid social + manual import."
+        description="Streamlined 5-step flow with hybrid social + manual import."
+        headerIcon={<Sparkles size={24} />}
       >
-        <div className="mx-auto max-w-7xl space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="mb-2 h-2 rounded-full bg-slate-100">
-              <div
-                className="h-full rounded-full bg-indigo-600"
-                style={{ width: `${(step / 5) * 100}%` }}
-              />
-            </div>
-            <div className="grid gap-2 sm:grid-cols-5">
-              {[1, 2, 3, 4, 5].map((id) => (
-                <div
-                  key={id}
-                  className={`rounded-lg border px-2 py-1 text-xs font-semibold ${step === id ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-200 bg-white text-slate-600'}`}
-                >
-                  Step {id}/5
+        <div className="mx-auto w-full max-w-7xl min-w-0 space-y-6 overflow-x-hidden px-3 pb-20 sm:px-4 lg:px-0">
+          {/* Progress Bar Header */}
+          <div className="sticky top-0 z-30 rounded-2xl border border-white/10 bg-[#0C0F13]/80 p-4 backdrop-blur-md shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 text-[#1ECEFA]">
+                  <span className="text-sm font-black">{step}</span>
                 </div>
-              ))}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={step === 1}
-                  onClick={() =>
-                    setStep((prev) => Math.max(1, prev - 1) as Step)
-                  }
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  disabled={step === 5}
-                  onClick={() =>
-                    setStep((prev) => Math.min(5, prev + 1) as Step)
-                  }
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                >
-                  Forward
-                </button>
+                <div>
+                  <h3 className="font-display text-sm font-bold text-white">
+                    Step {step} of 5
+                  </h3>
+                  <p className="text-[10px] text-slate-400 uppercase font-bold">
+                    {step === 1 && 'Persona Selection'}
+                    {step === 2 && 'Import Hub'}
+                    {step === 3 && 'AI Optimization'}
+                    {step === 4 && 'Review & Finalize'}
+                    {step === 5 && 'Publish & Share'}
+                  </p>
+                </div>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => persistDraftSnapshot(true)}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold"
-                >
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    persistDraftSnapshot(false);
-                    router.push('/portfolios');
-                  }}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold"
+                  onClick={() => router.push('/portfolios')}
+                  className="rounded-lg border border-white/10 px-4 py-2 text-xs font-bold text-slate-400 hover:bg-white/5"
                 >
                   Save & Exit
                 </button>
               </div>
             </div>
+            <div className="h-1.5 w-full rounded-full bg-white/5">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#1ECEFA] to-[#0A4F78] transition-all duration-700 shadow-[0_0_10px_rgba(30,206,250,0.5)]"
+                style={{ width: `${(step / 5) * 100}%` }}
+              />
+            </div>
           </div>
 
-          {step === 1 && (
-            <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-slate-900">
-                Quick Start & Persona Selection
-              </h2>
-              <div className="grid gap-3 md:grid-cols-2">
+          {showDraftRestoration && pendingDraft && (
+            <div className="relative overflow-hidden rounded-2xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 p-6 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1ECEFA]/20 text-[#1ECEFA]">
+                  <Clock size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-lg font-bold text-white">
+                    Continue where you left off?
+                  </h4>
+                  <p className="text-sm text-slate-300">
+                    We found an unfinished{' '}
+                    {pendingDraft.type === 'ai' ? 'AI import' : 'local draft'}.
+                    Restore it to save time!
+                  </p>
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => void restoreDraft()}
+                      className="rounded-lg bg-[#1ECEFA] px-4 py-2 text-xs font-black text-black"
+                    >
+                      Restore Draft
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDraftRestoration(false);
+                        setPendingDraft(null);
+                      }}
+                      className="rounded-lg border border-white/10 px-4 py-2 text-xs font-bold text-slate-400"
+                    >
+                      Start Fresh
+                    </button>
+                  </div>
+                </div>
                 <button
-                  type="button"
                   onClick={() => {
-                    setSetupMethod('social');
-                    setProfileMode('social');
-                    setProjectMode('hybrid');
-                    setCertificationMode('hybrid');
-                    setCertificationsEnabled(true);
+                    setShowDraftRestoration(false);
+                    setPendingDraft(null);
                   }}
-                  className={`rounded-xl border p-4 text-left ${setupMethod === 'social' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}
+                  className="text-slate-500 hover:text-white"
                 >
-                  <p className="text-sm font-semibold text-slate-900">
-                    Social Import
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Fast auto-fill from linked accounts, then add manual items
-                    in hybrid mode.
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSetupMethod('manual');
-                    setProfileMode('manual');
-                    setProjectMode('manual');
-                    setCertificationMode('manual');
-                  }}
-                  className={`rounded-xl border p-4 text-left ${setupMethod === 'manual' ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}
-                >
-                  <p className="text-sm font-semibold text-slate-900">
-                    Manual Setup
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Fill sections yourself and optionally enrich with local
-                    files.
-                  </p>
-                </button>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                {PERSONA_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setPersona(option.value)}
-                    className={`rounded-xl border p-3 text-left ${persona === option.value ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}
-                  >
-                    <p className="text-sm font-semibold text-slate-900">
-                      {option.label}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-600">{option.desc}</p>
-                  </button>
-                ))}
-              </div>
-              <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-700">
-                <p className="font-semibold">AI tip</p>
-                <p>{personaTip}</p>
-              </div>
-              <input
-                value={focusQuestion}
-                onChange={(e) => setFocusQuestion(e.target.value)}
-                placeholder="Optional focus question (e.g. Tech job hunt in Lagos)"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-              />
-              <div className="flex flex-wrap justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSetupMethod('manual');
-                    setProfileMode('manual');
-                    setProjectMode('manual');
-                    setCertificationMode('manual');
-                    setStep(2);
-                  }}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold"
-                >
-                  Skip to Manual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
-                >
-                  Continue <ArrowUpRight className="h-4 w-4" />
+                  <X size={20} />
                 </button>
               </div>
             </div>
           )}
 
-          {step === 2 && (
-            <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr]">
-              <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5">
-                <h2 className="text-xl font-semibold text-slate-900">
-                  Unified Import Hub
-                </h2>
-                <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                  {(
-                    ['profile', 'projects', 'certifications'] as ImportTab[]
-                  ).map((tab) => (
+          {step === 1 && (
+            <div className="grid gap-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl">
+                <div className="mb-8 text-center">
+                  <h2 className="font-display text-3xl font-black text-white">
+                    Who are you building for?
+                  </h2>
+                  <p className="mt-2 text-slate-400">
+                    Select a persona to optimize your portfolio structure and AI
+                    suggestions.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                  {PERSONA_OPTIONS.map((option) => (
                     <button
-                      key={tab}
+                      key={option.value}
                       type="button"
-                      onClick={() => setActiveTab(tab)}
-                      className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-slate-700'}`}
+                      onClick={() => setPersona(option.value)}
+                      className={`group relative flex flex-col items-center rounded-2xl border p-6 text-center transition-all duration-300 ${
+                        persona === option.value
+                          ? 'border-[#1ECEFA] bg-[#1ECEFA]/10 shadow-[0_0_20px_rgba(30,206,250,0.15)]'
+                          : 'border-white/5 bg-white/5 hover:border-white/20'
+                      }`}
                     >
-                      {tab}
+                      <div
+                        className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl transition-colors duration-300 ${
+                          persona === option.value
+                            ? 'bg-[#1ECEFA] text-black'
+                            : 'bg-white/5 text-slate-400 group-hover:bg-white/10 group-hover:text-white'
+                        }`}
+                      >
+                        <option.icon size={28} />
+                      </div>
+                      <h3 className="text-sm font-black text-white">
+                        {option.label}
+                      </h3>
+                      <p className="mt-1 text-[10px] text-slate-500 leading-tight">
+                        {option.desc}
+                      </p>
+                      {persona === option.value && (
+                        <div className="absolute -top-2 -right-2 rounded-full bg-[#1ECEFA] p-1 text-black shadow-lg">
+                          <Check size={12} strokeWidth={4} />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
 
-                {activeTab === 'profile' && (
-                  <div className="space-y-3">
-                    <div className="inline-flex rounded-lg border border-slate-200 p-1">
-                      {(['social', 'hybrid', 'manual'] as ImportMode[]).map(
-                        (mode) => (
-                          <button
-                            key={mode}
-                            type="button"
-                            onClick={() => setProfileMode(mode)}
-                            className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize ${profileMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-700'}`}
-                          >
-                            {mode}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                    {modeHasSocial(profileMode) &&
-                      (loadingIntegrations ? (
-                        <p className="text-sm text-slate-500">Loading...</p>
-                      ) : (
-                        renderProviderCards(PROFILE_PROVIDER_IDS)
-                      ))}
-                    {modeHasManual(profileMode) && (
-                      <div className="grid gap-2 md:grid-cols-2">
-                        <input
-                          value={manualFullName}
-                          onChange={(e) => setManualFullName(e.target.value)}
-                          placeholder="Full name"
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <input
-                          value={manualProfessionalTitle}
-                          onChange={(e) =>
-                            setManualProfessionalTitle(e.target.value)
-                          }
-                          placeholder="Professional title"
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <textarea
-                          value={manualBio}
-                          onChange={(e) => setManualBio(e.target.value)}
-                          placeholder="Bio"
-                          rows={3}
-                          className="md:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <textarea
-                          value={manualSkills}
-                          onChange={(e) => setManualSkills(e.target.value)}
-                          placeholder="Skills"
-                          rows={2}
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <input
-                          value={manualContactEmail}
-                          onChange={(e) =>
-                            setManualContactEmail(e.target.value)
-                          }
-                          placeholder="Email"
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <input
-                          value={personalSiteUrl}
-                          onChange={(e) => setPersonalSiteUrl(e.target.value)}
-                          placeholder="Personal site URL"
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <input
-                          value={locationHint}
-                          onChange={(e) => setLocationHint(e.target.value)}
-                          placeholder="Location hint"
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => void handleProfileImageUpload(e)}
-                          className="rounded-lg border border-slate-300 px-3 py-2 text-xs"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'projects' && (
-                  <div className="space-y-3">
-                    <div className="inline-flex rounded-lg border border-slate-200 p-1">
-                      {(['social', 'hybrid', 'manual'] as ImportMode[]).map(
-                        (mode) => (
-                          <button
-                            key={mode}
-                            type="button"
-                            onClick={() => setProjectMode(mode)}
-                            className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize ${projectMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-700'}`}
-                          >
-                            {mode}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                    {modeHasSocial(projectMode) &&
-                      (loadingIntegrations ? (
-                        <p className="text-sm text-slate-500">Loading...</p>
-                      ) : (
-                        renderProviderCards(PROJECT_PROVIDER_IDS)
-                      ))}
-                    {modeHasManual(projectMode) && (
-                      <div className="space-y-2">
-                        {manualProjects.map((project, idx) => (
-                          <div
-                            key={project.id}
-                            draggable
-                            onDragStart={() => setDraggingProjectId(project.id)}
-                            onDragOver={(event) => event.preventDefault()}
-                            onDrop={() =>
-                              setManualProjects((prev) =>
-                                reorderById(
-                                  prev,
-                                  draggingProjectId,
-                                  project.id,
-                                ),
-                              )
-                            }
-                            onDragEnd={() => setDraggingProjectId('')}
-                            className={`space-y-2 rounded-xl border p-3 ${draggingProjectId === project.id ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200'}`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs font-semibold text-slate-600">
-                                Project {idx + 1}
-                              </p>
-                              <div className="flex gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setManualProjects((prev) => {
-                                      if (idx === 0) return prev;
-                                      return reorderById(
-                                        prev,
-                                        project.id,
-                                        prev[idx - 1].id,
-                                      );
-                                    })
-                                  }
-                                  className="rounded border border-slate-300 px-2 py-0.5 text-[10px]"
-                                >
-                                  Up
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setManualProjects((prev) => {
-                                      if (idx === prev.length - 1) return prev;
-                                      return reorderById(
-                                        prev,
-                                        project.id,
-                                        prev[idx + 1].id,
-                                      );
-                                    })
-                                  }
-                                  className="rounded border border-slate-300 px-2 py-0.5 text-[10px]"
-                                >
-                                  Down
-                                </button>
-                              </div>
-                            </div>
-                            <input
-                              value={project.title}
-                              onChange={(e) =>
-                                setManualProjects((prev) =>
-                                  prev.map((it) =>
-                                    it.id === project.id
-                                      ? { ...it, title: e.target.value }
-                                      : it,
-                                  ),
-                                )
-                              }
-                              placeholder="Title"
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            />
-                            <textarea
-                              value={project.description}
-                              onChange={(e) =>
-                                setManualProjects((prev) =>
-                                  prev.map((it) =>
-                                    it.id === project.id
-                                      ? { ...it, description: e.target.value }
-                                      : it,
-                                  ),
-                                )
-                              }
-                              placeholder="Description"
-                              rows={2}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            />
-                            <input
-                              value={project.tools}
-                              onChange={(e) =>
-                                setManualProjects((prev) =>
-                                  prev.map((it) =>
-                                    it.id === project.id
-                                      ? { ...it, tools: e.target.value }
-                                      : it,
-                                  ),
-                                )
-                              }
-                              placeholder="Tools / stack (comma separated)"
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            />
-                            <textarea
-                              value={project.caseStudy}
-                              onChange={(e) =>
-                                setManualProjects((prev) =>
-                                  prev.map((it) =>
-                                    it.id === project.id
-                                      ? { ...it, caseStudy: e.target.value }
-                                      : it,
-                                  ),
-                                )
-                              }
-                              placeholder="Case study summary (optional)"
-                              rows={2}
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            />
-                            <input
-                              value={project.link}
-                              onChange={(e) =>
-                                setManualProjects((prev) =>
-                                  prev.map((it) =>
-                                    it.id === project.id
-                                      ? { ...it, link: e.target.value }
-                                      : it,
-                                  ),
-                                )
-                              }
-                              placeholder="Link"
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            />
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) =>
-                                void handleProjectFileUpload(project.id, e)
-                              }
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs"
-                            />
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setManualProjects((prev) => [
-                              ...prev,
-                              DEFAULT_MANUAL_PROJECT(),
-                            ])
-                          }
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
-                        >
-                          <Plus className="h-3.5 w-3.5" />+ Add Custom
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'certifications' && (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-slate-700">
-                        Certifications are optional
-                      </p>
+                <div className="mt-10 ">
+                  <div className="flex flex-col  gap-3">
+                    <div className=" flex  justify-between">
                       <button
-                        type="button"
-                        onClick={() =>
-                          setCertificationsEnabled((prev) => !prev)
-                        }
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
+                        onClick={() => {
+                          setSetupMethod('manual');
+                          setStep(2);
+                        }}
+                        className="rounded-xl border border-white/10 bg-white/5 py-4 px-8 text-sm font-bold text-white hover:bg-white/10"
                       >
-                        {certificationsEnabled
-                          ? 'Skip Section'
-                          : 'Enable Section'}
+                        Skip to Manual
+                      </button>
+                      <button
+                        onClick={() => setStep(2)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] py-4 px-8 text-sm font-semibold text-black shadow-[0_0_20px_rgba(30,206,250,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                      >
+                        Continue
                       </button>
                     </div>
-                    {certificationsEnabled && (
-                      <>
-                        <div className="inline-flex rounded-lg border border-slate-200 p-1">
-                          {(['social', 'hybrid', 'manual'] as ImportMode[]).map(
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_320px] animate-in fade-in slide-in-from-right-8 duration-500">
+              <div className="min-w-0 space-y-6">
+                <div className="rounded-3xl border border-white/10  p-6 shadow-2xl">
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                    <h2 className="font-display text-2xl font-black text-white">
+                      Unified Import Hub
+                    </h2>
+                    <div className="flex rounded-xl bg-black/40 p-1">
+                      {(
+                        ['profile', 'projects', 'certifications'] as ImportTab[]
+                      ).map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`rounded-lg px-4 py-2 text-xs font-bold uppercase transition-all ${
+                            activeTab === tab
+                              ? 'bg-[#1ECEFA] text-black shadow-lg'
+                              : 'text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {tab}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {activeTab === 'profile' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                      <div className="flex items-center gap-4">
+                        <div className="flex rounded-lg bg-white/5 p-1 border border-white/10">
+                          {(['social', 'manual', 'hybrid'] as ImportMode[]).map(
                             (mode) => (
                               <button
                                 key={mode}
-                                type="button"
-                                onClick={() => setCertificationMode(mode)}
-                                className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize ${certificationMode === mode ? 'bg-indigo-600 text-white' : 'text-slate-700'}`}
+                                onClick={() => setProfileMode(mode)}
+                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                  profileMode === mode
+                                    ? 'bg-[#1ECEFA] text-black'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
                               >
                                 {mode}
                               </button>
                             ),
                           )}
                         </div>
-                        {modeHasSocial(certificationMode) &&
-                          (loadingIntegrations ? (
-                            <p className="text-sm text-slate-500">Loading...</p>
-                          ) : (
-                            renderProviderCards(CERT_PROVIDER_IDS)
-                          ))}
-                        {modeHasManual(certificationMode) && (
-                          <div className="space-y-2">
-                            {manualCertifications.map((cert, idx) => (
-                              <div
-                                key={cert.id}
-                                draggable
-                                onDragStart={() =>
-                                  setDraggingCertificationId(cert.id)
-                                }
-                                onDragOver={(event) => event.preventDefault()}
-                                onDrop={() =>
-                                  setManualCertifications((prev) =>
-                                    reorderById(
-                                      prev,
-                                      draggingCertificationId,
-                                      cert.id,
-                                    ),
-                                  )
-                                }
-                                onDragEnd={() => setDraggingCertificationId('')}
-                                className={`space-y-2 rounded-xl border p-3 ${draggingCertificationId === cert.id ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200'}`}
+                        <p className="text-[10px] text-slate-500 font-bold ">
+                          Profile Sources
+                        </p>
+                      </div>
+
+                      {modeHasSocial(profileMode) && (
+                        <div className="grid gap-4">
+                          {renderProviderCards(PROFILE_PROVIDER_IDS)}
+                        </div>
+                      )}
+
+                      {modeHasManual(profileMode) && (
+                        <div className="grid gap-4 md:grid-cols-2 rounded-2xl border border-white/5 bg-black/20 p-6">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black  text-slate-500 ml-1">
+                              Full Name
+                            </label>
+                            <input
+                              value={manualFullName}
+                              onChange={(e) =>
+                                setManualFullName(e.target.value)
+                              }
+                              placeholder="Taro Sakamoto"
+                              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black  text-slate-500 ml-1">
+                              Job Title
+                            </label>
+                            <input
+                              value={manualProfessionalTitle}
+                              onChange={(e) =>
+                                setManualProfessionalTitle(e.target.value)
+                              }
+                              placeholder="Senior Designer"
+                              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                            />
+                          </div>
+                          <div className="space-y-1 md:col-span-2">
+                            <label className="text-[10px] font-black  text-slate-500 ml-1">
+                              Professional Bio
+                            </label>
+                            <textarea
+                              value={manualBio}
+                              onChange={(e) => setManualBio(e.target.value)}
+                              placeholder="Tell your story..."
+                              rows={4}
+                              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none resize-none"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black text-slate-500 ml-1">
+                              Skills (comma separated)
+                            </label>
+                            <input
+                              value={manualSkills}
+                              onChange={(e) => setManualSkills(e.target.value)}
+                              placeholder="React, Figma, UX Research..."
+                              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black  text-slate-500 ml-1">
+                              Contact Email
+                            </label>
+                            <input
+                              value={manualContactEmail}
+                              onChange={(e) =>
+                                setManualContactEmail(e.target.value)
+                              }
+                              placeholder="sakamoto@example.com"
+                              className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'projects' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                      <div className="flex items-center gap-4">
+                        <div className="flex rounded-lg bg-white/5 p-1 border border-white/10">
+                          {(['social', 'manual', 'hybrid'] as ImportMode[]).map(
+                            (mode) => (
+                              <button
+                                key={mode}
+                                onClick={() => setProjectMode(mode)}
+                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                  projectMode === mode
+                                    ? 'bg-[#1ECEFA] text-black'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                }`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <p className="text-xs font-semibold text-slate-600">
-                                    Certification {idx + 1}
-                                  </p>
-                                  <div className="flex gap-1">
+                                {mode}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-bold ">
+                          Project Sources
+                        </p>
+                      </div>
+
+                      {modeHasSocial(projectMode) && (
+                        <div className="grid gap-4 ">
+                          {renderProviderCards(PROJECT_PROVIDER_IDS)}
+                        </div>
+                      )}
+
+                      {modeHasManual(projectMode) && (
+                        <div className="space-y-4">
+                          {manualProjects.map((project, idx) => (
+                            <div
+                              key={project.id}
+                              className="group relative rounded-2xl border border-white/5 bg-black/20 p-6 transition-all hover:border-white/10"
+                            >
+                              <div className="mb-4 flex items-center justify-between">
+                                <h4 className="text-xs font-black  text-slate-400">
+                                  Project #{idx + 1}
+                                </h4>
+                                <button
+                                  onClick={() =>
+                                    setManualProjects((prev) =>
+                                      prev.filter((p) => p.id !== project.id),
+                                    )
+                                  }
+                                  className="text-slate-600 hover:text-rose-400"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <input
+                                  value={project.title}
+                                  onChange={(e) =>
+                                    setManualProjects((prev) =>
+                                      prev.map((p) =>
+                                        p.id === project.id
+                                          ? { ...p, title: e.target.value }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="Project Title"
+                                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                                />
+                                <input
+                                  value={project.tools}
+                                  onChange={(e) =>
+                                    setManualProjects((prev) =>
+                                      prev.map((p) =>
+                                        p.id === project.id
+                                          ? { ...p, tools: e.target.value }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="Tools (e.g. Next.js, Figma)"
+                                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                                />
+                                <textarea
+                                  value={project.description}
+                                  onChange={(e) =>
+                                    setManualProjects((prev) =>
+                                      prev.map((p) =>
+                                        p.id === project.id
+                                          ? {
+                                              ...p,
+                                              description: e.target.value,
+                                            }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="Short description of your impact..."
+                                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none md:col-span-2 resize-none"
+                                  rows={2}
+                                />
+                                <input
+                                  value={project.link}
+                                  onChange={(e) =>
+                                    setManualProjects((prev) =>
+                                      prev.map((p) =>
+                                        p.id === project.id
+                                          ? { ...p, link: e.target.value }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  placeholder="Live Link or Repo URL"
+                                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                                />
+                                <div className="relative">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) =>
+                                      void handleProjectFileUpload(
+                                        project.id,
+                                        e,
+                                      )
+                                    }
+                                    className="hidden"
+                                    id={`file-${project.id}`}
+                                  />
+                                  <label
+                                    htmlFor={`file-${project.id}`}
+                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 py-2.5 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white"
+                                  >
+                                    <Plus size={14} />{' '}
+                                    {project.imageUrl
+                                      ? 'Change Snapshot'
+                                      : 'Upload Snapshot'}
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            onClick={() =>
+                              setManualProjects((prev) => [
+                                ...prev,
+                                DEFAULT_MANUAL_PROJECT(),
+                              ])
+                            }
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 bg-white/5 py-4 text-sm font-bold text-slate-500 transition-all hover:bg-white/10 hover:text-[#1ECEFA]"
+                          >
+                            <PlusCircle size={18} /> Add Custom Project
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'certifications' && (
+                    <div className="space-y-6 animate-in fade-in duration-300">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="flex rounded-lg bg-white/5 p-1 border border-white/10">
+                            {(
+                              ['social', 'manual', 'hybrid'] as ImportMode[]
+                            ).map((mode) => (
+                              <button
+                                key={mode}
+                                onClick={() => setCertificationMode(mode)}
+                                disabled={!certificationsEnabled}
+                                className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase transition-all ${
+                                  certificationMode === mode
+                                    ? 'bg-[#1ECEFA] text-black'
+                                    : 'text-slate-500 hover:text-slate-300'
+                                } disabled:opacity-30`}
+                              >
+                                {mode}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase">
+                            Certification Sources
+                          </p>
+                        </div>
+                        <button
+                          onClick={() =>
+                            setCertificationsEnabled(!certificationsEnabled)
+                          }
+                          className={`text-[11px] font-bold px-4 py-2 transition-colors ${
+                            certificationsEnabled 
+                              ? 'text-rose-400'
+                              : 'text-[#1ECEFA]'
+                          }`}
+                        >
+                          {certificationsEnabled
+                            ? 'Disable Section'
+                            : 'Enable Section'}
+                        </button>
+                      </div>
+
+                      {certificationsEnabled && (
+                        <>
+                          {modeHasSocial(certificationMode) && (
+                            <div className="grid gap-4 ">
+                              {renderProviderCards(CERT_PROVIDER_IDS)}
+                            </div>
+                          )}
+
+                          {modeHasManual(certificationMode) && (
+                            <div className="space-y-4">
+                              {manualCertifications.map((cert, idx) => (
+                                <div
+                                  key={cert.id}
+                                  className="group relative rounded-2xl border border-white/5 bg-black/20 p-6 transition-all hover:border-white/10"
+                                >
+                                  <div className="mb-4 flex items-center justify-between">
+                                    <h4 className="text-xs font-black  text-slate-400">
+                                      Certification #{idx + 1}
+                                    </h4>
                                     <button
-                                      type="button"
                                       onClick={() =>
-                                        setManualCertifications((prev) => {
-                                          if (idx === 0) return prev;
-                                          return reorderById(
-                                            prev,
-                                            cert.id,
-                                            prev[idx - 1].id,
-                                          );
-                                        })
+                                        setManualCertifications((prev) =>
+                                          prev.filter((p) => p.id !== cert.id),
+                                        )
                                       }
-                                      className="rounded border border-slate-300 px-2 py-0.5 text-[10px]"
+                                      className="text-slate-600 hover:text-rose-400"
                                     >
-                                      Up
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        setManualCertifications((prev) => {
-                                          if (idx === prev.length - 1)
-                                            return prev;
-                                          return reorderById(
-                                            prev,
-                                            cert.id,
-                                            prev[idx + 1].id,
-                                          );
-                                        })
-                                      }
-                                      className="rounded border border-slate-300 px-2 py-0.5 text-[10px]"
-                                    >
-                                      Down
+                                      <X size={16} />
                                     </button>
                                   </div>
-                                </div>
-                                <input
-                                  value={cert.title}
-                                  onChange={(e) =>
-                                    setManualCertifications((prev) =>
-                                      prev.map((it) =>
-                                        it.id === cert.id
-                                          ? { ...it, title: e.target.value }
-                                          : it,
-                                      ),
-                                    )
-                                  }
-                                  placeholder="Title"
-                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                />
-                                <input
-                                  value={cert.issuer}
-                                  onChange={(e) =>
-                                    setManualCertifications((prev) =>
-                                      prev.map((it) =>
-                                        it.id === cert.id
-                                          ? { ...it, issuer: e.target.value }
-                                          : it,
-                                      ),
-                                    )
-                                  }
-                                  placeholder="Issuer"
-                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                />
-                                <input
-                                  value={cert.date}
-                                  onChange={(e) =>
-                                    setManualCertifications((prev) =>
-                                      prev.map((it) =>
-                                        it.id === cert.id
-                                          ? { ...it, date: e.target.value }
-                                          : it,
-                                      ),
-                                    )
-                                  }
-                                  placeholder="Date"
-                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                />
-                                <input
-                                  type="file"
-                                  accept="image/*,application/pdf"
-                                  onChange={(e) =>
-                                    void handleCertificationProofUpload(
-                                      cert.id,
-                                      e,
-                                    )
-                                  }
-                                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs"
-                                />
-                                {cert.proofName && (
-                                  <p className="text-xs text-slate-500">
-                                    Proof attached: {cert.proofName}
-                                  </p>
-                                )}
-                                {cert.imageUrl && (
-                                  <img
-                                    src={cert.imageUrl}
-                                    alt={`${cert.title || 'Certification'} preview`}
-                                    className="h-28 w-full rounded-lg border border-slate-200 object-cover"
-                                  />
-                                )}
-                                {cert.proofUrl &&
-                                  cert.proofUrl.startsWith(
-                                    'data:application/pdf',
-                                  ) && (
-                                    <iframe
-                                      src={cert.proofUrl}
-                                      title={`${cert.title || 'Certification'} PDF preview`}
-                                      className="h-40 w-full rounded-lg border border-slate-200 bg-white"
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <input
+                                      value={cert.title}
+                                      onChange={(e) =>
+                                        setManualCertifications((prev) =>
+                                          prev.map((p) =>
+                                            p.id === cert.id
+                                              ? { ...p, title: e.target.value }
+                                              : p,
+                                          ),
+                                        )
+                                      }
+                                      placeholder="Certificate Title"
+                                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
                                     />
+                                    <input
+                                      value={cert.issuer}
+                                      onChange={(e) =>
+                                        setManualCertifications((prev) =>
+                                          prev.map((p) =>
+                                            p.id === cert.id
+                                              ? { ...p, issuer: e.target.value }
+                                              : p,
+                                          ),
+                                        )
+                                      }
+                                      placeholder="Issuer (e.g. Google, IBM)"
+                                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                                    />
+                                    <input
+                                      value={cert.date}
+                                      onChange={(e) =>
+                                        setManualCertifications((prev) =>
+                                          prev.map((p) =>
+                                            p.id === cert.id
+                                              ? { ...p, date: e.target.value }
+                                              : p,
+                                          ),
+                                        )
+                                      }
+                                      placeholder="Date (e.g. March 2024)"
+                                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none"
+                                    />
+                                    <div className="relative">
+                                      <input
+                                        type="file"
+                                        accept="image/*,application/pdf"
+                                        onChange={(e) =>
+                                          void handleCertificationProofUpload(
+                                            cert.id,
+                                            e,
+                                          )
+                                        }
+                                        className="hidden"
+                                        id={`cert-file-${cert.id}`}
+                                      />
+                                      <label
+                                        htmlFor={`cert-file-${cert.id}`}
+                                        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/5 py-2.5 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white"
+                                      >
+                                        <Plus size={14} />{' '}
+                                        {cert.proofName
+                                          ? 'Change Proof'
+                                          : 'Upload Proof (Image/PDF)'}
+                                      </label>
+                                    </div>
+                                  </div>
+                                  {cert.proofName && (
+                                    <p className="mt-2 text-[10px] text-[#1ECEFA] font-bold">
+                                      ✓ {cert.proofName} attached
+                                    </p>
                                   )}
-                              </div>
-                            ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setManualCertifications((prev) => [
-                                  ...prev,
-                                  DEFAULT_MANUAL_CERTIFICATION(),
-                                ])
-                              }
-                              className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
-                            >
-                              <Plus className="h-3.5 w-3.5" />+ Add Local Cert
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                                </div>
+                              ))}
+                              <button
+                                onClick={() =>
+                                  setManualCertifications((prev) => [
+                                    ...prev,
+                                    DEFAULT_MANUAL_CERTIFICATION(),
+                                  ])
+                                }
+                                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/10 bg-white/5 py-4 text-sm font-bold text-slate-500 transition-all hover:bg-white/10 hover:text-[#1ECEFA]"
+                              >
+                                <PlusCircle size={18} /> Add Local Certificate
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-                  <p className="text-xs font-semibold text-indigo-700">
-                    AI Quick Actions
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <input
-                      value={quickFillUrl}
-                      onChange={(e) => setQuickFillUrl(e.target.value)}
-                      placeholder="Paste URL for quick fill"
-                      className="min-w-[220px] flex-1 rounded-lg border border-indigo-200 px-3 py-2 text-xs"
-                    />
+                  <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-6">
                     <button
-                      type="button"
-                      onClick={() => {
-                        if (
-                          quickFillUrl.toLowerCase().includes('github') ||
-                          quickFillUrl.toLowerCase().includes('behance') ||
-                          quickFillUrl.toLowerCase().includes('figma')
-                        ) {
-                          setProjectMode('hybrid');
-                          setActiveTab('projects');
-                        }
-                        if (
-                          quickFillUrl.toLowerCase().includes('udemy') ||
-                          quickFillUrl.toLowerCase().includes('coursera')
-                        ) {
-                          setCertificationsEnabled(true);
-                          setCertificationMode('hybrid');
-                          setActiveTab('certifications');
-                        }
-                        setStatusNote('Quick fill applied.');
-                        setQuickFillUrl('');
-                      }}
-                      className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white"
+                      onClick={() => setStep(1)}
+                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-slate-400 hover:bg-white/10 hover:text-white sm:px-6"
                     >
-                      Quick Fill
+                      Back
                     </button>
                     <button
-                      type="button"
-                      onClick={() => {
-                        const next = new Set([
-                          ...manualSkillList,
-                          'Communication',
-                          'Collaboration',
-                          'Problem Solving',
-                        ]);
-                        setManualSkills(Array.from(next).join(', '));
-                      }}
-                      className="rounded-lg border border-indigo-300 px-3 py-2 text-xs font-semibold text-indigo-700"
+                      onClick={() => setStep(3)}
+                      className="w-full rounded-xl bg-[#1ECEFA] px-6 py-3 text-sm font-bold text-black shadow-[0_0_20px_rgba(30,206,250,0.3)] transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto sm:px-10"
                     >
-                      Suggest skills?
+                      Continue
                     </button>
                   </div>
-                </div>
-
-                <div className="flex flex-wrap justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep(3)}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
-                  >
-                    Continue
-                  </button>
                 </div>
               </div>
 
-              <aside className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-sm font-semibold text-slate-800">
-                  Live Draft Preview
-                </p>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {manualFullName || user.name || 'Your Name'}
-                  </p>
-                  <p className="text-xs text-slate-600">
-                    {manualProfessionalTitle || `${persona} Portfolio`}
-                  </p>
-                  <p className="mt-2 text-xs text-slate-700">
-                    {manualBio || 'Profile summary will appear here.'}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Projects
-                  </p>
-                  {previewProjects.length > 0 ? (
-                    previewProjects.map((project) => (
-                      <p key={project} className="text-xs text-slate-700">
-                        {project}
+              {/* Sidebar Preview */}
+              <aside className="min-w-0 space-y-4">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-2xl">
+                  <h3 className="mb-4 text-xs font-black  text-[#1ECEFA]">
+                    Draft Overview
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="rounded-xl bg-black/40 p-4 border border-white/5">
+                      <p className="text-xs font-bold text-white">
+                        {manualFullName || user.name || 'Anonymous'}
                       </p>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-400">
-                      Projects will appear here.
-                    </p>
-                  )}
-                </div>
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Certifications
-                  </p>
-                  {previewCertifications.length > 0 ? (
-                    previewCertifications.map((cert) => (
-                      <p key={cert} className="text-xs text-slate-700">
-                        {cert}
+                      <p className="text-[10px] text-slate-500">
+                        {manualProfessionalTitle || `${persona} Portfolio`}
                       </p>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-400">
-                      Optional section is empty.
-                    </p>
-                  )}
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {manualSkillList.slice(0, 5).map((skill) => (
+                          <span
+                            key={skill}
+                            className="rounded bg-white/5 px-1.5 py-0.5 text-[8px] text-slate-400 border border-white/5"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {manualSkillList.length > 5 && (
+                          <span className="text-[8px] text-slate-600">
+                            +{manualSkillList.length - 5} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black  text-slate-500">
+                        Live Snapshot
+                      </p>
+                      <div className="rounded-xl bg-black/20 p-3 border border-white/5">
+                        <div className="flex justify-between text-[10px] mb-2">
+                          <span className="text-slate-400">Projects</span>
+                          <span className="text-white font-bold">
+                            {normalizedManualProjects.length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[10px] mb-2">
+                          <span className="text-slate-400">Certs</span>
+                          <span className="text-white font-bold">
+                            {normalizedManualCertifications.length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-slate-400">Social Linked</span>
+                          <span className="text-[#1ECEFA] font-bold">
+                            {selectedProviders.length}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-gradient-to-br from-[#1ECEFA]/20 to-transparent p-4 border border-[#1ECEFA]/20">
+                      <p className="text-[10px] font-black  text-[#1ECEFA]">
+                        Auto-fill Confidence
+                      </p>
+                      <div className="mt-2 flex items-end gap-2">
+                        <span className="text-3xl font-black text-white">
+                          {autoFillEstimate}%
+                        </span>
+                        <span className="text-[10px] text-slate-400 mb-1">
+                          Target: 80%+
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1 w-full rounded-full bg-white/5 overflow-hidden">
+                        <div
+                          className="h-full bg-[#1ECEFA]"
+                          style={{ width: `${autoFillEstimate}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-                  <p className="text-xs font-semibold text-indigo-700">
-                    Auto-fill score
-                  </p>
-                  <p className="text-2xl font-bold text-indigo-800">
-                    {autoFillEstimate}%
-                  </p>
-                  <p className="text-xs text-indigo-700">Target: 80-90%</p>
+
+                <div className="rounded-2xl border border-white/5 bg-white/5 p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Bot className="text-[#1ECEFA]" size={16} />
+                    <p className="text-[10px] font-black  text-slate-300">
+                      Quick Fill
+                    </p>
+                  </div>
+                  <input
+                    value={quickFillUrl}
+                    onChange={(e) => setQuickFillUrl(e.target.value)}
+                    placeholder="Paste GitHub/Behance URL..."
+                    className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[10px] text-white focus:outline-none focus:border-[#1ECEFA]/30"
+                  />
+                  <button
+                    onClick={() => {
+                      const url = quickFillUrl.toLowerCase();
+                      if (
+                        url.includes('github') ||
+                        url.includes('behance') ||
+                        url.includes('figma')
+                      ) {
+                        setActiveTab('projects');
+                        setProjectMode('hybrid');
+                        setStatusNote(
+                          `Detected ${url.includes('github') ? 'GitHub' : url.includes('behance') ? 'Behance' : 'Figma'} link. Mode set to Hybrid.`,
+                        );
+                      } else if (
+                        url.includes('udemy') ||
+                        url.includes('coursera')
+                      ) {
+                        setActiveTab('certifications');
+                        setCertificationsEnabled(true);
+                        setCertificationMode('hybrid');
+                        setStatusNote(
+                          `Detected ${url.includes('udemy') ? 'Udemy' : 'Coursera'} link. Mode set to Hybrid.`,
+                        );
+                      } else {
+                        setStatusNote('Analyzing URL for data extraction...');
+                      }
+                      setQuickFillUrl('');
+                    }}
+                    className="mt-2 w-full rounded-lg bg-white/10 py-2 text-[10px] font-bold text-white hover:bg-white/20"
+                  >
+                    Analyze Link
+                  </button>
                 </div>
               </aside>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-slate-900">
-                AI Optimization & Customization
-              </h2>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold text-slate-500">
-                    Persona
-                  </p>
-                  <p className="text-sm text-slate-700">{String(persona)}</p>
-                </div>
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold text-slate-500">Focus</p>
-                  <p className="text-sm text-slate-700">
-                    {focusQuestion || 'General optimization'}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-3">
-                  <p className="text-xs font-semibold text-indigo-700">
-                    Health score
-                  </p>
-                  <p className="text-2xl font-bold text-indigo-800">
-                    {autoFillEstimate}
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-xl border border-slate-200 p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    AI Suggestions
-                  </p>
-                  <div className="inline-flex rounded border border-slate-300 p-0.5">
-                    {(['desktop', 'mobile'] as const).map((device) => (
-                      <button
-                        key={device}
-                        type="button"
-                        onClick={() => setPreviewDevice(device)}
-                        className={`rounded px-2 py-1 text-[10px] font-semibold capitalize ${previewDevice === device ? 'bg-indigo-600 text-white' : 'text-slate-600'}`}
-                      >
-                        {device}
-                      </button>
-                    ))}
+            <div className="grid min-w-0 gap-6 animate-in fade-in zoom-in-95 duration-500">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl sm:p-8">
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-6">
+                  <div>
+                    <h2 className="font-display text-3xl font-black text-white">
+                      AI Optimization & Customization
+                    </h2>
+                    <p className="mt-1 text-slate-400">
+                      Interactive refinement of your portfolio before we build
+                      the draft.
+                    </p>
                   </div>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {aiSuggestions.map((suggestion) => (
+                  <div className="flex rounded-xl bg-black/40 p-1 border border-white/10">
                     <button
-                      key={suggestion}
-                      type="button"
-                      onClick={() =>
-                        setStatusNote(`Applied suggestion: ${suggestion}`)
-                      }
-                      className="min-w-[220px] rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-left text-xs text-slate-700"
+                      onClick={() => setPreviewDevice('desktop')}
+                      className={`p-2 rounded-lg transition-all ${previewDevice === 'desktop' ? 'bg-[#1ECEFA] text-black' : 'text-slate-500'}`}
                     >
-                      {suggestion}
+                      <LayoutDashboard size={20} />
                     </button>
-                  ))}
-                </div>
-                <div
-                  className={`mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 ${previewDevice === 'mobile' ? 'max-w-[320px]' : ''}`}
-                >
-                  <p className="text-sm font-semibold text-slate-900">
-                    {manualFullName || user.name || 'Your Name'}
-                  </p>
-                  <p className="text-xs text-slate-600">
-                    {manualProfessionalTitle || `${persona} Portfolio`}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-700">
-                    {manualBio ||
-                      'AI will refine your profile summary after optimization.'}
-                  </p>
-                </div>
-              </div>
-              {normalizedManualProjects.length === 0 &&
-                importProviders.length < 2 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-                    Sparse data detected. Add at least one manual project for a
-                    stronger draft.
+                    <button
+                      onClick={() => setPreviewDevice('mobile')}
+                      className={`p-2 rounded-lg transition-all ${previewDevice === 'mobile' ? 'bg-[#1ECEFA] text-black' : 'text-slate-500'}`}
+                    >
+                      <SidebarRight size={20} />
+                    </button>
                   </div>
-                )}
-              <div className="flex flex-wrap justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold"
-                >
-                  Back
-                </button>
-                <div className="flex gap-2">
+                </div>
+
+                <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,380px)]">
+                  <div className="min-w-0 space-y-6">
+                    <div className="space-y-3">
+                      <h4 className="text-[10px] font-black  text-[#1ECEFA]">
+                        AI Refinement Carousel
+                      </h4>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {aiSuggestions.map((suggestion, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() =>
+                              setStatusNote(`Applied: ${suggestion}`)
+                            }
+                            className="flex min-w-0 flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-6 text-left transition-all hover:border-[#1ECEFA]/50 hover:bg-[#1ECEFA]/5"
+                          >
+                            <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-[#1ECEFA]/10 text-[#1ECEFA]">
+                              <Sparkles size={16} />
+                            </div>
+                            <p className="text-sm font-bold text-white leading-relaxed">
+                              {suggestion}
+                            </p>
+                            <p className="mt-4 text-[10px] font-black  text-[#1ECEFA]">
+                              Apply Optimization
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/5 bg-black/40 p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <Bot className="text-[#1ECEFA]" size={24} />
+                        <h4 className="text-sm font-black text-white">
+                          Draft Critique & Health Score
+                        </h4>
+                      </div>
+                      <div className="grid gap-6 md:grid-cols-2">
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">
+                              SEO Score
+                            </span>
+                            <span className="text-xs font-bold text-emerald-400">
+                              88/100
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-400"
+                              style={{ width: '88%' }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">
+                              Content Density
+                            </span>
+                            <span className="text-xs font-bold text-[#1ECEFA]">
+                              72/100
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-white/5 overflow-hidden">
+                            <div
+                              className="h-full bg-[#1ECEFA]"
+                              style={{ width: '72%' }}
+                            />
+                          </div>
+                        </div>
+                        <div className="rounded-xl bg-white/5 p-4 border border-white/5">
+                          <p className="text-[10px] font-black  text-slate-500 mb-2">
+                            AI Observation
+                          </p>
+                          <p className="text-xs text-slate-300 leading-relaxed italic">
+                            "Your project descriptions are strong, but consider
+                            adding more numerical outcomes (e.g. 'Increased
+                            speed by 40%') to appeal to {persona} requirements."
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative min-w-0">
+                    <div
+                      className={`mx-auto rounded-[2rem] border-[8px] border-slate-800 bg-white shadow-2xl transition-all duration-500 overflow-hidden ${
+                        previewDevice === 'mobile'
+                          ? 'max-w-[280px] aspect-[9/19]'
+                          : 'w-full aspect-video'
+                      }`}
+                    >
+                      <div className="h-full w-full overflow-y-auto bg-slate-50 p-6 scrollbar-hide">
+                        <div className="mb-6 flex items-center justify-between">
+                          <div className="h-4 w-12 rounded bg-slate-200" />
+                          <div className="flex gap-2">
+                            <div className="h-4 w-4 rounded-full bg-slate-200" />
+                            <div className="h-4 w-4 rounded-full bg-slate-200" />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="h-8 w-3/4 rounded-lg bg-slate-900" />
+                          <div className="h-4 w-1/2 rounded-lg bg-[#1ECEFA]" />
+                          <div className="space-y-2 py-4">
+                            <div className="h-3 w-full rounded bg-slate-200" />
+                            <div className="h-3 w-full rounded bg-slate-200" />
+                            <div className="h-3 w-2/3 rounded bg-slate-200" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 pt-4">
+                            <div className="aspect-square rounded-xl bg-slate-100" />
+                            <div className="aspect-square rounded-xl bg-slate-100" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-[#1ECEFA] px-4 py-1 text-[8px] font-black  text-black shadow-lg">
+                      Live Interactive Draft
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-white/5 pt-8">
                   <button
-                    type="button"
-                    onClick={() =>
-                      setStatusNote('Generated alternate AI variations.')
-                    }
-                    className="rounded-lg border border-indigo-300 px-4 py-2 text-xs font-semibold text-indigo-700"
+                    onClick={() => setStep(2)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-6 py-4 text-sm font-bold text-slate-400 hover:bg-white/10 hover:text-white sm:px-8"
                   >
-                    Generate Variations
+                    Refine Data
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void startImport()}
-                    disabled={startingImport}
-                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-                  >
-                    {startingImport ? 'Starting...' : 'Run AI Optimization'}{' '}
-                    <Zap className="h-4 w-4 fill-current" />
-                  </button>
+                  <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:justify-end sm:gap-4">
+                    <button
+                      onClick={() =>
+                        setStatusNote('Regenerating AI Variations...')
+                      }
+                      className="flex-1 rounded-xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/5 px-6 py-4 text-sm font-bold text-[#1ECEFA] hover:bg-[#1ECEFA]/10 sm:flex-none sm:px-8"
+                    >
+                      Regenerate Variations
+                    </button>
+                    <button
+                      onClick={() => void startImport()}
+                      disabled={startingImport}
+                      className="flex flex-1 items-center justify-center gap-3 rounded-xl bg-[#1ECEFA] px-6 py-4 text-sm font-black text-black shadow-[0_0_30px_rgba(30,206,250,0.4)] transition-all hover:scale-[1.05] active:scale-[0.95] sm:flex-none sm:px-12"
+                    >
+                      {startingImport
+                        ? 'Processing...'
+                        : 'Generate My Portfolio'}{' '}
+                      <Zap size={20} fill="currentColor" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {step === 4 && (
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-xl font-semibold text-slate-900">
-                Review & Finalize
-              </h2>
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    ATS Estimate
-                  </p>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {autoFillEstimate}%
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Keywords: {aiSuggestions[1]}
+            <div className="grid min-w-0 gap-6 animate-in fade-in duration-500">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl sm:p-8">
+                <div className="mb-8 text-center">
+                  <h2 className="font-display text-3xl font-black text-white">
+                    Review & Finalize
+                  </h2>
+                  <p className="mt-2 text-slate-400">
+                    Your AI-optimized draft is ready for a quick final check.
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 p-3 md:col-span-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Checklist
-                  </p>
-                  <div className="mt-2 grid gap-1 text-xs text-slate-700 md:grid-cols-2">
-                    <p>
-                      {manualFullName || user.name ? 'Done' : 'Pending'}: Name
-                    </p>
-                    <p>
-                      {normalizedManualProjects.length > 0 ||
-                      importProviders.some((provider) =>
-                        PROJECT_PROVIDER_IDS.includes(provider),
-                      )
-                        ? 'Done'
-                        : 'Pending'}
-                      : Projects
-                    </p>
-                    <p>
-                      {manualSkillList.length > 0 ? 'Done' : 'Pending'}: Skills
-                    </p>
-                    <p>
-                      {certificationsEnabled
-                        ? 'Optional enabled'
-                        : 'Skipped by user'}
-                      : Certifications
-                    </p>
-                  </div>
-                </div>
-              </div>
-              {status?.status === 'queued' || status?.status === 'running' ? (
-                <div className="space-y-2 rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-center">
-                  <Bot className="mx-auto h-8 w-8 text-indigo-700" />
-                  <p className="text-sm font-semibold text-indigo-800">
-                    AI is processing your draft...
-                  </p>
-                  <div className="mx-auto h-2 w-full max-w-xl rounded-full bg-indigo-100">
-                    <div
-                      className="h-full rounded-full bg-indigo-600"
-                      style={{ width: `${status.progressPct ?? 10}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-indigo-700">
-                    {status.progressPct ?? 10}% complete
-                  </p>
-                </div>
-              ) : status?.status === 'failed' ? (
-                <div className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 p-4">
-                  <p className="text-sm font-semibold text-rose-700">
-                    {status.message ?? 'Import failed.'}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setStep(3)}
-                      className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
-                    >
-                      Optimize More
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void startImport()}
-                      className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-slate-200 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Conflicts
-                    </p>
-                    {conflicts.length === 0 ? (
-                      <p className="text-sm text-emerald-700">
-                        No major conflicts found. Auto-resolve is ready.
+
+                {status?.status === 'queued' || status?.status === 'running' ? (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-6">
+                    <div className="relative">
+                      <div className="absolute inset-0 animate-ping rounded-full bg-[#1ECEFA]/20" />
+                      <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[#1ECEFA]/10 text-[#1ECEFA] border border-[#1ECEFA]/30">
+                        <Bot size={48} />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xl font-bold text-white">
+                        AI is weaving your story...
                       </p>
-                    ) : (
-                      conflicts.map((conflict) => (
+                      <p className="mt-1 text-slate-400">
+                        Structuring projects, refining bio, and optimizing for
+                        search.
+                      </p>
+                    </div>
+                    <div className="w-full max-w-md space-y-2">
+                      <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
                         <div
-                          key={conflict.field}
-                          className="mt-2 rounded-lg border border-slate-200 p-2"
-                        >
-                          <p className="text-xs text-slate-500">
-                            {conflict.field} (suggested:{' '}
-                            {conflict.recommendedProvider})
-                          </p>
-                          <input
-                            value={
-                              overrides[conflict.field] ??
-                              conflict.recommendedValue
-                            }
-                            onChange={(e) =>
-                              setOverrides((prev) => ({
-                                ...prev,
-                                [conflict.field]: e.target.value,
-                              }))
-                            }
-                            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm"
-                          />
-                        </div>
-                      ))
-                    )}
+                          className="h-full bg-gradient-to-r from-[#1ECEFA] to-[#0A4F78] transition-all duration-1000"
+                          style={{ width: `${status.progressPct}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] font-black  text-slate-500">
+                        <span>Progress</span>
+                        <span>{status.progressPct}%</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap justify-between gap-2">
-                    <div className="flex gap-2">
+                ) : status?.status === 'failed' ? (
+                  <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center">
+                    <p className="text-lg font-bold text-rose-400 mb-4">
+                      {status.message || 'Optimization failed'}
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-4">
                       <button
-                        type="button"
                         onClick={() => setStep(3)}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
+                        className="rounded-xl border border-white/10 px-6 py-3 text-sm font-bold text-white"
                       >
-                        Optimize More
+                        Back to AI Step
                       </button>
                       <button
-                        type="button"
-                        onClick={() => window.print()}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
+                        onClick={() => void startImport()}
+                        className="rounded-xl bg-rose-500 px-6 py-3 text-sm font-black text-white"
                       >
-                        PDF Preview Download
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setStatusNote(
-                            'Extras queued. You can add e-commerce and advanced sections in the editor.',
-                          )
-                        }
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold"
-                      >
-                        Add Extras
+                        Retry AI Process
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void confirmImport()}
-                      disabled={confirming}
-                      className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white"
-                    >
-                      {confirming ? 'Finalizing...' : 'Finalize Draft'}{' '}
-                      <Check className="h-4 w-4" />
-                    </button>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <div className="grid gap-6 md:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <p className="text-[10px] font-black  text-[#1ECEFA] mb-2">
+                          ATS Compatibility
+                        </p>
+                        <div className="flex items-end gap-2">
+                          <span className="text-4xl font-black text-white">
+                            {autoFillEstimate}%
+                          </span>
+                          <span className="text-xs text-emerald-400 mb-1">
+                            Excellent
+                          </span>
+                        </div>
+                        <p className="mt-4 text-xs text-slate-400 leading-relaxed">
+                          Keywords mapped successfully from your LinkedIn and
+                          GitHub projects.
+                        </p>
+                      </div>
+                      <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6">
+                        <p className="text-[10px] font-black  text-slate-500 mb-4">
+                          Summary Checklist
+                        </p>
+                        <div className="grid grid-cols-1 gap-y-4 sm:grid-cols-2">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                              <Check size={12} strokeWidth={4} />
+                            </div>
+                            <span className="text-sm text-slate-300">
+                              Profile Information
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                              <Check size={12} strokeWidth={4} />
+                            </div>
+                            <span className="text-sm text-slate-300">
+                              {normalizedManualProjects.length +
+                                (importProviders.includes('github')
+                                  ? 6
+                                  : 0)}{' '}
+                              Projects Linked
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
+                              <Check size={12} strokeWidth={4} />
+                            </div>
+                            <span className="text-sm text-slate-300">
+                              {manualSkillList.length} Core Skills
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex h-5 w-5 items-center justify-center rounded-full ${certificationsEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600'}`}
+                            >
+                              <Check size={12} strokeWidth={4} />
+                            </div>
+                            <span className="text-sm text-slate-300">
+                              {certificationsEnabled
+                                ? 'Certs Included'
+                                : 'Certs Skipped'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/5 bg-black/40 p-6">
+                      <h4 className="text-xs font-black  text-slate-500 mb-4">
+                        Conflict Resolution
+                      </h4>
+                      {conflicts.length === 0 ? (
+                        <div className="flex items-center gap-3 text-emerald-400">
+                          <CheckCircle size={20} />
+                          <p className="text-sm font-bold">
+                            No data conflicts found. Data merging was seamless.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {conflicts.map((conflict) => (
+                            <div
+                              key={conflict.field}
+                              className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/5 p-4"
+                            >
+                              <div>
+                                <p className="text-[10px] font-black  text-[#1ECEFA]">
+                                  {conflict.field}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  Suggesting value from{' '}
+                                  {conflict.recommendedProvider}
+                                </p>
+                              </div>
+                              <input
+                                value={
+                                  overrides[conflict.field] ??
+                                  conflict.recommendedValue
+                                }
+                                onChange={(e) =>
+                                  setOverrides((prev) => ({
+                                    ...prev,
+                                    [conflict.field]: e.target.value,
+                                  }))
+                                }
+                                className="w-full min-w-0 rounded-lg border border-white/10 bg-black/40 px-4 py-2 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none sm:min-w-[200px] sm:flex-1"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap justify-between items-center gap-6 border-t border-white/5 pt-8">
+                      <div className="flex flex-wrap gap-4">
+                        <button
+                          onClick={() => setStep(3)}
+                          className="rounded-xl border border-white/10 px-6 py-3 text-sm font-bold text-slate-400 hover:bg-white/10 hover:text-white"
+                        >
+                          Refine AI
+                        </button>
+                        <button
+                          onClick={() => window.print()}
+                          className="rounded-xl border border-white/10 px-6 py-3 text-sm font-bold text-slate-400 hover:bg-white/10 hover:text-white flex items-center gap-2"
+                        >
+                          <Download size={16} /> PDF Preview
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => void confirmImport()}
+                        disabled={confirming}
+                        className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#1ECEFA] px-6 py-4 text-sm font-black text-black shadow-[0_0_30px_rgba(30,206,250,0.3)] transition-all hover:scale-[1.05] active:scale-[0.95] sm:w-auto sm:px-12"
+                      >
+                        {confirming ? 'Finalizing...' : 'Finalize & Build'}{' '}
+                        <CheckCircle size={20} strokeWidth={3} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {step === 5 && (
-            <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-              <h2 className="text-xl font-semibold text-emerald-900">
-                Publish & Share
-              </h2>
-              <p className="text-sm text-emerald-800">
-                Choose visibility, publish, and share your new portfolio.
-              </p>
-              <div className="grid gap-2 md:grid-cols-3">
-                <input
-                  value={publishSubdomain}
-                  onChange={(event) =>
-                    setPublishSubdomain(slugify(event.target.value))
-                  }
-                  placeholder="Subdomain"
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-                <input
-                  value={publishCustomDomain}
-                  onChange={(event) =>
-                    setPublishCustomDomain(event.target.value)
-                  }
-                  placeholder="Custom domain (optional)"
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                />
-                <select
-                  value={publishVisibility}
-                  onChange={(event) =>
-                    setPublishVisibility(
-                      event.target.value as 'PUBLIC' | 'PRIVATE' | 'UNLISTED',
-                    )
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                >
-                  <option value="PUBLIC">Public</option>
-                  <option value="UNLISTED">Unlisted</option>
-                  <option value="PRIVATE">Private (skip publish)</option>
-                </select>
-              </div>
-              {subdomainSuggestions.length > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-                  <p className="text-xs font-semibold text-amber-800">
-                    Suggestions
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {subdomainSuggestions.map((suggestion) => (
+            <div className="grid min-w-0 gap-6 animate-in fade-in zoom-in-95 duration-700">
+              <div className="rounded-3xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/5 p-5 text-center shadow-[0_0_50px_rgba(30,206,250,0.1)] sm:p-10">
+                <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#1ECEFA] text-black shadow-[0_0_30px_rgba(30,206,250,0.5)]">
+                  <Sparkles size={48} />
+                </div>
+                <h2 className="font-display text-4xl font-black text-white">
+                  Ready for the World!
+                </h2>
+                <p className="mx-auto mt-4 max-w-lg text-slate-400">
+                  Your portfolio is built and ready to launch. Choose your link
+                  and set your visibility.
+                </p>
+
+                <div className="mx-auto mt-10 grid max-w-3xl gap-6 md:grid-cols-2">
+                  <div className="space-y-4 rounded-2xl border border-white/10 bg-black/40 p-6 text-left">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black  text-slate-500">
+                        Your Personal Link
+                      </label>
+                      <div className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-1 pl-4">
+                        <span className="shrink-0 text-xs text-slate-500">
+                          blox.app/
+                        </span>
+                        <input
+                          value={publishSubdomain}
+                          onChange={(e) =>
+                            setPublishSubdomain(slugify(e.target.value))
+                          }
+                          className="min-w-0 flex-1 bg-transparent py-2 text-sm font-bold text-white focus:outline-none"
+                          placeholder="username"
+                        />
+                      </div>
+                      {subdomainSuggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {subdomainSuggestions.map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => setPublishSubdomain(s)}
+                              className="rounded-lg bg-white/5 px-2 py-1 text-[10px] text-slate-400 hover:text-white"
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black  text-slate-500">
+                        Visibility
+                      </label>
+                      <div className="flex rounded-xl bg-white/5 p-1 border border-white/10">
+                        {(['PUBLIC', 'UNLISTED', 'PRIVATE'] as const).map(
+                          (v) => (
+                            <button
+                              key={v}
+                              onClick={() => setPublishVisibility(v)}
+                              className={`flex-1 rounded-lg py-2 text-[10px] font-black  transition-all ${
+                                publishVisibility === v
+                                  ? 'bg-[#1ECEFA] text-black'
+                                  : 'text-slate-500 hover:text-slate-300'
+                              }`}
+                            >
+                              {v}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center gap-4">
+                    <button
+                      onClick={() => void publishDraft()}
+                      disabled={publishing || !status?.draftAssetId}
+                      className="flex h-16 items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#1ECEFA] to-[#0A4F78] text-lg font-black text-white shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {publishing ? 'Publishing...' : 'Launch Site Now'}{' '}
+                      <ArrowUpRight size={24} strokeWidth={3} />
+                    </button>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => setPublishSubdomain(suggestion)}
-                        className="rounded border border-amber-300 bg-white px-2 py-1 text-xs font-semibold text-amber-800"
+                        onClick={() =>
+                          router.push(
+                            `/portfolios/${status?.draftAssetId}/edit`,
+                          )
+                        }
+                        className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-4 text-xs font-bold text-white hover:bg-white/10"
                       >
-                        {suggestion}
+                        Open Advanced Editor
                       </button>
-                    ))}
+                      <button
+                        onClick={() => router.push('/portfolios')}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-4 text-xs font-bold text-white hover:bg-white/10"
+                      >
+                        Back to Dashboard
+                      </button>
+                    </div>
                   </div>
                 </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void publishDraft()}
-                  disabled={publishing || !status?.draftAssetId}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-                >
-                  {publishing ? 'Publishing...' : 'Publish Now'}
-                </button>
+
                 {publishedUrl && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => window.open(publishedUrl, '_blank')}
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      View Site
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void copyPublishedLink()}
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      Copy Link
-                    </button>
-                    <a
-                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publishedUrl)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      Share on LinkedIn
-                    </a>
-                  </>
+                  <div className="mx-auto mt-10 max-w-xl rounded-3xl border border-emerald-500/30 bg-emerald-500/10 p-8 animate-in fade-in zoom-in duration-500">
+                    <h4 className="text-xl font-black text-white">
+                      Congratulations! 🎉
+                    </h4>
+                    <p className="mt-2 text-sm text-emerald-100">
+                      Your portfolio is live and looking stunning.
+                    </p>
+                    <div className="mt-6 flex flex-wrap justify-center gap-3">
+                      <button
+                        onClick={() => window.open(publishedUrl, '_blank')}
+                        className="flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-xs font-black text-black"
+                      >
+                        <ExternalLink size={16} /> View Live Site
+                      </button>
+                      <button
+                        onClick={() => void copyPublishedLink()}
+                        className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-xs font-black text-white"
+                      >
+                        <Globe size={16} /> Copy Link
+                      </button>
+                      <a
+                        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publishedUrl)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 rounded-xl bg-[#0A66C2] px-6 py-3 text-xs font-black text-white"
+                      >
+                        <Linkedin size={16} /> Share on LinkedIn
+                      </a>
+                    </div>
+                  </div>
                 )}
-                {status?.draftAssetId && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(`/portfolios/${status.draftAssetId}/edit`)
-                    }
-                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                  >
-                    Open Editor
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => router.push('/portfolios')}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700"
-                >
-                  Back to Portfolios
-                </button>
               </div>
-              {publishedUrl && (
-                <div className="rounded-xl border border-emerald-300 bg-white p-3 text-xs text-emerald-800">
-                  Live URL: {publishedUrl}
-                </div>
-              )}
             </div>
           )}
 
           {statusError && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700">
-              {statusError}
+            <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-2xl rounded-2xl border border-rose-500/30 bg-rose-500/20 px-4 py-3 backdrop-blur-md shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:bottom-8 sm:left-1/2 sm:right-auto sm:w-[min(92vw,42rem)] sm:-translate-x-1/2 sm:px-6 sm:py-4">
+              <div className="flex flex-wrap items-center gap-3 text-rose-400">
+                <X
+                  size={20}
+                  strokeWidth={3}
+                  className="cursor-pointer"
+                  onClick={() => setStatusError('')}
+                />
+                <p className="break-words text-sm font-bold">{statusError}</p>
+              </div>
             </div>
           )}
+
           {statusNote && !statusError && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
-              {statusNote}
+            <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-2xl rounded-2xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/20 px-4 py-3 backdrop-blur-md shadow-2xl animate-in fade-in slide-in-from-bottom-4 sm:bottom-8 sm:left-1/2 sm:right-auto sm:w-[min(92vw,42rem)] sm:-translate-x-1/2 sm:px-6 sm:py-4">
+              <div className="flex flex-wrap items-center gap-3 text-[#1ECEFA]">
+                <Sparkles size={20} />
+                <p className="break-words text-sm font-bold">{statusNote}</p>
+                <X
+                  size={16}
+                  className="ml-4 cursor-pointer text-slate-400"
+                  onClick={() => setStatusNote('')}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -2355,3 +2391,4 @@ export default function PortfolioNewPage() {
     </AuthGuard>
   );
 }
+    

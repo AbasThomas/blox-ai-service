@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { analyticsApi, assetsApi } from '@/lib/api';
 
@@ -24,67 +25,107 @@ interface AnalyticsData {
 }
 
 const PERIODS = ['7d', '30d', '90d'] as const;
-type Period = typeof PERIODS[number];
+type Period = (typeof PERIODS)[number];
 
 function asNumber(value: unknown, fallback = 0) {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
+function asString(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
+
 function normalizeAnalytics(assetId: string, payload: unknown): AnalyticsData {
   const raw = payload as Record<string, unknown>;
   const summary = (raw.summary as Record<string, unknown> | undefined) ?? null;
-  const summaryLinks = Array.isArray(summary?.links) ? (summary.links as Array<Record<string, unknown>>) : [];
-  const rawLinks = Array.isArray(raw.links) ? (raw.links as Array<Record<string, unknown>>) : [];
+  const summaryLinks = Array.isArray(summary?.links)
+    ? (summary.links as Array<Record<string, unknown>>)
+    : [];
+  const rawLinks = Array.isArray(raw.links)
+    ? (raw.links as Array<Record<string, unknown>>)
+    : [];
   const linksSource = summaryLinks.length > 0 ? summaryLinks : rawLinks;
 
   const links = linksSource.map((link) => ({
-    id: String(link.id ?? crypto.randomUUID()),
-    assetId: String(link.assetId ?? assetId),
-    shortCode: String(link.shortCode ?? ''),
-    source: typeof link.source === 'string' ? link.source : undefined,
-    targetUrl: String(link.targetUrl ?? ''),
+    id: asString(link.id) || crypto.randomUUID(),
+    assetId: asString(link.assetId) || assetId,
+    shortCode: asString(link.shortCode),
+    source: asString(link.source) || undefined,
+    targetUrl: asString(link.targetUrl),
     clickCount: asNumber(link.clickCount, 0),
-    createdAt: String(link.createdAt ?? new Date().toISOString()),
+    createdAt: asString(link.createdAt) || new Date().toISOString(),
   }));
 
-  const topSourcesFromRaw = Array.isArray(raw.topSources) ? (raw.topSources as Array<Record<string, unknown>>) : [];
-  const topSources = topSourcesFromRaw.length > 0
-    ? topSourcesFromRaw.map((item) => ({
-        source: String(item.source ?? 'direct'),
-        count: asNumber(item.count, 0),
-      }))
-    : [...new Map(
-        links.map((link) => [(link.source ?? 'direct').toLowerCase(), 0] as const),
-      ).keys()].map((source) => ({
-        source,
-        count: links
-          .filter((link) => (link.source ?? 'direct').toLowerCase() === source)
-          .reduce((sum, link) => sum + Math.max(1, link.clickCount), 0),
-      })).sort((a, b) => b.count - a.count);
+  const topSourcesRaw = Array.isArray(raw.topSources)
+    ? (raw.topSources as Array<Record<string, unknown>>)
+    : [];
+  const topSources =
+    topSourcesRaw.length > 0
+      ? topSourcesRaw.map((item) => ({
+          source: asString(item.source) || 'direct',
+          count: asNumber(item.count, 0),
+        }))
+      : [
+          ...new Set(
+            links.map((item) => (item.source ?? 'direct').toLowerCase()),
+          ),
+        ]
+          .map((source) => ({
+            source,
+            count: links
+              .filter(
+                (item) => (item.source ?? 'direct').toLowerCase() === source,
+              )
+              .reduce((sum, item) => sum + Math.max(1, item.clickCount), 0),
+          }))
+          .sort((a, b) => b.count - a.count);
 
-  const rawDaily = Array.isArray(raw.dailyViews) ? (raw.dailyViews as Array<Record<string, unknown>>) : [];
-  const dailyViews = rawDaily.length > 0
-    ? rawDaily.map((item) => ({
-        date: String(item.date ?? ''),
-        count: asNumber(item.count, 0),
-      }))
-    : [...new Map(
-        links.map((link) => [new Date(link.createdAt).toISOString().slice(0, 10), 0] as const),
-      ).keys()].map((date) => ({
-        date,
-        count: links
-          .filter((link) => new Date(link.createdAt).toISOString().slice(0, 10) === date)
-          .reduce((sum, link) => sum + Math.max(1, link.clickCount), 0),
-      })).sort((a, b) => +new Date(a.date) - +new Date(b.date));
+  const dailyRaw = Array.isArray(raw.dailyViews)
+    ? (raw.dailyViews as Array<Record<string, unknown>>)
+    : [];
+  const dailyViews =
+    dailyRaw.length > 0
+      ? dailyRaw
+          .map((row) => ({
+            date: asString(row.date),
+            count: asNumber(row.count, 0),
+          }))
+          .filter((row) => row.date)
+      : [...new Set(links.map((item) => item.createdAt.slice(0, 10)))]
+          .map((date) => ({
+            date,
+            count: links
+              .filter((item) => item.createdAt.startsWith(date))
+              .reduce((sum, item) => sum + Math.max(1, item.clickCount), 0),
+          }))
+          .sort((a, b) => +new Date(a.date) - +new Date(b.date));
 
   const totalViews = asNumber(summary?.views, asNumber(raw.totalViews, 0));
   const totalClicks = asNumber(summary?.clicks, asNumber(raw.totalClicks, 0));
-  const uniqueVisitors = asNumber(raw.uniqueVisitors, Math.max(totalViews - Math.floor(totalClicks * 0.2), 0));
+  const uniqueVisitors = asNumber(
+    raw.uniqueVisitors,
+    Math.max(totalViews - Math.floor(totalClicks * 0.2), 0),
+  );
 
-  return { totalViews, totalClicks, uniqueVisitors, topSources, dailyViews, links };
+  return {
+    totalViews,
+    totalClicks,
+    uniqueVisitors,
+    topSources,
+    dailyViews,
+    links,
+  };
+}
+
+function sanitizeUrl(raw: string) {
+  const value = raw.trim();
+  if (!value) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  return `https://${value}`;
 }
 
 export default function AnalyticsPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<Period>('30d');
@@ -97,190 +138,339 @@ export default function AnalyticsPage({ params }: { params: { id: string } }) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setMessage('');
     try {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - parseInt(period, 10));
       const [analytics, asset] = await Promise.all([
-        analyticsApi.getAssetAnalytics(params.id, { from: fromDate.toISOString() }),
-        assetsApi.getById(params.id) as Promise<{ title: string; publishedUrl?: string }>,
+        analyticsApi.getAssetAnalytics(params.id, {
+          from: fromDate.toISOString(),
+        }),
+        assetsApi.getById(params.id) as Promise<{
+          title: string;
+          publishedUrl?: string;
+        }>,
       ]);
       setData(normalizeAnalytics(params.id, analytics));
       setAssetTitle(asset.title);
       setAssetUrl(asset.publishedUrl ?? '');
-      setNewLinkTarget((previous) => previous || asset.publishedUrl || `${window.location.origin}/preview/${params.id}`);
-    } catch {
+      setNewLinkTarget(
+        (previous) =>
+          previous ||
+          asset.publishedUrl ||
+          `${window.location.origin}/preview/${params.id}`,
+      );
+    } catch (error) {
       setData(null);
+      setMessage(
+        error instanceof Error ? error.message : 'Could not load analytics.',
+      );
     } finally {
       setLoading(false);
     }
   }, [params.id, period]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const handleCreateLink = async () => {
-    if (!newLinkSource.trim() || !newLinkTarget.trim()) return;
+    const source = newLinkSource.trim();
+    const targetUrl = sanitizeUrl(newLinkTarget);
+    if (!source || !targetUrl) return;
     setCreatingLink(true);
     setMessage('');
     try {
-      const link = await analyticsApi.createShortLink(params.id, newLinkSource.trim(), newLinkTarget.trim()) as LinkTracker;
-      setData((prev) => {
-        if (!prev) return prev;
-        const links = [link, ...prev.links];
-        const topSources = [...new Map(
-          links.map((item) => [(item.source ?? 'direct').toLowerCase(), 0] as const),
-        ).keys()].map((source) => ({
-          source,
-          count: links
-            .filter((item) => (item.source ?? 'direct').toLowerCase() === source)
-            .reduce((sum, item) => sum + Math.max(1, item.clickCount), 0),
-        })).sort((a, b) => b.count - a.count);
-        return { ...prev, links, topSources };
+      const created = (await analyticsApi.createShortLink(
+        params.id,
+        source,
+        targetUrl,
+      )) as LinkTracker;
+      setData((previous) => {
+        if (!previous) return previous;
+        const links = [created, ...previous.links];
+        const topSources = [
+          ...new Set(
+            links.map((row) => (row.source ?? 'direct').toLowerCase()),
+          ),
+        ]
+          .map((sourceName) => ({
+            source: sourceName,
+            count: links
+              .filter(
+                (row) => (row.source ?? 'direct').toLowerCase() === sourceName,
+              )
+              .reduce((sum, row) => sum + Math.max(1, row.clickCount), 0),
+          }))
+          .sort((a, b) => b.count - a.count);
+        return { ...previous, links, topSources };
       });
       setNewLinkSource('');
+      setNewLinkTarget(targetUrl);
       setMessage('Short link created.');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Could not create short link.');
+      setMessage(
+        error instanceof Error ? error.message : 'Could not create short link.',
+      );
     } finally {
       setCreatingLink(false);
     }
   };
 
-  const apiBase = useMemo(() => process.env.NEXT_PUBLIC_APP_BASE_URL ?? (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'), []);
+  const appBase = useMemo(
+    () =>
+      process.env.NEXT_PUBLIC_APP_BASE_URL ??
+      (typeof window !== 'undefined'
+        ? window.location.origin
+        : 'http://localhost:4200'),
+    [],
+  );
 
-  const statCards = data ? [
-    { label: 'Total views', value: data.totalViews.toLocaleString() },
-    { label: 'Total clicks', value: data.totalClicks.toLocaleString() },
-    { label: 'Unique visitors', value: data.uniqueVisitors.toLocaleString() },
-    { label: 'CTR', value: data.totalViews > 0 ? `${((data.totalClicks / data.totalViews) * 100).toFixed(1)}%` : '0.0%' },
-  ] : [];
+  const statCards = data
+    ? [
+        { label: 'Total views', value: data.totalViews.toLocaleString() },
+        { label: 'Total clicks', value: data.totalClicks.toLocaleString() },
+        {
+          label: 'Unique visitors',
+          value: data.uniqueVisitors.toLocaleString(),
+        },
+        {
+          label: 'CTR',
+          value:
+            data.totalViews > 0
+              ? `${((data.totalClicks / data.totalViews) * 100).toFixed(1)}%`
+              : '0.0%',
+        },
+      ]
+    : [];
+
+  const maxDaily = Math.max(
+    ...(data?.dailyViews.map((row) => row.count) ?? [1]),
+    1,
+  );
+  const maxSource = Math.max(
+    ...(data?.topSources.map((row) => row.count) ?? [1]),
+    1,
+  );
 
   return (
-    <FeaturePage title={assetTitle ? `Analytics: ${assetTitle}` : 'Analytics'} description="Track views, clicks, referrals, and short links.">
-      <div className="flex items-center gap-2 mb-6">
-        {PERIODS.map((p) => (
-          <button key={p} onClick={() => setPeriod(p)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-              period === p ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-            }`}>
-            {p === '7d' ? '7 days' : p === '30d' ? '30 days' : '90 days'}
+    <FeaturePage
+      title={assetTitle ? `Analytics: ${assetTitle}` : 'Portfolio Analytics'}
+      description="Track visits, link clicks, and source performance."
+    >
+      <div className="mx-auto w-full min-w-0 max-w-7xl space-y-5 overflow-x-hidden">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0C1118] p-3">
+          <button
+            type="button"
+            onClick={() => router.push(`/portfolios/${params.id}/edit`)}
+            className="rounded-md border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+          >
+            Open editor
           </button>
-        ))}
-      </div>
-
-      {assetUrl ? (
-        <div className="mb-4 rounded-lg border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-3 py-2 text-xs text-[#1ECEFA]">
-          Live URL: {assetUrl}
-        </div>
-      ) : null}
-      {message ? (
-        <div className="mb-4 rounded-lg border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-3 py-2 text-xs text-[#1ECEFA]">
-          {message}
-        </div>
-      ) : null}
-
-      {loading ? (
-        <div className="grid gap-4 sm:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 animate-pulse rounded-xl bg-slate-100" />)}
-        </div>
-      ) : !data ? (
-        <div className="rounded-xl border border-dashed border-slate-300 p-10 text-center text-slate-400">
-          <p className="text-sm">No analytics data yet. Share your asset to start tracking.</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {statCards.map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm text-center">
-                <p className="text-2xl font-black text-slate-900">{stat.value}</p>
-                <p className="mt-1 text-xs text-slate-500">{stat.label}</p>
-              </div>
+          <button
+            type="button"
+            onClick={() => router.push(`/preview/${params.id}`)}
+            className="rounded-md border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-3 py-2 text-xs font-semibold text-[#1ECEFA]"
+          >
+            Publish settings
+          </button>
+          <div className="ml-auto flex flex-wrap gap-2">
+            {PERIODS.map((entry) => (
+              <button
+                key={entry}
+                type="button"
+                onClick={() => setPeriod(entry)}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
+                  period === entry
+                    ? 'bg-[#1ECEFA] text-black'
+                    : 'border border-white/10 text-slate-300 hover:bg-white/5'
+                }`}
+              >
+                {entry === '7d'
+                  ? '7 days'
+                  : entry === '30d'
+                    ? '30 days'
+                    : '90 days'}
+              </button>
             ))}
           </div>
+        </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">Daily views</h3>
-              {data.dailyViews.length === 0 ? (
-                <p className="text-sm text-slate-400">No daily breakdown yet.</p>
-              ) : (
-                <>
-                  <div className="flex items-end gap-1 h-32">
-                    {data.dailyViews.slice(-14).map((day) => {
-                      const max = Math.max(...data.dailyViews.map((value) => value.count), 1);
-                      return (
-                        <div key={day.date} className="flex-1 flex flex-col items-center gap-1" title={`${day.date}: ${day.count}`}>
-                          <div className="w-full rounded-t bg-blue-500" style={{ height: `${(day.count / max) * 100}%` }} />
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-slate-400 mt-2 text-center">Last 14 data points</p>
-                </>
-              )}
+        {assetUrl ? (
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+            Live URL:{' '}
+            <a
+              href={assetUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all font-semibold hover:underline"
+            >
+              {assetUrl}
+            </a>
+          </div>
+        ) : null}
+
+        {message ? (
+          <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300">
+            {message}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="h-24 animate-pulse rounded-xl border border-white/10 bg-[#0C1118]"
+              />
+            ))}
+          </div>
+        ) : !data ? (
+          <div className="rounded-xl border border-dashed border-white/20 bg-[#0C1118] p-10 text-center text-sm text-slate-400">
+            No analytics data yet.
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {statCards.map((card) => (
+                <div
+                  key={card.label}
+                  className="rounded-xl border border-white/10 bg-[#0C1118] p-4"
+                >
+                  <p className="text-2xl text-slate-100">{card.value}</p>
+                  <p className="mt-1 text-xs text-slate-400">{card.label}</p>
+                </div>
+              ))}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-900 mb-4">Top sources</h3>
-              {data.topSources.length === 0 ? (
-                <p className="text-sm text-slate-400">No source data yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.topSources.slice(0, 6).map((source) => {
-                    const max = Math.max(...data.topSources.map((item) => item.count), 1);
-                    return (
-                      <div key={source.source} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-700 font-medium capitalize">{source.source || 'Direct'}</span>
-                          <span className="text-slate-500">{source.count}</span>
+            <div className="grid gap-5 xl:grid-cols-2">
+              <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+                <h2 className="text-sm font-semibold text-slate-100">
+                  Daily views
+                </h2>
+                {data.dailyViews.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-400">
+                    No daily breakdown yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid gap-2">
+                    {data.dailyViews.slice(-14).map((row) => (
+                      <div key={row.date}>
+                        <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
+                          <span>{row.date}</span>
+                          <span>{row.count}</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-slate-100">
-                          <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${(source.count / max) * 100}%` }} />
+                        <div className="h-1.5 rounded-full bg-white/10">
+                          <div
+                            className="h-1.5 rounded-full bg-[#1ECEFA]"
+                            style={{
+                              width: `${(row.count / maxDaily) * 100}%`,
+                            }}
+                          />
                         </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+                <h2 className="text-sm font-semibold text-slate-100">
+                  Top sources
+                </h2>
+                {data.topSources.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-400">
+                    No source data yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid gap-2">
+                    {data.topSources.slice(0, 8).map((row) => (
+                      <div key={row.source || 'direct'}>
+                        <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
+                          <span className="capitalize">
+                            {row.source || 'direct'}
+                          </span>
+                          <span>{row.count}</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-white/10">
+                          <div
+                            className="h-1.5 rounded-full bg-emerald-400"
+                            style={{
+                              width: `${(row.count / maxSource) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
+              <h2 className="text-sm font-semibold text-slate-100">
+                Short links
+              </h2>
+              <div className="mt-3 grid gap-2 lg:grid-cols-[180px_1fr_auto]">
+                <input
+                  value={newLinkSource}
+                  onChange={(event) => setNewLinkSource(event.target.value)}
+                  placeholder="Source label"
+                  className="rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                />
+                <input
+                  value={newLinkTarget}
+                  onChange={(event) => setNewLinkTarget(event.target.value)}
+                  placeholder="Target URL"
+                  className="rounded-md border border-white/10 bg-[#0E141D] px-3 py-2 text-sm text-slate-100 outline-none focus:border-[#1ECEFA]/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleCreateLink()}
+                  disabled={
+                    creatingLink ||
+                    !newLinkSource.trim() ||
+                    !newLinkTarget.trim()
+                  }
+                  className="rounded-md bg-[#1ECEFA] px-3 py-2 text-xs font-semibold text-black disabled:opacity-60"
+                >
+                  {creatingLink ? 'Creating...' : 'Create'}
+                </button>
+              </div>
+
+              {data.links.length === 0 ? (
+                <p className="mt-3 text-xs text-slate-400">
+                  No short links yet.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {data.links.map((link) => (
+                    <div
+                      key={link.id}
+                      className="rounded-md border border-white/10 bg-[#0E141D] px-3 py-2"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="break-all text-xs text-[#8CEBFF]">
+                          {appBase}/s/{link.shortCode}
+                        </span>
+                        <span className="text-xs text-slate-300">
+                          {link.clickCount} clicks
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Source: {(link.source ?? 'direct').toLowerCase()}
+                      </p>
+                      <p className="break-all text-[11px] text-slate-500">
+                        {link.targetUrl}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
           </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-sm font-bold text-slate-900 mb-4">Short links</h3>
-            <div className="grid gap-2 mb-4 lg:grid-cols-[200px_1fr_auto]">
-              <input value={newLinkSource} onChange={(event) => setNewLinkSource(event.target.value)}
-                placeholder="Source label"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-              <input value={newLinkTarget} onChange={(event) => setNewLinkTarget(event.target.value)}
-                placeholder="Target URL (https://...)"
-                className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-              <button onClick={handleCreateLink} disabled={creatingLink || !newLinkSource.trim() || !newLinkTarget.trim()}
-                className="rounded-md bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-700 disabled:opacity-50">
-                {creatingLink ? '...' : 'Create'}
-              </button>
-            </div>
-            {data.links.length === 0 ? (
-              <p className="text-sm text-slate-400">No links yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {data.links.map((link) => (
-                  <div key={link.id} className="flex flex-col gap-1 rounded-lg border border-slate-100 px-3 py-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs text-blue-600">{apiBase}/s/{link.shortCode}</span>
-                      <span className="text-xs font-medium text-slate-900">{link.clickCount} clicks</span>
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      Source: {link.source ?? 'direct'}
-                    </div>
-                    <div className="truncate text-xs text-slate-500">
-                      {link.targetUrl}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </FeaturePage>
   );
 }

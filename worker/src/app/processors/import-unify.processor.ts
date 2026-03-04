@@ -116,6 +116,27 @@ export class ImportUnifyProcessor extends WorkerHost {
       focusQuestion,
       manualFallback,
     } = job.data;
+
+    const existingRun = await this.prisma.profileImportRun.findUnique({
+      where: { id: runId },
+      select: {
+        status: true,
+        draftAssetId: true,
+      },
+    });
+    if (
+      existingRun &&
+      (existingRun.status === 'awaiting_review' ||
+        existingRun.status === 'partial' ||
+        existingRun.status === 'completed') &&
+      !!existingRun.draftAssetId
+    ) {
+      this.logger.log(
+        `[import-unify] Skipping ${runId}; already ${existingRun.status}.`,
+      );
+      return;
+    }
+
     await this.updateRun(runId, {
       status: 'running',
       progressPct: 10,
