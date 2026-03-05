@@ -19,8 +19,9 @@ import {
 } from '@/components/ui/icons';
 
 type Tab = 'overview' | 'edit' | 'preview' | 'analytics' | 'share' | 'settings';
+type TabIcon = React.ComponentType<{ className?: string }>;
 
-const TABS: Array<{ id: Tab; label: string; Icon: React.FC<React.SVGProps<SVGSVGElement>> }> = [
+const TABS: Array<{ id: Tab; label: string; Icon: TabIcon }> = [
   { id: 'overview', label: 'Overview', Icon: Globe },
   { id: 'edit', label: 'Edit', Icon: Sparkles },
   { id: 'preview', label: 'Preview & Publish', Icon: ArrowUpRight },

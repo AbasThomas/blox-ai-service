@@ -1,8 +1,7 @@
 import type { IconType } from 'react-icons';
 import {
-  SiAdobeillustrator,
-  SiAdobephotoshop,
-  SiAdobexd,
+  SiAffinitydesigner,
+  SiAffinityphoto,
   SiAngular,
   SiDjango,
   SiDocker,
@@ -17,7 +16,7 @@ import {
   SiGraphql,
   SiHtml5,
   SiJavascript,
-  SiJava,
+  SiOpenjdk,
   SiLaravel,
   SiMysql,
   SiNextdotjs,
@@ -31,7 +30,9 @@ import {
   SiTypescript,
   SiVuedotjs,
   SiWebflow,
+  SiXdadevelopers,
 } from 'react-icons/si';
+import { FaPenRuler, FaPaintbrush } from 'react-icons/fa6';
 import { FiCode } from 'react-icons/fi';
 
 export type SkillPersona = 'developer' | 'designer' | 'general';
@@ -47,7 +48,7 @@ const SKILL_ICON_MAP: Record<string, SkillIconMatch> = {
   typescript: { icon: SiTypescript, colorClass: 'text-blue-400' },
   'node.js': { icon: SiNodedotjs, colorClass: 'text-green-500' },
   nodejs: { icon: SiNodedotjs, colorClass: 'text-green-500' },
-  java: { icon: SiJava, colorClass: 'text-orange-400' },
+  java: { icon: SiOpenjdk, colorClass: 'text-orange-400' },
   spring: { icon: SiSpring, colorClass: 'text-green-500' },
   django: { icon: SiDjango, colorClass: 'text-emerald-500' },
   express: { icon: SiExpress, colorClass: 'text-slate-300' },
@@ -69,10 +70,12 @@ const SKILL_ICON_MAP: Record<string, SkillIconMatch> = {
   firebase: { icon: SiFirebase, colorClass: 'text-amber-400' },
   flutter: { icon: SiFlutter, colorClass: 'text-sky-400' },
   figma: { icon: SiFigma, colorClass: 'text-pink-400' },
-  'adobe xd': { icon: SiAdobexd, colorClass: 'text-fuchsia-400' },
+  'adobe xd': { icon: SiXdadevelopers, colorClass: 'text-fuchsia-400' },
   sketch: { icon: SiSketch, colorClass: 'text-orange-400' },
-  photoshop: { icon: SiAdobephotoshop, colorClass: 'text-blue-400' },
-  illustrator: { icon: SiAdobeillustrator, colorClass: 'text-amber-400' },
+  photoshop: { icon: FaPaintbrush, colorClass: 'text-blue-400' },
+  illustrator: { icon: FaPenRuler, colorClass: 'text-amber-400' },
+  'affinity photo': { icon: SiAffinityphoto, colorClass: 'text-cyan-400' },
+  'affinity designer': { icon: SiAffinitydesigner, colorClass: 'text-orange-400' },
   framer: { icon: SiFramer, colorClass: 'text-violet-300' },
   webflow: { icon: SiWebflow, colorClass: 'text-indigo-400' },
   tailwind: { icon: SiTailwindcss, colorClass: 'text-cyan-400' },

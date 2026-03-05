@@ -48,7 +48,7 @@ function getContactEmail(profile: PublicProfilePayload) {
       link.url.startsWith('mailto:') ||
       link.label.toLowerCase().includes('email'),
   );
-  return contactLink?.url.replace('mailto:', '') ?? profile.user.email ?? '';
+  return contactLink?.url.replace('mailto:', '') ?? '';
 }
 
 function profileName(profile: PublicProfilePayload) {

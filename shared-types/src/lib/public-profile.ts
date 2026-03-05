@@ -65,7 +65,7 @@ export interface PublicProfilePayload {
   canonicalUrl: string;
   user: {
     fullName: string;
-    email?: string;
+    emailInitials?: string;
     headline?: string;
     avatarUrl?: string;
   };

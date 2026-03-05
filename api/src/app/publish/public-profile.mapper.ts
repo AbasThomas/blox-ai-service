@@ -323,6 +323,13 @@ function getAppHost(): string {
   }
 }
 
+function emailInitials(value: string | undefined): string | undefined {
+  const local = asString(value).split('@')[0]?.replace(/[^a-z0-9]/gi, '') ?? '';
+  if (local.length >= 2) return local.slice(0, 2).toLowerCase();
+  if (local.length === 1) return `${local.toLowerCase()}${local.toLowerCase()}`;
+  return undefined;
+}
+
 export function mapAssetToPublicProfile(input: {
   subdomain: string;
   asset: AssetWithOwner;
@@ -413,7 +420,7 @@ export function mapAssetToPublicProfile(input: {
     canonicalUrl: `https://${subdomain}.${getAppHost()}`,
     user: {
       fullName: asset.user.fullName,
-      email: asString(asset.user.email) || undefined,
+      emailInitials: emailInitials(asset.user.email),
       headline: heroHeading,
       avatarUrl: asString(asRecord(content.profile).avatarUrl) || undefined,
     },

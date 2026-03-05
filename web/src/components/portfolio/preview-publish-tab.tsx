@@ -99,20 +99,44 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
   const [seoAudit, setSeoAudit] = useState<SeoAudit | null>(null);
   const [auditing, setAuditing] = useState(false);
   const [rawContent, setRawContent] = useState<Record<string, unknown>>({});
+  const [assetTitle, setAssetTitle] = useState('');
+  const [assetUser, setAssetUser] = useState<{ fullName?: string; email?: string }>({});
 
   const publicUrl = useMemo(() => {
     if (typeof window === 'undefined') return '';
     return resolvePublicUrl(publishedUrl, normSub(subdomain));
   }, [publishedUrl, subdomain]);
 
+  const previewProfile = useMemo<PublicProfilePayload>(() => {
+    return buildPreviewProfile({
+      content: rawContent,
+      title: assetTitle,
+      seoConfig: seoRaw,
+      user: assetUser,
+      subdomain: normSub(subdomain) || 'preview',
+      publishedUrl: publicUrl,
+      templateId,
+    });
+  }, [rawContent, assetTitle, seoRaw, assetUser, subdomain, publicUrl, templateId]);
+
   const load = useCallback(async () => {
     try {
       const data = (await assetsApi.getById(assetId)) as {
-        slug?: string; title?: string; publishedUrl?: string; content?: unknown; seoConfig?: unknown;
+        slug?: string;
+        title?: string;
+        publishedUrl?: string;
+        content?: unknown;
+        seoConfig?: unknown;
+        user?: { fullName?: string; email?: string };
       };
       const seeded = normSub(asStr(data.slug) || asStr(data.title));
       if (seeded) setSubdomain(seeded);
       if (data.publishedUrl) setPublishedUrl(data.publishedUrl);
+      setAssetTitle(asStr(data.title));
+      setAssetUser({
+        fullName: asStr(data.user?.fullName) || undefined,
+        email: asStr(data.user?.email) || undefined,
+      });
       const content = toRecord(data.content);
       setRawContent(content);
       setTemplateId(normalizePortfolioTemplateId(asStr(content.templateId)));
@@ -133,20 +157,28 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
 
   useEffect(() => { void load(); }, [load]);
 
+  const persistTemplateSelection = useCallback(async () => {
+    const nextId = normalizePortfolioTemplateId(templateId);
+    if (asStr(rawContent.templateId) === nextId) return;
+    const nextContent = { ...rawContent, templateId: nextId };
+    await assetsApi.update(assetId, { content: nextContent });
+    setRawContent(nextContent);
+    setTemplateId(nextId);
+  }, [assetId, rawContent, templateId]);
+
   const handleSaveTemplate = async () => {
-    setSavingTemplate(true); setMsg('');
+    setSavingTemplate(true);
+    setMsg('');
     try {
-      const nextId = normalizePortfolioTemplateId(templateId);
-      const nextContent = { ...rawContent, templateId: nextId };
-      await assetsApi.update(assetId, { content: nextContent });
-      setTemplateId(nextId);
-      setRawContent(nextContent);
-      setMsg('Template saved. Publish to apply it.');
+      await persistTemplateSelection();
+      setMsg('Template applied to preview and saved.');
       setMsgKind('ok');
     } catch (err) {
       setMsg(err instanceof Error ? err.message : 'Could not save template.');
       setMsgKind('error');
-    } finally { setSavingTemplate(false); }
+    } finally {
+      setSavingTemplate(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -154,6 +186,7 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
     if (!sub) { setMsg('Enter a valid subdomain.'); setMsgKind('error'); return; }
     setPublishing(true); setMsg('');
     try {
+      await persistTemplateSelection();
       const res = (await publishApi.publish({ assetId, subdomain: sub })) as { publishedUrl?: string; subdomain?: string; status?: string };
       const newSub = normSub(res.subdomain ?? sub);
       setSubdomain(newSub);
@@ -279,7 +312,7 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 {(['desktop', 'tablet', 'mobile'] as ViewMode[]).map((m) => (
                   <button key={m} type="button" onClick={() => setViewMode(m)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all ${
-                      viewMode === m ? 'bg-purple-500 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                      viewMode === m ? 'bg-cyan-400 text-slate-950' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                     }`}>
                     {m}
                   </button>
@@ -294,18 +327,12 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
             </div>
 
             <div className="flex justify-center overflow-hidden rounded-xl border border-white/8 bg-[#060A12]">
-              <div className={`${VIEW_WIDTHS[viewMode]} mx-auto w-full transition-all duration-300`}>
-                {isLive ? (
-                  <iframe src={publicUrl} className="h-[560px] w-full rounded-xl border-none" title="Portfolio preview" />
-                ) : (
-                  <div className="flex h-[400px] flex-col items-center justify-center gap-3 p-8 text-center">
-                    <div className="h-12 w-12 rounded-xl bg-[#1ECEFA]/10 flex items-center justify-center">
-                      <Globe className="h-6 w-6 text-[#1ECEFA]" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-400">Not published yet</p>
-                    <p className="text-xs text-slate-600 max-w-[240px]">Publish your portfolio to see a live preview here. The template you selected will be applied.</p>
-                  </div>
-                )}
+              <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] w-full overflow-y-auto transition-all duration-300 transform-gpu`}>
+                <PortfolioTemplateRenderer
+                  profile={previewProfile}
+                  subdomain={normSub(subdomain) || previewProfile.subdomain}
+                  templateId={templateId}
+                />
               </div>
             </div>
           </div>

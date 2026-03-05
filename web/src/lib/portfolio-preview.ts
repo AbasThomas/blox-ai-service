@@ -48,6 +48,13 @@ function inferLinkLabel(url: string): string {
   }
 }
 
+function deriveEmailInitials(email: string): string | undefined {
+  const local = email.split('@')[0]?.replace(/[^a-z0-9]/gi, '') ?? '';
+  if (local.length >= 2) return local.slice(0, 2).toLowerCase();
+  if (local.length === 1) return `${local.toLowerCase()}${local.toLowerCase()}`;
+  return undefined;
+}
+
 function coerceLinks(value: unknown): SmartLink[] {
   if (!Array.isArray(value)) return [];
 
@@ -237,7 +244,7 @@ export function buildPreviewProfile(input: {
       asString(input.publishedUrl) || `https://${input.subdomain}.blox.app`,
     user: {
       fullName,
-      email: asString(input.user?.email) || undefined,
+      emailInitials: deriveEmailInitials(asString(input.user?.email)),
       headline: heroHeading,
       avatarUrl: asString(profile.avatarUrl) || undefined,
     },

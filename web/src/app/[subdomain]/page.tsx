@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import { fetchPublicProfile } from '@/lib/public-profile';
 import { normalizePortfolioTemplateId } from '@/lib/portfolio-templates';
 import { isReservedSubdomain } from '@/lib/subdomains';
@@ -86,7 +85,7 @@ export async function generateMetadata({ params }: SubdomainPageProps): Promise<
 
   const templateId = normalizePortfolioTemplateId(profile.templateId);
   const accent = TEMPLATE_ACCENTS[templateId] ?? TEMPLATE_ACCENTS['portfolio-modern-001'];
-  const initials = initialsFromEmail(profile.user.email, profile.user.fullName);
+  const initials = profile.user.emailInitials || initialsFromEmail(undefined, profile.user.fullName);
 
   const subdomainDomain = `${subdomain}.${BASE_URL.replace(/^https?:\/\//, '')}`;
   const canonical = profile.canonicalUrl ?? `https://${subdomainDomain}`;

@@ -94,7 +94,33 @@ async function readFileAsDataUrl(file: File) {
 function stringifyProjectItem(item: unknown): string {
   if (typeof item === 'string') return item;
   const row = asRecord(item);
-  return [asString(row.title) || asString(row.name), asString(row.description), asString(row.url)].filter(Boolean).join(' | ');
+  const imageList = [
+    ...asArray(row.images)
+      .map((image) => {
+        if (typeof image === 'string') return image;
+        return asString(asRecord(image).url || asRecord(image).imageUrl);
+      })
+      .filter(Boolean),
+    ...asArray(row.gallery)
+      .map((image) => {
+        if (typeof image === 'string') return image;
+        return asString(asRecord(image).url || asRecord(image).imageUrl);
+      })
+      .filter(Boolean),
+  ];
+  const snapshot =
+    asString(row.snapshotUrl) ||
+    asString(row.thumbnail) ||
+    asString(row.imageUrl) ||
+    imageList[0] ||
+    '';
+  return serializeProjectLine({
+    title: asString(row.title) || asString(row.name),
+    description: asString(row.description),
+    url: asString(row.url),
+    snapshotUrl: snapshot,
+    images: imageList,
+  });
 }
 
 function stringifyCertificationItem(item: unknown): string {
@@ -138,9 +164,49 @@ function normalizeContent(raw: ContentRecord | undefined): EditorContent {
   };
 }
 
+interface ProjectEditorLine {
+  title: string;
+  description: string;
+  url: string;
+  snapshotUrl: string;
+  images: string[];
+}
+
+function parseProjectEditorLine(line: string): ProjectEditorLine {
+  const [title = '', description = '', url = '', snapshotUrl = '', imagesRaw = ''] =
+    line.split('|').map((chunk) => chunk.trim());
+  const images = imagesRaw
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return { title, description, url, snapshotUrl, images };
+}
+
+function serializeProjectLine(project: ProjectEditorLine): string {
+  return [
+    project.title.trim(),
+    project.description.trim(),
+    project.url.trim(),
+    project.snapshotUrl.trim(),
+    project.images.map((image) => image.trim()).filter(Boolean).join(', '),
+  ]
+    .filter(Boolean)
+    .join(' | ');
+}
+
 function parseProjectLine(line: string) {
-  const parts = line.split('|').map((c) => c.trim()).filter(Boolean);
-  return { title: parts[0] ?? 'Project', name: parts[0] ?? 'Project', description: parts[1] ?? '', ...(parts[2] ? { url: parts[2] } : {}) };
+  const parsed = parseProjectEditorLine(line);
+  const title = parsed.title || 'Project';
+  const snapshotUrl = parsed.snapshotUrl || parsed.images[0] || '';
+  const images = parsed.images.filter(Boolean).map((url) => ({ url }));
+  return {
+    title,
+    name: title,
+    description: parsed.description,
+    ...(parsed.url ? { url: parsed.url } : {}),
+    ...(snapshotUrl ? { snapshotUrl, imageUrl: snapshotUrl } : {}),
+    ...(images.length > 0 ? { images } : {}),
+  };
 }
 
 function parseCertificationLine(line: string) {
@@ -311,13 +377,43 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
     } catch (error) { showNotice(error instanceof Error ? error.message : 'Could not import profile image.', 'error'); }
   };
 
-  const updateListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications', index: number, value: string) => {
+  const updateListItem = (key: 'experience' | 'skills' | 'certifications', index: number, value: string) => {
     setContent((prev) => { const next = [...prev[key]]; next[index] = value; return { ...prev, [key]: next }; });
   };
-  const addListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications') =>
+  const addListItem = (key: 'experience' | 'skills' | 'certifications') =>
     setContent((prev) => ({ ...prev, [key]: [...prev[key], ''] }));
-  const removeListItem = (key: 'experience' | 'projects' | 'skills' | 'certifications', index: number) =>
+  const removeListItem = (key: 'experience' | 'skills' | 'certifications', index: number) =>
     setContent((prev) => ({ ...prev, [key]: prev[key].filter((_, idx) => idx !== index) }));
+
+  const updateProjectLine = useCallback((index: number, updater: (line: ProjectEditorLine) => ProjectEditorLine) => {
+    setContent((prev) => {
+      const next = [...prev.projects];
+      const parsed = parseProjectEditorLine(next[index] ?? '');
+      next[index] = serializeProjectLine(updater(parsed));
+      return { ...prev, projects: next };
+    });
+  }, []);
+
+  const addProject = () =>
+    setContent((prev) => ({ ...prev, projects: [...prev.projects, ''] }));
+
+  const removeProject = (index: number) =>
+    setContent((prev) => ({ ...prev, projects: prev.projects.filter((_, idx) => idx !== index) }));
+
+  const handleProjectImageUpload = async (projectIndex: number, file: File | null) => {
+    if (!file) return;
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      if (!dataUrl) return;
+      updateProjectLine(projectIndex, (line) => {
+        const images = [...line.images, dataUrl];
+        return { ...line, snapshotUrl: line.snapshotUrl || dataUrl, images };
+      });
+      showNotice('Project image added. Save to persist it.', 'info');
+    } catch (error) {
+      showNotice(error instanceof Error ? error.message : 'Could not import project image.', 'error');
+    }
+  };
 
   const handleNext = async () => {
     if (step === 1 || step === 2) { const ok = await handleSave(); if (!ok) return; }
@@ -332,7 +428,10 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
     healthScore >= 70 ? 'text-emerald-300' : healthScore >= 40 ? 'text-amber-300' : 'text-rose-300',
     [healthScore]);
 
-  const projectsCount = content.projects.filter((i) => i.trim()).length;
+  const projectsCount = content.projects.filter((line) => {
+    const parsed = parseProjectEditorLine(line);
+    return Boolean(parsed.title.trim() || parsed.description.trim() || parsed.url.trim());
+  }).length;
   const certificationsCount = content.certifications.filter((i) => i.trim()).length;
   const skillsCount = content.skills.filter((i) => i.trim()).length;
   const experienceCount = content.experience.filter((i) => i.trim()).length;
@@ -346,7 +445,7 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
   ];
   const completionPct = Math.round((completionChecks.filter((c) => c.ok).length / completionChecks.length) * 100);
 
-  const renderListEditor = (key: 'experience' | 'projects' | 'skills' | 'certifications', hint?: string) => (
+  const renderListEditor = (key: 'experience' | 'skills' | 'certifications', hint?: string) => (
     <div className="space-y-2">
       {hint ? <p className="text-[11px] text-slate-600">{hint}</p> : null}
       {content[key].length === 0 ? (
@@ -369,6 +468,139 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
       <button type="button" onClick={() => addListItem(key)}
         className="w-full rounded-xl border border-dashed border-white/12 px-3 py-2.5 text-xs font-medium text-slate-500 hover:border-indigo-500/40 hover:text-indigo-300 transition-all">
         + Add entry
+      </button>
+    </div>
+  );
+
+  const renderProjectEditor = () => (
+    <div className="space-y-3">
+      <p className="text-[11px] text-slate-600">
+        Add a title, description, URL, snapshot image, and optional gallery images.
+      </p>
+      {content.projects.length === 0 ? (
+        <p className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2.5 text-xs text-slate-600">
+          No projects yet.
+        </p>
+      ) : null}
+
+      {content.projects.map((projectLine, index) => {
+        const project = parseProjectEditorLine(projectLine);
+        return (
+          <div key={`project-${index}`} className="space-y-3 rounded-xl border border-white/8 bg-white/[0.02] p-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-1">
+                <span className="text-[11px] text-slate-500">Title</span>
+                <input
+                  value={project.title}
+                  onChange={(event) =>
+                    updateProjectLine(index, (line) => ({ ...line, title: event.target.value }))
+                  }
+                  className={INPUT_CLS}
+                  placeholder="Project title"
+                />
+              </label>
+              <label className="block space-y-1">
+                <span className="text-[11px] text-slate-500">Project URL</span>
+                <input
+                  value={project.url}
+                  onChange={(event) =>
+                    updateProjectLine(index, (line) => ({ ...line, url: event.target.value }))
+                  }
+                  className={INPUT_CLS}
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+
+            <label className="block space-y-1">
+              <span className="text-[11px] text-slate-500">Description</span>
+              <textarea
+                rows={3}
+                value={project.description}
+                onChange={(event) =>
+                  updateProjectLine(index, (line) => ({ ...line, description: event.target.value }))
+                }
+                className={TEXTAREA_CLS}
+                placeholder="Describe your project outcome"
+              />
+            </label>
+
+            <label className="block space-y-1">
+              <span className="text-[11px] text-slate-500">Snapshot URL</span>
+              <input
+                value={project.snapshotUrl}
+                onChange={(event) =>
+                  updateProjectLine(index, (line) => ({ ...line, snapshotUrl: event.target.value }))
+                }
+                className={INPUT_CLS}
+                placeholder="Primary preview image URL"
+              />
+            </label>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-500">Gallery images</span>
+                <label className="inline-flex cursor-pointer items-center rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-white/5">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) =>
+                      void handleProjectImageUpload(index, event.target.files?.[0] ?? null)
+                    }
+                  />
+                  Upload image
+                </label>
+              </div>
+
+              {project.images.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {project.images.map((image, imageIndex) => (
+                    <div key={`${image}-${imageIndex}`} className="group relative h-16 w-24 overflow-hidden rounded-md border border-white/10">
+                      <img src={image} alt={`Project image ${imageIndex + 1}`} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateProjectLine(index, (line) => ({
+                            ...line,
+                            images: line.images.filter((_, idx) => idx !== imageIndex),
+                            snapshotUrl:
+                              line.snapshotUrl === image
+                                ? line.images.filter((_, idx) => idx !== imageIndex)[0] ?? ''
+                                : line.snapshotUrl,
+                          }))
+                        }
+                        className="absolute right-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-slate-600">No gallery images uploaded.</p>
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => removeProject(index)}
+                className="rounded-lg border border-rose-500/20 px-3 py-1.5 text-xs text-rose-300 hover:bg-rose-500/10"
+              >
+                Remove project
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      <button
+        type="button"
+        onClick={addProject}
+        className="w-full rounded-xl border border-dashed border-white/12 px-3 py-2.5 text-xs font-medium text-slate-500 hover:border-indigo-500/40 hover:text-indigo-300 transition-all"
+      >
+        + Add project
       </button>
     </div>
   );
@@ -570,7 +802,7 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
                 {renderListEditor('skills', 'One skill per entry')}
 
                 <SectionDivider label="Projects" />
-                {renderListEditor('projects', 'Format: Title | Description | URL')}
+                {renderProjectEditor()}
 
                 <SectionDivider label="Certifications" />
                 {renderListEditor('certifications', 'Format: Title | Issuer | Date')}
