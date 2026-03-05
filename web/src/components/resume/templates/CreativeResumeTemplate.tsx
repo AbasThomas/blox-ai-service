@@ -8,7 +8,7 @@ export function CreativeResumeTemplate({ data }: ResumeTemplateProps) {
     <div className="min-h-[297mm] w-[210mm] overflow-hidden bg-white font-sans text-slate-900 shadow-xl print:m-0 print:h-auto print:w-auto print:overflow-visible print:shadow-none">
       <div className="grid h-full grid-cols-[35%_65%]">
         {/* Left Column (Vibrant) */}
-        <div className="bg-purple-600 p-8 text-white print:bg-purple-600 print:text-white print:print-color-adjust-exact">
+        <div className="bg-purple-600 p-8 text-white print:bg-purple-600 print:text-white print:print-color-adjust-exact h-full">
           <div className="mb-10 text-center">
             {/* Placeholder for Photo/Logo */}
             <div className="mx-auto mb-4 flex h-32 w-32 items-center justify-center rounded-full bg-white/20 text-4xl font-bold">

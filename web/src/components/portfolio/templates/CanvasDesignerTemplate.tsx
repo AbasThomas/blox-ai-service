@@ -249,9 +249,6 @@ export function CanvasDesignerTemplate({ profile, subdomain }: CanvasDesignerTem
           <div className="space-y-6">
             <CanvasAvatar url={user.avatarUrl} name={name} />
             <div>
-              <p style={{ color: '#c2410c', fontSize: '0.78rem', letterSpacing: '0.12em', marginBottom: 10 }}>
-                {subdomain}.blox.app
-              </p>
               <h1 style={{ fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', fontWeight: 900, lineHeight: 1.1, color: '#431407' }}>
                 {sections.hero.heading || name}
               </h1>

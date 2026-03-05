@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Instrument_Sans } from 'next/font/google';
+import { Inter, Instrument_Sans, Rubik_Maze } from 'next/font/google';
 import './global.css';
 import { PosthogProvider } from '../components/layout/posthog-provider';
 import { GlobalInProgressWidget } from '../components/shared/global-in-progress-widget';
@@ -15,6 +15,13 @@ const inter = Inter({
 const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
   variable: '--font-instrument-sans',
+  display: 'swap',
+});
+
+const rubikMaze = Rubik_Maze({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-rubik-maze',
   display: 'swap',
 });
 
@@ -81,7 +88,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${instrumentSans.variable} font-sans`}>
+      <body className={`${inter.variable} ${instrumentSans.variable} ${rubikMaze.variable} font-sans`}>
         <PosthogProvider>
           <div className="flex min-h-screen flex-col">
             {children}

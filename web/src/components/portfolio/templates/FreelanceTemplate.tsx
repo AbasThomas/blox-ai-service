@@ -169,7 +169,7 @@ const NAV_ITEMS = ['about', 'projects', 'skills', 'contact'];
 
 export function FreelanceTemplate({ profile, subdomain }: FreelanceTemplateProps) {
   const { sections, user } = profile;
-  const name = user.fullName || 'Portfolio Owner';
+  const name = user?.fullName || 'Portfolio Owner';
   const [active, setActive] = useState('hero');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -328,11 +328,10 @@ export function FreelanceTemplate({ profile, subdomain }: FreelanceTemplateProps
       {/* HERO — CENTERED */}
       <section id="hero" className="flex min-h-screen flex-col items-center justify-center px-6 pt-28 pb-16 text-center">
         <div className="mx-auto max-w-3xl space-y-6">
-          <FreelanceAvatar url={user.avatarUrl} name={name} />
+          <div className="flex justify-center">
+            <FreelanceAvatar url={user?.avatarUrl} name={name} />
+          </div>
           <div>
-            <p style={{ color: '#78350F', fontSize: '0.8rem', letterSpacing: '0.12em' }} className="mb-2">
-              {subdomain}.blox.app
-            </p>
             <h1
               style={{
                 fontSize: 'clamp(2.2rem, 5.5vw, 4rem)',
@@ -343,7 +342,7 @@ export function FreelanceTemplate({ profile, subdomain }: FreelanceTemplateProps
             >
               {sections.hero.heading || `Hi, I'm ${name}`}
             </h1>
-            {user.headline && (
+            {user?.headline && (
               <p style={{ color: '#F59E0B', fontWeight: 500, fontSize: '1.1rem' }} className="mt-3">
                 {user.headline}
               </p>

@@ -115,7 +115,7 @@ function GlassProjectCard({ project }: { project: PublicProfilePayload['sections
 
 const NAV_ITEMS = ['about', 'projects', 'skills', 'contact'];
 
-export function GlassDevTemplate({ profile, subdomain }: GlassDevTemplateProps) {
+export function GlassDevTemplate({ profile }: GlassDevTemplateProps) {
   const { sections, user } = profile;
   const name = user.fullName || 'Portfolio Owner';
   const [active, setActive] = useState('hero');
@@ -222,7 +222,6 @@ export function GlassDevTemplate({ profile, subdomain }: GlassDevTemplateProps) 
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <p style={{ color: GLASS.muted, fontSize: '0.75rem', letterSpacing: '0.1em', marginBottom: 10 }}>{subdomain}.blox.app</p>
           <h1 style={{ fontSize: 'clamp(2.2rem, 6vw, 4rem)', fontWeight: 800, lineHeight: 1.1, color: GLASS.text, maxWidth: '40rem', margin: '0 auto' }}>
             {sections.hero.heading || name}
           </h1>
@@ -399,7 +398,7 @@ export function GlassDevTemplate({ profile, subdomain }: GlassDevTemplateProps) 
       <footer style={{ position: 'relative', zIndex: 1, borderTop: `1px solid ${GLASS.cardBorder}` }} className="px-6 py-5">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <p style={{ color: '#1e2a4a', fontSize: '0.78rem' }}>© {new Date().getFullYear()} {name}</p>
-          <p style={{ color: GLASS.accentLight, fontSize: '0.72rem' }}>{subdomain}.blox.app</p>
+          <p style={{ color: GLASS.accentLight, fontSize: '0.72rem' }}>Built with Blox</p>
         </div>
       </footer>
     </main>

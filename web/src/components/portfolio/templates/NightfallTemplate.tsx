@@ -259,9 +259,6 @@ export function NightfallTemplate({ profile, subdomain }: NightfallTemplateProps
         />
         <div className="relative mx-auto grid w-full max-w-5xl gap-12 lg:grid-cols-[1fr_320px] lg:items-center">
           <div className="space-y-6">
-            <p style={{ color: '#1ECEFA', fontSize: '0.72rem', letterSpacing: '0.18em', fontFamily: 'monospace' }}>
-              {subdomain}.blox.app
-            </p>
             <h1
               style={{
                 fontSize: 'clamp(2.4rem, 6vw, 4.5rem)',
@@ -564,7 +561,6 @@ export function NightfallTemplate({ profile, subdomain }: NightfallTemplateProps
       <footer style={{ borderTop: '1px solid rgba(30,206,250,0.08)' }} className="px-6 py-6">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <p style={{ color: '#1e293b', fontSize: '0.8rem' }}>© {new Date().getFullYear()} {name}</p>
-          <p style={{ color: '#1ECEFA', fontFamily: 'monospace', fontSize: '0.72rem' }}>{subdomain}.blox.app</p>
         </div>
       </footer>
     </main>

@@ -52,7 +52,7 @@ function getContactEmail(profile: PublicProfilePayload) {
 }
 
 function profileName(profile: PublicProfilePayload) {
-  return profile.user.fullName || 'Portfolio Owner';
+  return profile.user?.fullName || 'Portfolio Owner';
 }
 
 function socialLinks(profile: PublicProfilePayload) {
@@ -98,9 +98,6 @@ export function PortfolioTemplateScaffold({
       <section id="hero" className="relative flex min-h-screen items-center px-4 pt-28 pb-16 sm:px-6">
         <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
           <div className="space-y-6">
-            <p className={`${theme.mutedTextClassName} text-sm`}>
-              {subdomain}.blox.app
-            </p>
             <h1 className={theme.heroTitleClassName}>{sections.hero.heading || person}</h1>
             <p className={theme.heroBodyClassName}>
               {sections.hero.body || sections.about || 'A portfolio experience built with Blox.'}
@@ -118,7 +115,7 @@ export function PortfolioTemplateScaffold({
           <div className={`rounded-3xl p-6 ${theme.heroPanelClassName}`}>
             <div className="space-y-4">
               <div className="mx-auto h-40 w-40 overflow-hidden rounded-2xl border border-current/10">
-                {user.avatarUrl ? (
+                {user?.avatarUrl ? (
                   isDataUrl(user.avatarUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -144,7 +141,7 @@ export function PortfolioTemplateScaffold({
               </div>
               <div>
                 <p className="text-lg font-semibold">{person}</p>
-                {profile.user.headline ? (
+                {profile.user?.headline ? (
                   <p className={theme.mutedTextClassName}>{profile.user.headline}</p>
                 ) : null}
               </div>

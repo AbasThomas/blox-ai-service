@@ -273,9 +273,6 @@ export function MinimalTemplate({ profile, subdomain }: MinimalTemplateProps) {
       <section id="hero" className="flex min-h-screen items-center px-6 pt-20 pb-16">
         <div className="mx-auto grid w-full max-w-6xl gap-12 lg:grid-cols-[1fr_280px] lg:items-center">
           <div>
-            <p style={{ color: '#d1d5db', fontSize: '0.75rem', letterSpacing: '0.12em', marginBottom: 24 }}>
-              {subdomain}.blox.app
-            </p>
             <h1
               style={{
                 fontFamily: 'Georgia, "Times New Roman", serif',

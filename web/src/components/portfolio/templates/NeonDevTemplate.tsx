@@ -201,7 +201,7 @@ export function NeonDevTemplate({ profile, subdomain }: NeonDevTemplateProps) {
         <div className="mx-auto flex h-13 max-w-6xl items-center justify-between px-6 py-3">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 6, padding: '3px 12px', fontFamily: 'monospace', fontSize: '0.75rem', color: '#a78bfa' }}>
-              portfolio://<span style={{ color: '#c4b5fd' }}>{subdomain}</span>
+              portfolio://site
             </div>
           </div>
           <nav className="hidden items-center gap-1 md:flex">
@@ -420,7 +420,6 @@ export function NeonDevTemplate({ profile, subdomain }: NeonDevTemplateProps) {
       <footer style={{ borderTop: '1px solid rgba(139,92,246,0.08)' }} className="px-6 py-5">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <span style={{ color: '#1e1b4b', fontFamily: 'monospace', fontSize: '0.72rem' }}>// © {new Date().getFullYear()} {name}</span>
-          <span style={{ color: '#a78bfa', fontFamily: 'monospace', fontSize: '0.7rem' }}>{subdomain}.blox.app</span>
         </div>
       </footer>
     </main>

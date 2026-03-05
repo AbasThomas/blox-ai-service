@@ -175,9 +175,25 @@ const SKILL_ICON_MAP: Record<string, SkillIconMatch> = {
 const DESIGNER_TOKENS = ['figma', 'adobe', 'ux', 'ui', 'sketch', 'framer', 'webflow', 'canva', 'blender', 'procreate', 'illustrator', 'photoshop', 'indesign', 'lightroom', 'premiere', 'after effects', 'affinity', 'gimp', 'inkscape', 'coreldraw', 'cinema', 'maya'];
 const DEVELOPER_TOKENS = ['react', 'node', 'typescript', 'javascript', 'api', 'backend', 'frontend', 'java', 'docker', 'python', 'rust', 'go', 'kubernetes', 'aws', 'azure', 'cloud', 'mongodb', 'postgresql', 'nestjs', 'django', 'laravel'];
 
-export function detectSkillPersona(skills: string[]): SkillPersona {
+function normalizeSkillValue(skill: unknown): string {
+  if (typeof skill === 'string') return skill.trim();
+  if (typeof skill === 'number' || typeof skill === 'boolean') return String(skill);
+  if (skill && typeof skill === 'object') {
+    const row = skill as Record<string, unknown>;
+    if (typeof row.name === 'string') return row.name.trim();
+    if (typeof row.label === 'string') return row.label.trim();
+    if (typeof row.title === 'string') return row.title.trim();
+  }
+  return '';
+}
+
+export function detectSkillPersona(skills: unknown[]): SkillPersona {
   if (skills.length === 0) return 'general';
-  const lower = skills.map((s) => s.toLowerCase());
+  const lower = skills
+    .map((skill) => normalizeSkillValue(skill))
+    .filter(Boolean)
+    .map((skill) => skill.toLowerCase());
+  if (lower.length === 0) return 'general';
   const designerHits = lower.filter((s) => DESIGNER_TOKENS.some((t) => s.includes(t))).length;
   const developerHits = lower.filter((s) => DEVELOPER_TOKENS.some((t) => s.includes(t))).length;
   if (designerHits > developerHits) return 'designer';
@@ -185,17 +201,20 @@ export function detectSkillPersona(skills: string[]): SkillPersona {
   return 'general';
 }
 
-export function getSkillIconData(skill: string): SkillIconMatch {
-  const normalized = skill.toLowerCase().trim();
+export function getSkillIconData(skill: unknown): SkillIconMatch {
+  const normalized = normalizeSkillValue(skill).toLowerCase();
+  if (!normalized) {
+    return { icon: FiCode, colorClass: 'text-slate-400', hex: '#64748b' };
+  }
   return SKILL_ICON_MAP[normalized] ?? { icon: FiCode, colorClass: 'text-slate-400', hex: '#64748b' };
 }
 
-function getSkillIcon(skill: string): SkillIconMatch {
+function getSkillIcon(skill: unknown): SkillIconMatch {
   return getSkillIconData(skill);
 }
 
 interface SkillBadgeProps {
-  skill: string;
+  skill: unknown;
   persona?: SkillPersona;
   className?: string;
   iconClassName?: string;
@@ -207,6 +226,7 @@ export function SkillBadge({
   className = '',
   iconClassName = '',
 }: SkillBadgeProps) {
+  const label = normalizeSkillValue(skill) || 'Skill';
   const { icon: Icon, colorClass } = getSkillIcon(skill);
   const personaTone =
     persona === 'designer'
@@ -220,7 +240,7 @@ export function SkillBadge({
       className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${personaTone} ${className}`}
     >
       <Icon className={`h-4 w-4 ${colorClass} ${iconClassName}`} aria-hidden="true" />
-      <span>{skill}</span>
+      <span>{label}</span>
     </span>
   );
 }

@@ -375,7 +375,7 @@ export default function HomePage() {
           >
             Your Career,
             <br />
-            <span className="text-[#1ECEFA]">Block by Blox.</span>
+            <span className="text-[#1ECEFA]">Block by <span className="rubik-maze-regular">Blox</span>.</span>
           </motion.h1>
 
           <motion.p
@@ -840,8 +840,7 @@ export default function HomePage() {
         }}
       >
         <h1 
-          className="text-[22vw] leading-[0.7] select-none text-[rgba(30,206,250,0.06)] tracking-tighter mix-blend-screen scale-y-110 reveal-on-scroll"
-          style={{ fontFamily: 'var(--font-instrument-sans), var(--font-inter), system-ui' }}
+          className="rubik-maze-regular text-[22vw] leading-[0.7] select-none text-[rgba(30,206,250,0.06)] tracking-tighter mix-blend-screen scale-y-110 reveal-on-scroll"
         >
           BLOX
         </h1>

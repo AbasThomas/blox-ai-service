@@ -303,9 +303,6 @@ export function DevTerminalTemplate({ profile, subdomain }: DevTerminalTemplateP
                     {user.headline && (
                       <div style={{ color: '#16a34a', fontSize: '0.82rem', marginTop: 4 }}>{user.headline}</div>
                     )}
-                    <div style={{ color: '#14532d', fontSize: '0.75rem', marginTop: 2 }}>
-                      {subdomain}.blox.app
-                    </div>
                   </div>
                 </div>
               </TermOutput>
@@ -592,7 +589,6 @@ export function DevTerminalTemplate({ profile, subdomain }: DevTerminalTemplateP
           <span style={{ color: '#14532d', fontSize: '0.75rem' }}>
             <span style={{ color: '#22c55e' }}>➜</span> © {new Date().getFullYear()} {name}
           </span>
-          <span style={{ color: '#166534', fontSize: '0.72rem' }}>{subdomain}.blox.app</span>
         </div>
       </footer>
     </main>

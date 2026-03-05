@@ -147,7 +147,7 @@ function CaseStudyCard({ project, index }: { project: PublicProfilePayload['sect
 const NAV_ITEMS = ['about', 'work', 'tools', 'contact'];
 const SECTION_MAP: Record<string, string> = { work: 'projects', tools: 'skills' };
 
-export function StudioDesignerTemplate({ profile, subdomain }: StudioDesignerTemplateProps) {
+export function StudioDesignerTemplate({ profile }: StudioDesignerTemplateProps) {
   const { sections, user } = profile;
   const name = user.fullName || 'Portfolio Owner';
   const [active, setActive] = useState('hero');
@@ -247,9 +247,6 @@ export function StudioDesignerTemplate({ profile, subdomain }: StudioDesignerTem
           <div className="space-y-6">
             <StudioAvatar url={user.avatarUrl} name={name} />
             <div>
-              <p style={{ color: '#334155', fontSize: '0.72rem', letterSpacing: '0.15em', marginBottom: 12 }}>
-                {subdomain}.blox.app
-              </p>
               <h1 style={{ fontSize: 'clamp(2.4rem, 6vw, 4.5rem)', fontWeight: 900, lineHeight: 1.05, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
                 {sections.hero.heading || name}
               </h1>
@@ -449,7 +446,7 @@ export function StudioDesignerTemplate({ profile, subdomain }: StudioDesignerTem
       <footer style={{ borderTop: '1px solid rgba(168,85,247,0.08)', background: '#0c0c18' }} className="px-6 py-5">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <p style={{ color: '#1e1b4b', fontSize: '0.78rem' }}>© {new Date().getFullYear()} {name}</p>
-          <p style={{ color: '#a855f7', fontSize: '0.72rem' }}>{subdomain}.blox.app</p>
+          <p style={{ color: '#a855f7', fontSize: '0.72rem' }}>Built with Blox</p>
         </div>
       </footer>
     </main>

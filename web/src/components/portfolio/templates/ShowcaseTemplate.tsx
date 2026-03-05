@@ -331,9 +331,6 @@ export function ShowcaseTemplate({ profile, subdomain }: ShowcaseTemplateProps) 
       <section id="hero" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center' }} className="pt-14">
         <div className="mx-auto grid w-full max-w-6xl gap-0 px-6 py-16 lg:grid-cols-[1fr_400px] lg:items-center">
           <div className="space-y-6 py-12">
-            <p style={{ color: 'rgba(255,228,230,0.3)', fontSize: '0.72rem', letterSpacing: '0.18em' }}>
-              {subdomain}.blox.app
-            </p>
             <h1
               style={{
                 fontSize: 'clamp(2.8rem, 7vw, 5.5rem)',
