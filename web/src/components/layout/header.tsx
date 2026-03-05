@@ -53,8 +53,8 @@ export function Header() {
     router.push('/');
   }
 
-  // Keep marketing navbar consistent across landing/auth pages when logged out.
-  const navLinks = !isAuthenticated ? LANDING_LINKS : SIDEBAR_ITEMS;
+  // Always show marketing links on landing pages, even if logged in.
+  const navLinks = LANDING_LINKS;
 
   if (['/login', '/signup', '/forgot-password'].includes(pathname)) {
     return null;

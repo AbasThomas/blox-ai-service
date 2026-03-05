@@ -194,7 +194,7 @@ export default function ResumesPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/resumes/drafts"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-slate-200 transition-colors hover:border-[#1ECEFA]/40 hover:bg-[#1ECEFA]/10 hover:text-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold uppercasex text-slate-200 transition-colors hover:border-[#1ECEFA]/40 hover:bg-[#1ECEFA]/10 hover:text-white"
             >
               Resume Drafts
             </Link>

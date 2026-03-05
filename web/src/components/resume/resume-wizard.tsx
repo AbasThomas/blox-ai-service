@@ -20,62 +20,18 @@ import {
   GraduationCap,
 } from '@/components/ui/icons';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface ExperienceItem {
-  id: string;
-  role: string;
-  company: string;
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  bullets: string;
-}
-
-interface EducationItem {
-  id: string;
-  degree: string;
-  institution: string;
-  year: string;
-  gpa: string;
-}
-
-interface ContactInfo {
-  name: string;
-  email: string;
-  phone: string;
-  location: string;
-  linkedin: string;
-  website: string;
-}
-
-interface ResumeData {
-  title: string;
-  targetRole: string;
-  persona: string;
-  selectedTemplate: string;
-  tailorToJob: boolean;
-  pullFromPortfolio: boolean;
-  jobDesc: string;
-  summary: string;
-  experience: ExperienceItem[];
-  skills: string[];
-  education: EducationItem[];
-  contact: ContactInfo;
-}
+import { RESUME_TEMPLATES, TEMPLATE_META, TemplateSelector } from './templates';
+import { ResumeData, ExperienceItem, EducationItem, ContactInfo } from './types';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TEMPLATES = [
-  { id: 'ats-tech', name: 'Tech ATS Pro', category: 'tech', badge: 'ATS 98%', accent: 'bg-blue-500/20 text-blue-300 border-blue-500/20', preview: ['h-2 w-3/4', 'h-1.5 w-1/2', 'h-8 w-full', 'h-1.5 w-2/3', 'h-1.5 w-3/4'] },
-  { id: 'classic', name: 'Classic Pro', category: 'general', badge: 'Traditional', accent: 'bg-slate-500/20 text-slate-300 border-slate-500/20', preview: ['h-2 w-1/2 mx-auto', 'h-1.5 w-1/3 mx-auto', 'h-px w-full', 'h-1.5 w-3/4', 'h-1.5 w-2/3'] },
-  { id: 'modern', name: 'Modern Minimal', category: 'general', badge: 'Popular', accent: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/20', preview: ['h-3 w-1/2', 'h-1.5 w-1/3', 'h-1.5 w-full', 'h-1.5 w-5/6', 'h-1.5 w-4/6'] },
-  { id: 'creative', name: 'Creative Portfolio', category: 'design', badge: 'Visual', accent: 'bg-purple-500/20 text-purple-300 border-purple-500/20', preview: ['h-full w-1/3 float-left', 'h-2 w-1/2', 'h-1.5 w-2/3', 'h-1.5 w-1/2', 'h-1.5 w-3/4'] },
-  { id: 'executive', name: 'Executive Suite', category: 'executive', badge: 'Senior', accent: 'bg-amber-500/20 text-amber-300 border-amber-500/20', preview: ['h-2.5 w-2/3', 'h-1.5 w-1/2', 'h-px w-full', 'h-1.5 w-full', 'h-1.5 w-5/6'] },
-  { id: 'academic', name: 'Academic CV', category: 'academic', badge: 'Research', accent: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/20', preview: ['h-2 w-2/3 mx-auto', 'h-1.5 w-1/2 mx-auto', 'h-1.5 w-full', 'h-1.5 w-3/4', 'h-1.5 w-full'] },
-  { id: 'freelance', name: 'Freelance Consult', category: 'freelance', badge: 'Self-Employed', accent: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/20', preview: ['h-2 w-1/2', 'h-1.5 w-1/3', 'h-6 w-full rounded', 'h-1.5 w-5/6', 'h-1.5 w-2/3'] },
-  { id: 'entry', name: 'Fresh Graduate', category: 'entry', badge: 'Entry Level', accent: 'bg-rose-500/20 text-rose-300 border-rose-500/20', preview: ['h-2 w-2/3', 'h-1.5 w-1/2', 'h-1.5 w-full', 'h-1.5 w-3/4', 'h-1.5 w-4/6'] },
-];
+const TEMPLATES = TEMPLATE_META.map(t => ({
+  ...t,
+  badge: t.category === 'tech' ? 'ATS 98%' : 'Popular',
+  accent: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/20',
+  preview: ['h-2 w-3/4', 'h-1.5 w-1/2', 'h-8 w-full', 'h-1.5 w-2/3', 'h-1.5 w-3/4']
+}));
+
 
 const PERSONAS = [
   { id: 'job-seeker', label: 'Job Seeker', icon: Target, desc: 'Traditional employment' },
@@ -105,6 +61,23 @@ const SCORE_TIPS = [
 
 const DRAFT_KEY = 'blox_resume_wizard_draft';
 
+// ─── Input helper ─────────────────────────────────────────────────────────────
+
+const InputField = ({
+  label, value, onChange, placeholder, type = 'text',
+}: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) => (
+  <div>
+    <label className="mb-1.5 block text-xs font-medium text-slate-400">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 focus:bg-white/5 transition-colors"
+    />
+  </div>
+);
+
 // ─── ATS Score Calculator ─────────────────────────────────────────────────────
 
 function calcAtsScore(data: ResumeData): number {
@@ -124,81 +97,24 @@ function calcAtsScore(data: ResumeData): number {
 // ─── Resume Preview ───────────────────────────────────────────────────────────
 
 function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }) {
-  const skillsText = data.skills.filter(Boolean).join(' · ');
+  const Template = RESUME_TEMPLATES[data.selectedTemplate] || RESUME_TEMPLATES['ats-tech'];
 
   return (
     <div
-      className="origin-top-left overflow-hidden rounded-lg border border-white/10 bg-white font-serif text-[#1a1a1a] shadow-2xl"
-      style={{ width: `${210 * scale}px`, minHeight: `${297 * scale}px`, fontSize: `${11 * scale}px` }}
+      className="origin-top-left overflow-hidden rounded-lg border border-white/10 bg-white shadow-2xl"
+      style={{
+        width: `${210 * scale}mm`, // Approximate A4 width in pixels if 1mm = 1px, but templates use mm.
+        // Wait, templates use w-[210mm]. If I scale, I need the container to match.
+        // 210mm is approx 794px at 96dpi.
+        // If scale is 0.5, I want 397px width.
+        // But the template is fixed width 210mm.
+        // So I should set the container width to scaled value, and scale the inner content.
+        width: `${210 * scale}mm`,
+        height: `${297 * scale}mm`,
+      }}
     >
-      {/* Header */}
-      <div className="border-b-2 border-[#1a1a1a]" style={{ padding: `${20 * scale}px ${24 * scale}px` }}>
-        <h1 className="font-sans font-bold text-[#1a1a1a]" style={{ fontSize: `${20 * scale}px`, lineHeight: 1.2 }}>
-          {data.contact.name || data.title || 'Your Name'}
-        </h1>
-        {data.targetRole && (
-          <p className="font-sans font-medium text-[#555]" style={{ fontSize: `${11 * scale}px`, marginTop: `${4 * scale}px` }}>
-            {data.targetRole}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-x-3 font-sans text-[#666]" style={{ fontSize: `${9 * scale}px`, marginTop: `${6 * scale}px` }}>
-          {data.contact.email && <span>{data.contact.email}</span>}
-          {data.contact.phone && <span>{data.contact.phone}</span>}
-          {data.contact.location && <span>{data.contact.location}</span>}
-          {data.contact.linkedin && <span>{data.contact.linkedin}</span>}
-        </div>
-      </div>
-
-      <div style={{ padding: `${14 * scale}px ${24 * scale}px`, gap: `${14 * scale}px`, display: 'flex', flexDirection: 'column' }}>
-        {data.summary && (
-          <section>
-            <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
-              Professional Summary
-            </h2>
-            <div className="text-[#333] leading-relaxed" dangerouslySetInnerHTML={{ __html: data.summary }} style={{ fontSize: `${10 * scale}px` }} />
-          </section>
-        )}
-        {data.experience.length > 0 && (
-          <section>
-            <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
-              Experience
-            </h2>
-            {data.experience.map((exp) => (
-              <div key={exp.id} style={{ marginBottom: `${8 * scale}px` }}>
-                <div className="flex justify-between font-sans font-semibold" style={{ fontSize: `${10 * scale}px` }}>
-                  <span>{exp.role}</span>
-                  <span className="text-[#555]">{exp.startDate}{exp.endDate ? ` – ${exp.current ? 'Present' : exp.endDate}` : ''}</span>
-                </div>
-                <p className="font-sans italic text-[#555]" style={{ fontSize: `${9 * scale}px` }}>{exp.company}</p>
-                {exp.bullets && <div className="mt-1 text-[#333]" dangerouslySetInnerHTML={{ __html: exp.bullets }} style={{ fontSize: `${9.5 * scale}px` }} />}
-              </div>
-            ))}
-          </section>
-        )}
-        {skillsText && (
-          <section>
-            <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
-              Skills
-            </h2>
-            <p className="text-[#333]" style={{ fontSize: `${10 * scale}px`, lineHeight: 1.6 }}>{skillsText}</p>
-          </section>
-        )}
-        {data.education.length > 0 && (
-          <section>
-            <h2 className="font-sans font-bold uppercase tracking-wider" style={{ fontSize: `${9 * scale}px`, borderBottom: `1px solid #ccc`, paddingBottom: `${3 * scale}px`, marginBottom: `${6 * scale}px` }}>
-              Education
-            </h2>
-            {data.education.map((edu) => (
-              <div key={edu.id} style={{ marginBottom: `${6 * scale}px` }}>
-                <div className="flex justify-between font-sans font-semibold" style={{ fontSize: `${10 * scale}px` }}>
-                  <span>{edu.degree}</span>
-                  <span className="text-[#555]">{edu.year}</span>
-                </div>
-                <p className="font-sans italic text-[#555]" style={{ fontSize: `${9 * scale}px` }}>{edu.institution}{edu.gpa ? ` · GPA ${edu.gpa}` : ''}</p>
-              </div>
-            ))}
-          </section>
-        )}
+      <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '210mm', height: '297mm' }}>
+        <Template data={data} />
       </div>
     </div>
   );
@@ -482,22 +398,6 @@ export function ResumeWizard() {
   // Computed pending tips for Step 3
   const pendingTips = SCORE_TIPS.filter((t) => !t.check(data)).slice(0, 3);
 
-  // ── Input helper ──
-  const InputField = ({
-    label, value, onChange, placeholder, type = 'text',
-  }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; type?: string }) => (
-    <div>
-      <label className="mb-1.5 block text-xs font-medium text-slate-400">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-indigo-500/40 focus:bg-white/5 transition-colors"
-      />
-    </div>
-  );
-
   // ─────────────────────────────────────────────────────────────────────────
   // ── LAYOUT ──
   // ─────────────────────────────────────────────────────────────────────────
@@ -607,27 +507,7 @@ export function ResumeWizard() {
                 {/* Template grid */}
                 <div>
                   <p className="mb-3 text-xs font-medium text-slate-400">Template</p>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {TEMPLATES.map((t) => (
-                      <button key={t.id} type="button" onClick={() => update('selectedTemplate', t.id)}
-                        className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all ${
-                          data.selectedTemplate === t.id ? 'border-indigo-500/50 ring-1 ring-indigo-500/30' : 'border-white/5 hover:border-white/15'
-                        }`}>
-                        <div className="flex h-24 flex-col gap-1.5 bg-white p-3">
-                          {t.preview.map((cls, i) => (
-                            <div key={i} className={`rounded-full bg-slate-300 ${cls}`} />
-                          ))}
-                        </div>
-                        <div className="bg-[#0C0F13] px-2 py-2">
-                          <p className="truncate text-[11px] font-semibold text-slate-200">{t.name}</p>
-                          <span className={`mt-0.5 inline-block rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${t.accent}`}>{t.badge}</span>
-                        </div>
-                        {data.selectedTemplate === t.id && (
-                          <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white">✓</div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  <TemplateSelector selectedId={data.selectedTemplate} onSelect={(id) => update('selectedTemplate', id)} />
                 </div>
 
                 {/* Toggles */}

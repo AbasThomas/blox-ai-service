@@ -37,6 +37,7 @@ export interface ResumeData {
   experience: ExperienceItem[];
   skills: string[];
   education: EducationItem[];
+  certifications: string[]; // Added certifications
   contact: ContactInfo;
 }
 
