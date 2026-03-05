@@ -23,6 +23,7 @@ export class PublicProfileService {
             user: {
               select: {
                 fullName: true,
+                email: true,
               },
             },
           },

@@ -87,7 +87,9 @@ export class NotificationsService {
         title: dto.title,
         message: dto.message ?? '',
         link: dto.link,
-        payload: dto.payload as Prisma.InputJsonValue ?? Prisma.JsonNull,
+        payload: dto.payload !== undefined
+          ? (dto.payload as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
   }

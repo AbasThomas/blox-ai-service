@@ -14,6 +14,7 @@ interface AssetWithOwner {
   updatedAt: Date;
   user: {
     fullName: string;
+    email?: string;
   };
 }
 
@@ -129,6 +130,44 @@ function coerceProjects(value: unknown): PublicProfileProjectItem[] {
     return asStringArray(value).map((title) => ({ title }));
   }
 
+  const coerceProjectImages = (
+    source: unknown,
+  ): Array<{ url: string; alt?: string }> => {
+    if (!Array.isArray(source)) {
+      return asStringArray(source)
+        .map((entry) => normalizeUrl(entry))
+        .filter((entry): entry is string => !!entry)
+        .map((url) => ({ url }));
+    }
+
+    const output: Array<{ url: string; alt?: string }> = [];
+    const seen = new Set<string>();
+
+    for (const raw of source) {
+      let url = '';
+      let alt = '';
+
+      if (typeof raw === 'string') {
+        url = normalizeUrl(raw) ?? '';
+      } else {
+        const row = asRecord(raw);
+        url =
+          normalizeUrl(asString(row.url) || asString(row.imageUrl) || asString(row.src)) ??
+          '';
+        alt = asString(row.alt) || asString(row.caption);
+      }
+
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      output.push({
+        url,
+        ...(alt ? { alt } : {}),
+      });
+    }
+
+    return output;
+  };
+
   const items: PublicProfileProjectItem[] = [];
   for (const raw of value) {
     if (typeof raw === 'string') {
@@ -147,14 +186,31 @@ function coerceProjects(value: unknown): PublicProfileProjectItem[] {
     const description = asString(row.description) || asString(row.summary);
     const rawUrl = asString(row.url) || asString(row.href);
     const url = rawUrl ? normalizeUrl(rawUrl) ?? undefined : undefined;
-    const imageUrl = normalizeUrl(asString(row.imageUrl) || asString(row.image)) ?? undefined;
+    const imageUrl =
+      normalizeUrl(
+        asString(row.imageUrl) ||
+          asString(row.image) ||
+          asString(row.snapshotUrl) ||
+          asString(row.thumbnail),
+      ) ?? undefined;
+    const images = [
+      ...coerceProjectImages(row.images),
+      ...coerceProjectImages(row.gallery),
+      ...coerceProjectImages(row.imageUrls),
+    ];
     const tags = asStringArray(row.tags).slice(0, 8);
     const caseStudy = asString(row.caseStudy) || asString(row.impact);
+    const snapshotUrl =
+      normalizeUrl(asString(row.snapshotUrl) || asString(row.thumbnail)) ??
+      imageUrl ??
+      images[0]?.url;
     items.push({
       title,
       ...(description ? { description } : {}),
       ...(url ? { url } : {}),
-      ...(imageUrl ? { imageUrl } : {}),
+      ...(snapshotUrl ? { snapshotUrl } : {}),
+      ...(snapshotUrl || imageUrl ? { imageUrl: snapshotUrl ?? imageUrl } : {}),
+      ...(images.length > 0 ? { images } : {}),
       ...(tags.length > 0 ? { tags } : {}),
       ...(caseStudy ? { caseStudy } : {}),
     });
@@ -357,6 +413,7 @@ export function mapAssetToPublicProfile(input: {
     canonicalUrl: `https://${subdomain}.${getAppHost()}`,
     user: {
       fullName: asset.user.fullName,
+      email: asString(asset.user.email) || undefined,
       headline: heroHeading,
       avatarUrl: asString(asRecord(content.profile).avatarUrl) || undefined,
     },

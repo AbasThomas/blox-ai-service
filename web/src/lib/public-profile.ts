@@ -12,7 +12,7 @@ export const fetchPublicProfile = cache(async (subdomain: string): Promise<Publi
   if (!slug || isReservedSubdomain(slug)) return null;
 
   const response = await fetch(`${getApiBaseUrl()}/v1/public/${encodeURIComponent(slug)}`, {
-    next: { revalidate: 300, tags: [`public-profile-${slug}`] },
+    cache: 'no-store',
   });
 
   if (response.status === 404) return null;

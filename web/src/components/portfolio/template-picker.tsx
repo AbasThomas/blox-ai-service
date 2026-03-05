@@ -227,16 +227,20 @@ function TemplateCard({
       onClick={() => onSelect(template.id)}
       className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-all duration-200 ${
         selected
-          ? 'border-purple-500 ring-2 ring-purple-500/30'
+          ? 'border-white/30'
           : 'border-white/8 hover:border-white/20'
       }`}
+      style={selected ? { boxShadow: `0 0 0 2px ${template.accent}55` } : undefined}
     >
       {/* Thumbnail */}
       <div className="relative aspect-[200/130] w-full overflow-hidden" style={{ background: template.bg }}>
         <TemplateMockup template={template} />
         {/* selected checkmark */}
         {selected && (
-          <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-purple-500 text-white shadow-lg">
+          <div
+            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-lg"
+            style={{ background: template.accent }}
+          >
             <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 fill-none stroke-white stroke-2 stroke-linecap-round stroke-linejoin-round">
               <path d="M2 6l3 3 5-5" />
             </svg>

@@ -102,7 +102,10 @@ export class AssetsService {
   async getById(userId: string, id: string) {
     const asset = await this.prisma.asset.findFirst({
       where: { id, userId },
-      include: { publishTargets: { where: { isActive: true } } },
+      include: {
+        publishTargets: { where: { isActive: true } },
+        user: { select: { fullName: true, email: true } },
+      },
     });
     if (!asset) throw new NotFoundException('Asset not found');
     return asset;

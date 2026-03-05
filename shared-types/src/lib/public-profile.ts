@@ -29,6 +29,11 @@ export interface PublicProfileProjectItem {
   description?: string;
   url?: string;
   imageUrl?: string;
+  snapshotUrl?: string;
+  images?: Array<{
+    url: string;
+    alt?: string;
+  }>;
   tags?: string[];
   caseStudy?: string;
 }
@@ -60,6 +65,7 @@ export interface PublicProfilePayload {
   canonicalUrl: string;
   user: {
     fullName: string;
+    email?: string;
     headline?: string;
     avatarUrl?: string;
   };

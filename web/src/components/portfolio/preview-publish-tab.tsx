@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { assetsApi, publishApi, scannerApi } from '@/lib/api';
+import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import {
   DEFAULT_PORTFOLIO_TEMPLATE_ID,
   normalizePortfolioTemplateId,
 } from '@/lib/portfolio-templates';
+import { buildPreviewProfile } from '@/lib/portfolio-preview';
 import { TemplatePicker } from './template-picker';
+import { PortfolioTemplateRenderer } from './templates/PortfolioTemplateRenderer';
 import { ArrowUpRight, Globe, Sparkles, Zap } from '@/components/ui/icons';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
