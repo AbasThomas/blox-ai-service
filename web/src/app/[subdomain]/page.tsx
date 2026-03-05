@@ -50,6 +50,10 @@ const TEMPLATE_ACCENTS: Record<string, { color: string; bg: string }> = {
   'portfolio-timeline-dev': { color: '#22C55E', bg: '#0D1117' },
   'portfolio-minimal-clean': { color: '#6366F1', bg: '#FFFFFF' },
   'portfolio-grid-showcase': { color: '#FBBF24', bg: '#4A0916' },
+  'portfolio-neon-dev': { color: '#8B5CF6', bg: '#050008' },
+  'portfolio-glass-dev': { color: '#6366F1', bg: '#020617' },
+  'portfolio-studio-designer': { color: '#A855F7', bg: '#080812' },
+  'portfolio-canvas-designer': { color: '#F97316', bg: '#FFF7ED' },
 };
 
 function initialsFromEmail(email: string | undefined, fallbackName: string) {
