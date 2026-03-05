@@ -4,6 +4,32 @@ const BASE_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:33
 
 // Singleton refresh promise — prevents multiple simultaneous refresh calls
 let _tokenRefreshPromise: Promise<string | null> | null = null;
+let _sessionInvalidated = false;
+
+const PROTECTED_API_PREFIXES = [
+  '/assets',
+  '/billing',
+  '/analytics',
+  '/publish',
+  '/collaboration',
+  '/integrations',
+  '/notifications',
+  '/onboarding',
+  '/scanner',
+] as const;
+
+function isProtectedPath(path: string): boolean {
+  return PROTECTED_API_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
+function invalidateSessionOnce() {
+  if (typeof window === 'undefined' || _sessionInvalidated) return;
+  _sessionInvalidated = true;
+  useBloxStore.getState().logout();
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.replace('/login');
+  }
+}
 
 async function tryRefreshToken(): Promise<string | null> {
   if (_tokenRefreshPromise) return _tokenRefreshPromise;
@@ -30,6 +56,7 @@ async function tryRefreshToken(): Promise<string | null> {
         accessToken: data.accessToken,
         ...(data.refreshToken ? { refreshToken: data.refreshToken } : {}),
       });
+      _sessionInvalidated = false;
       return data.accessToken;
     } catch {
       return null;
@@ -62,11 +89,21 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const requiresAuth = isProtectedPath(path);
+  let authHeaders = getAuthHeaders();
+
+  if (requiresAuth && typeof window !== 'undefined' && !authHeaders.Authorization) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      authHeaders = { Authorization: `Bearer ${refreshed}` };
+    }
+  }
+
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
+      ...authHeaders,
       ...(options?.headers ?? {}),
     },
     cache: 'no-store',
@@ -81,7 +118,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
       // ignore json parse error
     }
 
-    if (response.status === 401 && typeof window !== 'undefined' && !path.startsWith('/auth/')) {
+    if (response.status === 401 && typeof window !== 'undefined' && requiresAuth) {
       // Try to silently refresh the access token, then retry
       const newToken = await tryRefreshToken();
       if (newToken) {
@@ -96,14 +133,15 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
         });
         if (retryRes.ok) return retryRes.json() as Promise<T>;
       }
-      // Refresh failed — clear session and redirect
-      useBloxStore.getState().logout();
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.replace('/login');
-      }
+      // Refresh failed — clear session and redirect once
+      invalidateSessionOnce();
     }
 
     throw new Error(errorMessage);
+  }
+
+  if (requiresAuth) {
+    _sessionInvalidated = false;
   }
 
   return response.json() as Promise<T>;
