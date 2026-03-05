@@ -31,6 +31,31 @@ function invalidateSessionOnce() {
   }
 }
 
+function parseJwtExpiryEpochMs(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const decoded = atob(padded);
+    const parsed = JSON.parse(decoded) as { exp?: number };
+    if (typeof parsed.exp !== 'number') return null;
+    return parsed.exp * 1000;
+  } catch {
+    return null;
+  }
+}
+
+function shouldRefreshAccessToken(token: string | null): boolean {
+  if (!token) return true;
+  const expiry = parseJwtExpiryEpochMs(token);
+  if (!expiry) return true;
+  const now = Date.now();
+  const safetyWindowMs = 30_000;
+  return expiry - now <= safetyWindowMs;
+}
+
 async function tryRefreshToken(): Promise<string | null> {
   if (_tokenRefreshPromise) return _tokenRefreshPromise;
   _tokenRefreshPromise = (async () => {
@@ -90,22 +115,28 @@ function getAuthHeaders(): Record<string, string> {
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const requiresAuth = isProtectedPath(path);
-  let authHeaders = getAuthHeaders();
+  let accessToken = getAccessToken();
 
-  if (requiresAuth && typeof window !== 'undefined' && !authHeaders.Authorization) {
+  if (requiresAuth && typeof window !== 'undefined' && shouldRefreshAccessToken(accessToken)) {
     const refreshed = await tryRefreshToken();
-    if (refreshed) {
-      authHeaders = { Authorization: `Bearer ${refreshed}` };
+    if (!refreshed) {
+      invalidateSessionOnce();
+      throw new Error('Session expired. Please sign in again.');
     }
+    accessToken = refreshed;
+  }
+
+  const headers = new Headers(options?.headers);
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(options?.headers ?? {}),
-    },
+    headers,
     cache: 'no-store',
   });
 
