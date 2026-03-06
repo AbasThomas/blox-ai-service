@@ -103,14 +103,8 @@ function ResumePreview({ data, scale = 1 }: { data: ResumeData; scale?: number }
     <div
       className="origin-top-left overflow-hidden rounded-lg border border-white/10 bg-white shadow-2xl"
       style={{
-        width: `${210 * scale}mm`, // Approximate A4 width in pixels if 1mm = 1px, but templates use mm.
-        // Wait, templates use w-[210mm]. If I scale, I need the container to match.
-        // 210mm is approx 794px at 96dpi.
-        // If scale is 0.5, I want 397px width.
-        // But the template is fixed width 210mm.
-        // So I should set the container width to scaled value, and scale the inner content.
-        width: `${210 * scale}mm`,
-        height: `${297 * scale}mm`,
+        width: `calc(210mm * ${scale})`,
+        height: `calc(297mm * ${scale})`,
       }}
     >
       <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: '210mm', height: '297mm' }}>
@@ -209,6 +203,7 @@ const DEFAULT_DATA: ResumeData = {
   experience: [],
   skills: [],
   education: [],
+  certifications: [],
   contact: { name: '', email: '', phone: '', location: '', linkedin: '', website: '' },
 };
 

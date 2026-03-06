@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { PublicProfileProjectItem } from '@nextjs-blox/shared-types';
 
 interface ProjectImage {
@@ -87,14 +88,34 @@ export function ProjectGalleryCard({
   const images = useMemo(() => buildProjectImages(project), [project]);
   const [expanded, setExpanded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const reduced = useReducedMotion();
 
   const activeImage = images[activeIndex];
 
   return (
-    <article className={`overflow-hidden ${cardClassName}`}>
+    <motion.article
+      className={`overflow-hidden ${cardClassName}`}
+      whileHover={reduced ? {} : { y: -4, transition: { duration: 0.25, ease: 'easeOut' } }}
+    >
       {images[0] ? (
-        <div className="relative aspect-[16/9] w-full overflow-hidden">
-          <RenderProjectImage image={images[0]} priority />
+        <div className="group relative aspect-[16/9] w-full overflow-hidden">
+          <div className="h-full w-full transition-transform duration-500 group-hover:scale-105">
+            <RenderProjectImage image={images[0]} priority />
+          </div>
+          {/* Hover overlay with visit link */}
+          {project.url && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 backdrop-blur-0 transition-all duration-300 group-hover:bg-black/40 group-hover:opacity-100">
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noreferrer"
+                className="translate-y-2 rounded-full bg-white px-5 py-2 text-sm font-bold text-slate-900 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                aria-label={`Visit ${project.title}`}
+              >
+                Visit project →
+              </a>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex aspect-[16/9] w-full items-center justify-center bg-white/5 text-sm text-slate-500">
@@ -105,7 +126,7 @@ export function ProjectGalleryCard({
       <div className="space-y-4 p-5">
         <div>
           <h3 className={titleClassName}>{project.title}</h3>
-          {project.description ? <p className={textClassName}>{project.description}</p> : null}
+          {project.description ? <p className={`mt-1 ${textClassName}`}>{project.description}</p> : null}
         </div>
 
         {project.tags?.length ? (
@@ -137,7 +158,13 @@ export function ProjectGalleryCard({
         </div>
 
         {expanded && activeImage ? (
-          <div className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-3">
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-3 rounded-xl border border-white/10 bg-black/20 p-3"
+          >
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-white/10">
               <RenderProjectImage image={activeImage} />
             </div>
@@ -158,9 +185,9 @@ export function ProjectGalleryCard({
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
         ) : null}
       </div>
-    </article>
+    </motion.article>
   );
 }

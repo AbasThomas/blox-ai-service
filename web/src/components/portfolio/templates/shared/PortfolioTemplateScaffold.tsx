@@ -5,6 +5,8 @@ import { PortfolioNav } from './PortfolioNav';
 import { ProjectGalleryCard } from './ProjectGalleryCard';
 import { detectSkillPersona, SkillBadge } from './SkillBadge';
 import { SmoothScroll } from './SmoothScroll';
+import { FadeIn, FadeInGroup, FadeInItem } from './FadeIn';
+import { ExperienceTimeline } from './ExperienceTimeline';
 
 export interface PortfolioThemeConfig {
   rootClassName: string;
@@ -29,6 +31,10 @@ export interface PortfolioThemeConfig {
   projectLinkClassName: string;
   projectTagClassName: string;
   contactTheme: ContactFormTheme;
+  /** Optional: timeline dot/line color overrides */
+  timelineAccentColor?: string;
+  timelineLineColor?: string;
+  timelineCardBg?: string;
 }
 
 interface PortfolioTemplateScaffoldProps {
@@ -61,7 +67,7 @@ function socialLinks(profile: PublicProfilePayload) {
   );
 }
 
-function navItems(profile: PublicProfilePayload) {
+function navItems() {
   return [
     { label: 'Home', href: '#hero' },
     { label: 'About', href: '#about' },
@@ -87,7 +93,7 @@ export function PortfolioTemplateScaffold({
       <SmoothScroll />
       <PortfolioNav
         brand={person}
-        items={navItems(profile)}
+        items={navItems()}
         className={theme.navClassName}
         brandClassName={theme.navBrandClassName}
         linkClassName={theme.navLinkClassName}
@@ -95,6 +101,7 @@ export function PortfolioTemplateScaffold({
         mobilePanelClassName={theme.navClassName}
       />
 
+      {/* HERO */}
       <section id="hero" className="relative flex min-h-screen items-center px-4 pt-28 pb-16 sm:px-6">
         <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
           <div className="space-y-6">
@@ -150,116 +157,132 @@ export function PortfolioTemplateScaffold({
         </div>
       </section>
 
+      {/* ABOUT */}
       <section id="about" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
-          <h2 className={theme.sectionTitleClassName}>About</h2>
+          <FadeIn>
+            <h2 className={theme.sectionTitleClassName}>About</h2>
+          </FadeIn>
           <div className={`grid gap-6 lg:grid-cols-2 ${theme.panelClassName}`}>
-            <p className="text-base leading-8">
-              {sections.about || sections.hero.body || 'Professional summary coming soon.'}
-            </p>
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold">Experience highlights</h3>
-              {sections.experience.length > 0 ? (
-                <div className="space-y-4">
-                  {sections.experience.map((item, index) => (
-                    <article key={`${item.role}-${index}`} className="rounded-xl border border-current/10 p-4">
-                      <p className="text-lg font-semibold">{item.role}</p>
-                      {item.company ? (
-                        <p className={`${theme.accentTextClassName} text-sm`}>{item.company}</p>
-                      ) : null}
-                      {item.summary ? (
-                        <p className={`${theme.mutedTextClassName} mt-2 text-sm leading-6`}>
-                          {item.summary}
-                        </p>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              ) : (
-                <p className={theme.mutedTextClassName}>
-                  Experience entries have not been added yet.
-                </p>
-              )}
-            </div>
+            <FadeIn delay={0.05}>
+              <p className="text-base leading-8">
+                {sections.about || sections.hero.body || 'Professional summary coming soon.'}
+              </p>
+            </FadeIn>
+            <FadeIn delay={0.1}>
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold">Experience highlights</h3>
+                {sections.experience.length > 0 ? (
+                  <ExperienceTimeline
+                    items={sections.experience}
+                    accentColor={theme.timelineAccentColor}
+                    lineColor={theme.timelineLineColor}
+                    cardBg={theme.timelineCardBg}
+                  />
+                ) : (
+                  <p className={theme.mutedTextClassName}>
+                    Experience entries have not been added yet.
+                  </p>
+                )}
+              </div>
+            </FadeIn>
           </div>
         </div>
       </section>
 
+      {/* PROJECTS */}
       <section id="projects" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
-          <h2 className={theme.sectionTitleClassName}>Projects</h2>
+          <FadeIn>
+            <h2 className={theme.sectionTitleClassName}>Projects</h2>
+          </FadeIn>
           {sections.projects.length > 0 ? (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <FadeInGroup className="grid gap-6 sm:grid-cols-2">
               {sections.projects.map((project, index) => (
-                <ProjectGalleryCard
-                  key={`${project.title}-${index}`}
-                  project={project}
-                  cardClassName={theme.projectCardClassName}
-                  titleClassName="text-xl font-semibold"
-                  textClassName={theme.mutedTextClassName}
-                  tagClassName={theme.projectTagClassName}
-                  linkClassName={theme.projectLinkClassName}
-                  buttonClassName={theme.secondaryButtonClassName}
-                  accentClassName={theme.accentTextClassName}
-                />
+                <FadeInItem key={`${project.title}-${index}`}>
+                  <ProjectGalleryCard
+                    project={project}
+                    cardClassName={theme.projectCardClassName}
+                    titleClassName="text-xl font-semibold"
+                    textClassName={theme.mutedTextClassName}
+                    tagClassName={theme.projectTagClassName}
+                    linkClassName={theme.projectLinkClassName}
+                    buttonClassName={theme.secondaryButtonClassName}
+                    accentClassName={theme.accentTextClassName}
+                  />
+                </FadeInItem>
               ))}
-            </div>
+            </FadeInGroup>
           ) : (
-            <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
-              <p className={theme.mutedTextClassName}>
-                Projects will appear here once they are added in the editor.
-              </p>
-            </div>
+            <FadeIn>
+              <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
+                <p className={theme.mutedTextClassName}>
+                  Projects will appear here once they are added in the editor.
+                </p>
+              </div>
+            </FadeIn>
           )}
         </div>
       </section>
 
+      {/* SKILLS */}
       <section id="skills" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
-          <h2 className={theme.sectionTitleClassName}>Skills</h2>
+          <FadeIn>
+            <h2 className={theme.sectionTitleClassName}>Skills</h2>
+          </FadeIn>
           {sections.skills.length > 0 ? (
-            <div className="flex flex-wrap gap-3">
+            <FadeInGroup className="flex flex-wrap gap-3">
               {sections.skills.map((skill) => (
-                <SkillBadge
-                  key={skill}
-                  skill={skill}
-                  persona={skillsPersona}
-                  className={theme.skillChipClassName}
-                />
+                <FadeInItem key={skill}>
+                  <SkillBadge
+                    skill={skill}
+                    persona={skillsPersona}
+                    className={theme.skillChipClassName}
+                  />
+                </FadeInItem>
               ))}
-            </div>
+            </FadeInGroup>
           ) : (
-            <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
-              <p className={theme.mutedTextClassName}>
-                Add skills to highlight your capabilities here.
-              </p>
-            </div>
+            <FadeIn>
+              <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
+                <p className={theme.mutedTextClassName}>
+                  Add skills to highlight your capabilities here.
+                </p>
+              </div>
+            </FadeIn>
           )}
         </div>
       </section>
 
+      {/* CONTACT */}
       <section id="contact" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_1.1fr]">
-          <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
-            <h2 className={theme.sectionTitleClassName}>Contact</h2>
-            <p className={`${theme.mutedTextClassName} mt-3 text-base leading-7`}>
-              {sections.contact || 'Interested in collaboration? Send a message and I will reply soon.'}
-            </p>
-            {contactEmail ? (
-              <a
-                href={`mailto:${contactEmail}`}
-                className={`mt-4 inline-flex text-sm font-semibold ${theme.accentTextClassName}`}
-              >
-                {contactEmail}
-              </a>
-            ) : null}
-          </div>
-          <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
-            <ContactForm recipientEmail={contactEmail} theme={theme.contactTheme} />
-          </div>
+          <FadeIn delay={0.05}>
+            <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
+              <h2 className={theme.sectionTitleClassName}>Contact</h2>
+              <p className={`${theme.mutedTextClassName} mt-3 text-base leading-7`}>
+                {sections.contact || 'Interested in collaboration? Send a message and I will reply soon.'}
+              </p>
+              {contactEmail ? (
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className={`mt-4 inline-flex text-sm font-semibold ${theme.accentTextClassName}`}
+                >
+                  {contactEmail}
+                </a>
+              ) : null}
+            </div>
+          </FadeIn>
+          <FadeIn delay={0.1}>
+            <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
+              <ContactForm recipientEmail={contactEmail} theme={theme.contactTheme} />
+            </div>
+          </FadeIn>
         </div>
       </section>
 
+      {/* FOOTER */}
       <footer className={`px-4 py-8 sm:px-6 ${theme.footerClassName}`}>
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <p className={theme.mutedTextClassName}>
