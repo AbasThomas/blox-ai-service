@@ -230,6 +230,43 @@ function toSkillList(input: string) {
     .filter(Boolean);
 }
 
+function sanitizeImportPayloadValue(value: unknown): unknown {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('data:')) return '';
+    return trimmed;
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => sanitizeImportPayloadValue(item))
+      .filter((item) => {
+        if (item === '' || item === null || item === undefined) return false;
+        if (Array.isArray(item)) return item.length > 0;
+        if (typeof item === 'object') return Object.keys(item as Record<string, unknown>).length > 0;
+        return true;
+      });
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => [key, sanitizeImportPayloadValue(item)] as const)
+      .filter(([, item]) => {
+        if (item === '' || item === null || item === undefined) return false;
+        if (Array.isArray(item)) return item.length > 0;
+        if (typeof item === 'object') return Object.keys(item as Record<string, unknown>).length > 0;
+        return true;
+      });
+    return Object.fromEntries(entries);
+  }
+  return value;
+}
+
+function sanitizeManualFallbackForImport(input: Record<string, unknown>) {
+  const cleaned = sanitizeImportPayloadValue(input);
+  if (!cleaned || typeof cleaned !== 'object' || Array.isArray(cleaned)) return {};
+  return cleaned as Record<string, unknown>;
+}
+
 async function readFileAsDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -488,6 +525,11 @@ export default function PortfolioNewPage() {
     projectMode,
     selectedProviders,
   ]);
+
+  const importManualFallback = useMemo(
+    () => sanitizeManualFallbackForImport(manualFallback),
+    [manualFallback],
+  );
 
   const requireSession = useCallback(
     (reason: string) => {
@@ -820,7 +862,9 @@ export default function PortfolioNewPage() {
         locationHint: locationHint || undefined,
         focusQuestion: focusQuestion || undefined,
         manualFallback:
-          Object.keys(manualFallback).length > 0 ? manualFallback : undefined,
+          Object.keys(importManualFallback).length > 0
+            ? importManualFallback
+            : undefined,
       })) as ImportStatus;
       setRunId(res.runId);
       setStatus(res);

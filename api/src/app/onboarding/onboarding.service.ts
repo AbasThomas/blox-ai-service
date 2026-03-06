@@ -38,18 +38,26 @@ export class OnboardingService {
   ) {}
 
   async startImport(userId: string, payload: StartOnboardingImportPayload) {
-    const providers = this.normalizeProviders(payload.providers);
+    const input = this.asRecord(payload);
+    const persona = this.text(input.persona) || 'Professional';
+    const personalSiteUrl = this.text(input.personalSiteUrl) || null;
+    const locationHint = this.text(input.locationHint) || null;
+    const focusQuestion = this.text(input.focusQuestion) || null;
+
+    const providers = this.normalizeProviders(input.providers);
     if (providers.length === 0) {
       throw new BadRequestException('At least one provider is required');
     }
 
-    const compactFallback = this.compactManualFallback(payload.manualFallback);
+    const compactFallback = this.compactManualFallback(
+      this.asRecord(input.manualFallback),
+    );
     const session = await this.prisma.onboardingSession.create({
       data: {
         userId,
-        persona: payload.persona,
+        persona,
         selectedProviders: providers,
-        personalSiteUrl: payload.personalSiteUrl ?? null,
+        personalSiteUrl,
         status: 'in_progress',
       },
     });
@@ -65,39 +73,69 @@ export class OnboardingService {
           mode: 'queue',
           requestedAt: new Date().toISOString(),
           requestSnapshot: {
-            persona: String(payload.persona),
+            persona,
             providers,
-            personalSiteUrl: payload.personalSiteUrl ?? null,
-            locationHint: payload.locationHint ?? null,
-            focusQuestion: payload.focusQuestion ?? null,
+            personalSiteUrl,
+            locationHint,
+            focusQuestion,
             manualFallback: compactFallback,
           },
         } as unknown as Prisma.InputJsonValue,
       },
     });
 
-    const job = await this.importQueue.add('import-unify', {
-      runId: run.id,
-      userId,
-      providers,
-      persona: payload.persona,
-      personalSiteUrl: payload.personalSiteUrl ?? null,
-      locationHint: payload.locationHint ?? null,
-      focusQuestion: payload.focusQuestion ?? null,
-      manualFallback: compactFallback ?? null,
-    });
+    try {
+      const job = await this.importQueue.add('import-unify', {
+        runId: run.id,
+        userId,
+        providers,
+        persona,
+        personalSiteUrl,
+        locationHint,
+        focusQuestion,
+        manualFallback: compactFallback ?? null,
+      });
 
-    await this.prisma.profileImportRun.update({
-      where: { id: run.id },
-      data: { queueJobId: String(job.id) },
-    });
+      await this.prisma.profileImportRun.update({
+        where: { id: run.id },
+        data: { queueJobId: String(job.id) },
+      });
 
-    return {
-      runId: run.id,
-      queueJobId: String(job.id),
-      status: 'queued',
-      progressPct: 2,
-    } satisfies ImportJobStatusResponse;
+      return {
+        runId: run.id,
+        queueJobId: String(job.id),
+        status: 'queued',
+        progressPct: 2,
+      } satisfies ImportJobStatusResponse;
+    } catch {
+      await this.prisma.profileImportRun.update({
+        where: { id: run.id },
+        data: {
+          statusMessage: 'Queue unavailable. Starting fast recovery import.',
+          progressPct: 4,
+        },
+      });
+
+      void this.runInlineImport({
+        runId: run.id,
+        userId,
+        persona,
+        providers,
+        personalSiteUrl,
+        locationHint,
+        focusQuestion,
+        manualFallback: compactFallback ?? undefined,
+        reason: 'recovery',
+      });
+
+      return {
+        runId: run.id,
+        queueJobId: 'inline-recovery',
+        status: 'running',
+        progressPct: 8,
+        message: 'Queue unavailable. Fast recovery import started.',
+      } satisfies ImportJobStatusResponse;
+    }
   }
 
   async getImportStatus(

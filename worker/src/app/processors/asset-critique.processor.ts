@@ -29,7 +29,9 @@ export class AssetCritiqueProcessor extends WorkerHost {
       const res = await axios.post<{ content: string }>(
         `${AI_SERVICE_URL}/v1/ai/generate`,
         {
+          assetType: asset.type,
           prompt: `Critique this professional ${asset.type} content and provide specific improvement suggestions:\n${contentStr.substring(0, 2000)}`,
+          context: { assetId, userId, flow: 'asset-critique' },
           preferredRoute: 'generation_critique',
         },
         { timeout: 90_000 },

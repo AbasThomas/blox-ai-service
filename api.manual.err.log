@@ -1,0 +1,57 @@
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:40 PM [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mHTTP 413 POST /v1/onboarding/import/start[39m
+PayloadTooLargeError: request entity too large
+    at readStream (C:\Users\USER\Desktop\Nextjs_blox\node_modules\raw-body\index.js:163:17)
+    at getRawBody (C:\Users\USER\Desktop\Nextjs_blox\node_modules\raw-body\index.js:116:12)
+    at read (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\read.js:113:3)
+    at jsonParser (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\types\json.js:88:5)
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:342:13)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:297:9
+    at processParams (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:291:5)
+    at cors (C:\Users\USER\Desktop\Nextjs_blox\node_modules\cors\lib\index.js:188:7)
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:43 PM [31m  ERROR[39m [38;5;3m[MailService] [39m[31mFailed to send welcome email to onboard-big-new-1772742339631@example.com[39m
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:43 PM [31m  ERROR[39m [38;5;3m[MailService] [39mError: Missing credentials for "PLAIN"
+    at SMTPConnection._formatError [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:912:19[90m)[39m
+    at SMTPConnection.login [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:549:38[90m)[39m
+    at [90mC:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-transport\index.js:278:32
+    at SMTPConnection.<anonymous> [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:227:17[90m)[39m
+[90m    at Object.onceWrapper (node:events:622:28)[39m
+[90m    at SMTPConnection.emit (node:events:508:28)[39m
+    at SMTPConnection._actionEHLO [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1503:14[90m)[39m
+    at SMTPConnection._processResponse [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1098:20[90m)[39m
+    at SMTPConnection._onData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:872:14[90m)[39m
+    at SMTPConnection._onSocketData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:196:44[90m)[39m {
+  code: [32m'EAUTH'[39m,
+  command: [32m'API'[39m
+}
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:43 PM [31m  ERROR[39m [38;5;3m[MailService] [39m[31mFailed to send welcome email to onboard-ok-new-1772742339475@example.com[39m
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:43 PM [31m  ERROR[39m [38;5;3m[MailService] [39mError: Missing credentials for "PLAIN"
+    at SMTPConnection._formatError [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:912:19[90m)[39m
+    at SMTPConnection.login [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:549:38[90m)[39m
+    at [90mC:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-transport\index.js:278:32
+    at SMTPConnection.<anonymous> [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:227:17[90m)[39m
+[90m    at Object.onceWrapper (node:events:622:28)[39m
+[90m    at SMTPConnection.emit (node:events:508:28)[39m
+    at SMTPConnection._actionEHLO [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1503:14[90m)[39m
+    at SMTPConnection._processResponse [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1098:20[90m)[39m
+    at SMTPConnection._onData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:872:14[90m)[39m
+    at SMTPConnection._onSocketData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:196:44[90m)[39m {
+  code: [32m'EAUTH'[39m,
+  command: [32m'API'[39m
+}
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:56 PM [31m  ERROR[39m [38;5;3m[MailService] [39m[31mFailed to send welcome email to onboard-sanitized-new-1772742352212@example.com[39m
+[31m[Nest] 28780  - [39m03/05/2026, 9:25:56 PM [31m  ERROR[39m [38;5;3m[MailService] [39mError: Missing credentials for "PLAIN"
+    at SMTPConnection._formatError [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:912:19[90m)[39m
+    at SMTPConnection.login [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:549:38[90m)[39m
+    at [90mC:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-transport\index.js:278:32
+    at SMTPConnection.<anonymous> [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:227:17[90m)[39m
+[90m    at Object.onceWrapper (node:events:622:28)[39m
+[90m    at SMTPConnection.emit (node:events:508:28)[39m
+    at SMTPConnection._actionEHLO [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1503:14[90m)[39m
+    at SMTPConnection._processResponse [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:1098:20[90m)[39m
+    at SMTPConnection._onData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:872:14[90m)[39m
+    at SMTPConnection._onSocketData [90m(C:\Users\USER\Desktop\Nextjs_blox\[39mnode_modules\[4mnodemailer[24m\lib\smtp-connection\index.js:196:44[90m)[39m {
+  code: [32m'EAUTH'[39m,
+  command: [32m'API'[39m
+}

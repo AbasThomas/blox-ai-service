@@ -34,12 +34,17 @@ export class AssetGenerateProcessor extends WorkerHost {
       // Call AI service
       let generatedContent: string;
       try {
-        const response = await axios.post<{ content: string }>(
+        const response = await axios.post<{ content?: string }>(
           `${AI_SERVICE_URL}/v1/ai/generate`,
-          { prompt: `Generate a ${type} for: ${prompt}`, preferredRoute: 'generation_critique' },
+          {
+            assetType: type,
+            prompt: `Generate a ${type} for: ${prompt}`,
+            context: { assetId, userId, flow: 'asset-generate' },
+            preferredRoute: 'generation_critique',
+          },
           { timeout: 120_000 },
         );
-        generatedContent = response.data.content;
+        generatedContent = response.data.content || this.buildFallbackContent(type, prompt);
       } catch (err) {
         this.logger.warn('AI service unavailable, using fallback content');
         generatedContent = this.buildFallbackContent(type, prompt);
@@ -158,4 +163,3 @@ export class AssetGenerateProcessor extends WorkerHost {
     return `Professional ${type} content for: ${prompt}\n\nExperienced professional with strong skills.\nSenior position with key achievements.\nLeadership, Communication, Technical expertise.\nRelevant degree and certifications.`;
   }
 }
-

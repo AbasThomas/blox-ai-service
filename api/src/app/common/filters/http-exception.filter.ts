@@ -17,15 +17,28 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = context.getResponse<Response>();
     const request = context.getRequest<Request>();
 
+    const exceptionRecord =
+      exception && typeof exception === 'object'
+        ? (exception as Record<string, unknown>)
+        : null;
+    const derivedStatus =
+      exceptionRecord && typeof exceptionRecord.status === 'number'
+        ? exceptionRecord.status
+        : exceptionRecord && typeof exceptionRecord.statusCode === 'number'
+          ? exceptionRecord.statusCode
+          : HttpStatus.INTERNAL_SERVER_ERROR;
+
     const status =
       exception instanceof HttpException
         ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+        : derivedStatus;
 
     const message =
       exception instanceof HttpException
         ? exception.getResponse()
-        : 'Internal server error';
+        : status === HttpStatus.PAYLOAD_TOO_LARGE
+          ? 'Request payload too large'
+          : exceptionRecord?.message ?? 'Internal server error';
 
     this.logger.error(
       `HTTP ${status} ${request.method} ${request.url}`,
