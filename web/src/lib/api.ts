@@ -264,6 +264,19 @@ export const analyticsApi = {
   createShortLink: (assetId: string, source: string, targetUrl: string) =>
     post(`/analytics/${assetId}/links`, { source, targetUrl }),
   listShortLinks: (assetId: string) => get(`/analytics/${assetId}/links`),
+  /** Best-effort anonymous tracking — never throws */
+  trackView: async (subdomain: string, extra?: Record<string, unknown>): Promise<void> => {
+    try {
+      await post('/analytics/track', {
+        event: 'portfolio_view',
+        subdomain,
+        timestamp: new Date().toISOString(),
+        ...extra,
+      });
+    } catch {
+      // silently ignore — tracking must never break the UI
+    }
+  },
 };
 
 // Publish

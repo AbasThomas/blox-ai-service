@@ -55,3 +55,51 @@ PayloadTooLargeError: request entity too large
   code: [32m'EAUTH'[39m,
   command: [32m'API'[39m
 }
+[31m[Nest] 28780  - [39m03/06/2026, 6:54:53 AM [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mHTTP 404 POST /v1/analytics/track[39m
+NotFoundException: Cannot POST /v1/analytics/track
+    at callback (C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\routes-resolver.js:77:19)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\router-proxy.js:9:23
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:342:13)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:297:9
+    at processParams (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:291:5)
+    at read (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\read.js:42:5)
+    at urlencodedParser (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\types\urlencoded.js:57:5)
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+[31m[Nest] 28780  - [39m03/06/2026, 6:54:53 AM [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mHTTP 404 POST /v1/analytics/track[39m
+NotFoundException: Cannot POST /v1/analytics/track
+    at callback (C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\routes-resolver.js:77:19)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\router-proxy.js:9:23
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:342:13)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:297:9
+    at processParams (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:291:5)
+    at read (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\read.js:42:5)
+    at urlencodedParser (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\types\urlencoded.js:57:5)
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+[31m[Nest] 28780  - [39m03/06/2026, 7:08:31 AM [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mHTTP 404 POST /v1/analytics/track[39m
+NotFoundException: Cannot POST /v1/analytics/track
+    at callback (C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\routes-resolver.js:77:19)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\router-proxy.js:9:23
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:342:13)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:297:9
+    at processParams (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:291:5)
+    at read (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\read.js:42:5)
+    at urlencodedParser (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\types\urlencoded.js:57:5)
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+[31m[Nest] 28780  - [39m03/06/2026, 7:08:31 AM [31m  ERROR[39m [38;5;3m[HttpExceptionFilter] [39m[31mHTTP 404 POST /v1/analytics/track[39m
+NotFoundException: Cannot POST /v1/analytics/track
+    at callback (C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\routes-resolver.js:77:19)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\@nestjs\core\router\router-proxy.js:9:23
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)
+    at trimPrefix (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:342:13)
+    at C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:297:9
+    at processParams (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:582:12)
+    at next (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\index.js:291:5)
+    at read (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\read.js:42:5)
+    at urlencodedParser (C:\Users\USER\Desktop\Nextjs_blox\node_modules\body-parser\lib\types\urlencoded.js:57:5)
+    at Layer.handleRequest (C:\Users\USER\Desktop\Nextjs_blox\node_modules\router\lib\layer.js:152:17)

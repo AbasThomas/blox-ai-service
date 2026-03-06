@@ -6,6 +6,14 @@ import { randomBytes } from 'crypto';
 export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Best-effort anonymous event recording from public portfolio pages */
+  async recordPublicEvent(body: Record<string, unknown>): Promise<{ ok: boolean }> {
+    // Currently a no-op store — events flow to PostHog from the client.
+    // Add DB writes here when a PortfolioView model is available.
+    void body; // suppress unused warning
+    return { ok: true };
+  }
+
   async trackView(assetId: string, shortCode: string) {
     await this.prisma.linkTracker.updateMany({
       where: { assetId, shortCode },

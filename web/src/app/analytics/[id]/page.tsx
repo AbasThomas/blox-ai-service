@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { analyticsApi, assetsApi } from '@/lib/api';
+import { SparklineChart } from '@/components/analytics/SparklineChart';
 
 interface LinkTracker {
   id: string;
@@ -245,10 +246,6 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
       ]
     : [];
 
-  const maxDaily = Math.max(
-    ...(data?.dailyViews.map((row) => row.count) ?? [1]),
-    1,
-  );
   const maxSource = Math.max(
     ...(data?.topSources.map((row) => row.count) ?? [1]),
     1,
@@ -346,33 +343,16 @@ export default function AnalyticsPage({ params }: { params: Promise<{ id: string
 
             <div className="grid gap-5 xl:grid-cols-2">
               <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">
-                <h2 className="text-sm font-semibold text-slate-100">
-                  Daily views
-                </h2>
-                {data.dailyViews.length === 0 ? (
-                  <p className="mt-2 text-xs text-slate-400">
-                    No daily breakdown yet.
-                  </p>
-                ) : (
-                  <div className="mt-3 grid gap-2">
-                    {data.dailyViews.slice(-14).map((row) => (
-                      <div key={row.date}>
-                        <div className="mb-1 flex items-center justify-between text-[11px] text-slate-400">
-                          <span>{row.date}</span>
-                          <span>{row.count}</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-white/10">
-                          <div
-                            className="h-1.5 rounded-full bg-[#1ECEFA]"
-                            style={{
-                              width: `${(row.count / maxDaily) * 100}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <h2 className="mb-3 text-sm font-semibold text-slate-100">Daily views</h2>
+                <SparklineChart
+                  data={data.dailyViews.map((row) => ({ label: row.date, value: row.count }))}
+                  variant="area"
+                  strokeColor="#1ECEFA"
+                  fillColor="rgba(30,206,250,0.08)"
+                  height={180}
+                  showAxes
+                  showTooltip
+                />
               </div>
 
               <div className="rounded-xl border border-white/10 bg-[#0C1118] p-4">

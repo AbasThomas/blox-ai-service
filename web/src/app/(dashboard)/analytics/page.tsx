@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { analyticsApi, assetsApi } from '@/lib/api';
+import { SparklineChart } from '@/components/analytics/SparklineChart';
 import {
   Activity,
   ArrowUpRight,
@@ -253,6 +254,18 @@ export default function AnalyticsDashboardPage() {
       .slice(0, 8);
   }, [assetMetrics]);
 
+  const globalDailyViews = useMemo(() => {
+    const counts = new Map<string, number>();
+    assetMetrics.forEach((item) => {
+      item.metrics.dailyViews.forEach(({ date, count }) => {
+        counts.set(date, (counts.get(date) ?? 0) + count);
+      });
+    });
+    return [...counts.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, count]) => ({ label: date, value: count }));
+  }, [assetMetrics]);
+
   const allLinks = useMemo(() => {
     return assetMetrics.flatMap((item) =>
       item.metrics.links.map((link) => ({
@@ -489,6 +502,24 @@ export default function AnalyticsDashboardPage() {
             );
           })}
         </div>
+
+        <section className="rounded-2xl border border-white/10 bg-black/20 p-5">
+          <h2 className="mb-1 text-xs font-bold uppercase tracking-widest text-[#1ECEFA]">Daily Views Trend</h2>
+          <p className="mb-3 text-xs text-slate-400">Aggregated views across all assets for the selected period.</p>
+          {loading ? (
+            <div className="h-[180px] animate-pulse rounded-xl bg-white/5" />
+          ) : (
+            <SparklineChart
+              data={globalDailyViews}
+              variant="area"
+              strokeColor="#1ECEFA"
+              fillColor="rgba(30,206,250,0.07)"
+              height={180}
+              showAxes
+              showTooltip
+            />
+          )}
+        </section>
 
         <div className="grid gap-6 xl:grid-cols-[1.25fr_1fr]">
           <section className="rounded-2xl border border-white/10 bg-black/20 p-5">
