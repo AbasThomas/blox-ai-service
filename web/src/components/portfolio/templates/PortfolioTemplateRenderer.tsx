@@ -94,6 +94,7 @@ function normalizeProfile(
   return {
     subdomain: safeSubdomain,
     templateId: profile?.templateId,
+    ...(profile?.sectionOrder ? { sectionOrder: profile.sectionOrder } : {}),
     canonicalUrl: profile?.canonicalUrl || `https://${safeSubdomain}.blox.app`,
     user: {
       fullName,

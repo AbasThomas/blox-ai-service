@@ -18,7 +18,12 @@ interface Integration {
   scopes: string[];
   priority: 'primary' | 'secondary' | 'optional';
   connected: boolean;
+  connectedAt: string | null;
   authUrl: string | null;
+  oauthConfigured: boolean;
+  missingOauthEnvKeys: string[];
+  fallbackMode: boolean;
+  setupDocsUrl?: string;
 }
 
 interface Subscription {
@@ -493,30 +498,52 @@ export default function SettingsPage() {
                         
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                            <span className="text-slate-600">Priority</span>
-                            <span className={integration.priority === 'primary' ? 'text-[#1ECEFA]' : 'text-slate-500'}>{integration.priority}</span>
+                            <span className="text-slate-600">Mode</span>
+                            <span className="text-slate-500">{integration.mode}</span>
                           </div>
                           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
                             <span className="text-slate-600">Status</span>
                             <span className={integration.connected ? 'text-green-400' : 'text-slate-600'}>{integration.connected ? 'LINKED' : 'DISCONNECTED'}</span>
                           </div>
+                          {integration.mode === 'oauth' && !integration.oauthConfigured && (
+                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-amber-500">Config</span>
+                              <span className="text-amber-500">ENV MISSING</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      
+
                       {integration.connected ? (
-                        <button 
+                        <button
                           onClick={() => handleDisconnect(integration.id)}
                           className="mt-6 w-full rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 transition-all hover:bg-red-500 hover:text-white"
                         >
                           TERMINATE
                         </button>
+                      ) : integration.mode === 'manual' ? (
+                        <div className="mt-6 w-full rounded-xl md:rounded-2xl border border-white/5 bg-white/5 py-3 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
+                          MANUAL IMPORT
+                        </div>
                       ) : (
-                        <button
-                          onClick={() => handleConnectIntegration(integration.id)}
-                          className="mt-6 w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-md"
-                        >
-                          INITIALIZE LINK
-                        </button>
+                        <div className="mt-6 space-y-2">
+                          <button
+                            onClick={() => handleConnectIntegration(integration.id)}
+                            className="w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-md"
+                          >
+                            INITIALIZE LINK
+                          </button>
+                          {integration.mode === 'oauth' && !integration.oauthConfigured && integration.setupDocsUrl && (
+                            <a
+                              href={integration.setupDocsUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center justify-center gap-1 text-[10px] text-amber-500/70 hover:text-amber-400"
+                            >
+                              <ArrowUpRight className="h-3 w-3" /> Setup credentials
+                            </a>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}

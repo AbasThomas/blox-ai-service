@@ -62,6 +62,7 @@ export interface PublicProfileSections {
 export interface PublicProfilePayload {
   subdomain: string;
   templateId?: string;
+  sectionOrder?: string[];
   canonicalUrl: string;
   user: {
     fullName: string;

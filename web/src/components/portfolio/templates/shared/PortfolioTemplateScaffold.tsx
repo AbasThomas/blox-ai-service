@@ -1,3 +1,4 @@
+import React from 'react';
 import Image from 'next/image';
 import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import { ContactForm, type ContactFormTheme } from './ContactForm';
@@ -77,6 +78,8 @@ function navItems() {
   ];
 }
 
+const DEFAULT_SECTION_ORDER = ['hero', 'about', 'projects', 'skills', 'contact'];
+
 export function PortfolioTemplateScaffold({
   profile,
   subdomain,
@@ -87,22 +90,11 @@ export function PortfolioTemplateScaffold({
   const contactEmail = getContactEmail(profile);
   const links = socialLinks(profile);
   const skillsPersona = detectSkillPersona(sections.skills);
+  const sectionOrder = profile.sectionOrder ?? DEFAULT_SECTION_ORDER;
 
-  return (
-    <main className={theme.rootClassName}>
-      <SmoothScroll />
-      <PortfolioNav
-        brand={person}
-        items={navItems()}
-        className={theme.navClassName}
-        brandClassName={theme.navBrandClassName}
-        linkClassName={theme.navLinkClassName}
-        activeLinkClassName={theme.navActiveLinkClassName}
-        mobilePanelClassName={theme.navClassName}
-      />
-
-      {/* HERO */}
-      <section id="hero" className="relative flex min-h-screen items-center px-4 pt-28 pb-16 sm:px-6">
+  const sectionMap: Record<string, React.ReactNode> = {
+    hero: (
+      <section key="hero" id="hero" className="relative flex min-h-screen items-center px-4 pt-28 pb-16 sm:px-6">
         <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-center">
           <div className="space-y-6">
             <h1 className={theme.heroTitleClassName}>{sections.hero.heading || person}</h1>
@@ -156,9 +148,10 @@ export function PortfolioTemplateScaffold({
           </div>
         </div>
       </section>
+    ),
 
-      {/* ABOUT */}
-      <section id="about" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
+    about: (
+      <section key="about" id="about" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
           <FadeIn>
             <h2 className={theme.sectionTitleClassName}>About</h2>
@@ -189,9 +182,10 @@ export function PortfolioTemplateScaffold({
           </div>
         </div>
       </section>
+    ),
 
-      {/* PROJECTS */}
-      <section id="projects" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
+    projects: (
+      <section key="projects" id="projects" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
           <FadeIn>
             <h2 className={theme.sectionTitleClassName}>Projects</h2>
@@ -224,9 +218,10 @@ export function PortfolioTemplateScaffold({
           )}
         </div>
       </section>
+    ),
 
-      {/* SKILLS */}
-      <section id="skills" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
+    skills: (
+      <section key="skills" id="skills" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto max-w-6xl space-y-8">
           <FadeIn>
             <h2 className={theme.sectionTitleClassName}>Skills</h2>
@@ -254,9 +249,10 @@ export function PortfolioTemplateScaffold({
           )}
         </div>
       </section>
+    ),
 
-      {/* CONTACT */}
-      <section id="contact" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
+    contact: (
+      <section key="contact" id="contact" className={`${theme.sectionClassName} px-4 py-20 sm:px-6`}>
         <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_1.1fr]">
           <FadeIn delay={0.05}>
             <div className={`rounded-2xl p-6 ${theme.panelClassName}`}>
@@ -281,6 +277,23 @@ export function PortfolioTemplateScaffold({
           </FadeIn>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <main className={theme.rootClassName}>
+      <SmoothScroll />
+      <PortfolioNav
+        brand={person}
+        items={navItems()}
+        className={theme.navClassName}
+        brandClassName={theme.navBrandClassName}
+        linkClassName={theme.navLinkClassName}
+        activeLinkClassName={theme.navActiveLinkClassName}
+        mobilePanelClassName={theme.navClassName}
+      />
+
+      {sectionOrder.map((s) => sectionMap[s]).filter(Boolean)}
 
       {/* FOOTER */}
       <footer className={`px-4 py-8 sm:px-6 ${theme.footerClassName}`}>

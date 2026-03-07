@@ -9,6 +9,12 @@ interface ProviderConfig {
   clientIdEnv: string;
   clientSecretEnv: string;
   scopes: string[];
+  /** How to send client credentials in the token request (default: body) */
+  tokenAuthMethod?: 'body' | 'basic';
+  /** Content-type for token request (default: form) */
+  tokenContentType?: 'form' | 'json';
+  /** Scope separator (default: space) */
+  scopeSeparator?: string;
 }
 
 const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
@@ -17,14 +23,16 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     clientIdEnv: 'LINKEDIN_CLIENT_ID',
     clientSecretEnv: 'LINKEDIN_CLIENT_SECRET',
-    scopes: ['r_liteprofile', 'r_emailaddress'],
+    // Use OpenID Connect scopes (works with the LinkedIn v2 userinfo endpoint).
+    // Fall back to r_liteprofile for legacy apps that haven't migrated.
+    scopes: ['openid', 'profile', 'email'],
   },
   github: {
     authorizationUrl: 'https://github.com/login/oauth/authorize',
     tokenUrl: 'https://github.com/login/oauth/access_token',
     clientIdEnv: 'GITHUB_CLIENT_ID',
     clientSecretEnv: 'GITHUB_CLIENT_SECRET',
-    scopes: ['read:user', 'user:email'],
+    scopes: ['read:user', 'user:email', 'repo'],
   },
   figma: {
     authorizationUrl: 'https://www.figma.com/oauth',
@@ -39,6 +47,24 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     clientIdEnv: 'UPWORK_CLIENT_ID',
     clientSecretEnv: 'UPWORK_CLIENT_SECRET',
     scopes: ['freelancer.profile.read'],
+  },
+  dribbble: {
+    authorizationUrl: 'https://dribbble.com/oauth/authorize',
+    tokenUrl: 'https://dribbble.com/oauth/token',
+    clientIdEnv: 'DRIBBBLE_CLIENT_ID',
+    clientSecretEnv: 'DRIBBBLE_CLIENT_SECRET',
+    scopes: ['public'],
+    // Dribbble token endpoint expects JSON body
+    tokenContentType: 'json',
+  },
+  canva: {
+    authorizationUrl: 'https://www.canva.com/api/oauth/authorize',
+    tokenUrl: 'https://api.canva.com/rest/v1/oauth/token',
+    clientIdEnv: 'CANVA_CLIENT_ID',
+    clientSecretEnv: 'CANVA_CLIENT_SECRET',
+    scopes: ['profile:read', 'design:meta:read'],
+    // Canva requires HTTP Basic auth for token exchange
+    tokenAuthMethod: 'basic',
   },
 };
 
@@ -71,7 +97,7 @@ export class OAuthService {
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: this.callbackUrl(provider),
-      scope: config.scopes.join(' '),
+      scope: config.scopes.join(config.scopeSeparator ?? ' '),
       response_type: 'code',
       state,
     });
@@ -101,18 +127,28 @@ export class OAuthService {
       throw new BadRequestException(`OAuth not configured for ${provider}`);
     }
 
-    const body = new URLSearchParams({
+    const redirectUri = this.callbackUrl(provider);
+    const tokenFields = {
       grant_type: 'authorization_code',
       code,
-      redirect_uri: this.callbackUrl(provider),
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
+      redirect_uri: redirectUri,
+      ...(config.tokenAuthMethod === 'basic' ? {} : { client_id: clientId, client_secret: clientSecret }),
+    };
+
+    const useJson = config.tokenContentType === 'json';
+    const tokenBody = useJson ? JSON.stringify(tokenFields) : new URLSearchParams(tokenFields as Record<string, string>).toString();
+    const tokenHeaders: Record<string, string> = {
+      'Content-Type': useJson ? 'application/json' : 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    };
+    if (config.tokenAuthMethod === 'basic') {
+      tokenHeaders['Authorization'] = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`;
+    }
 
     const { data } = await axios.post<Record<string, string>>(
       config.tokenUrl,
-      body.toString(),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' } },
+      tokenBody,
+      { headers: tokenHeaders },
     );
 
     const { userId } = statePayload;

@@ -14,6 +14,7 @@ type ProviderId =
   | 'fiverr'
   | 'behance'
   | 'dribbble'
+  | 'canva'
   | 'figma'
   | 'coursera'
   | 'udemy';
@@ -259,26 +260,19 @@ export class ImportUnifyProcessor extends WorkerHost {
     fallback: Record<string, unknown>,
   ) {
     if (provider === 'linkedin' && token) {
-      const profile = await axios.get('https://api.linkedin.com/v2/me', {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 15_000,
-      });
-      return {
-        provider,
-        name:
-          `${profile.data.localizedFirstName ?? ''} ${profile.data.localizedLastName ?? ''}`.trim() ||
-          undefined,
-        headline: profile.data.localizedHeadline ?? undefined,
-        summary: profile.data.summary ?? undefined,
-        profileImageUrl: profile.data.profilePicture?.displayImage ?? undefined,
-        skills: [],
-        projects: [],
-        certifications: [],
-        links: profile.data.id
-          ? { linkedin: `https://www.linkedin.com/in/${profile.data.id}` }
-          : {},
-        raw: profile.data,
-      } satisfies ProviderImportData;
+      return this.fetchLinkedIn(token);
+    }
+
+    if (provider === 'figma' && token) {
+      return this.fetchFigma(token);
+    }
+
+    if (provider === 'dribbble' && token) {
+      return this.fetchDribbble(token);
+    }
+
+    if (provider === 'canva' && token) {
+      return this.fetchCanva(token);
     }
 
     if (provider === 'github' && token) {
@@ -484,6 +478,201 @@ export class ImportUnifyProcessor extends WorkerHost {
     } satisfies ProviderImportData;
   }
 
+  // ─── Provider fetch helpers ──────────────────────────────────────────────
+
+  private async fetchLinkedIn(token: string): Promise<ProviderImportData> {
+    // Try OpenID Connect userinfo first (for apps using openid+profile+email scopes).
+    // Falls back to v2/me with projection for legacy r_liteprofile apps.
+    let name: string | undefined;
+    let headline: string | undefined;
+    let summary: string | undefined;
+    let profileImageUrl: string | undefined;
+    let profileId: string | undefined;
+
+    try {
+      const oidc = await axios.get<Record<string, unknown>>(
+        'https://api.linkedin.com/v2/userinfo',
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 15_000 },
+      );
+      name = this.text(oidc.data.name) || undefined;
+      profileImageUrl = this.text(oidc.data.picture) || undefined;
+      // OIDC doesn't return headline; attempt v2/me for the headline
+    } catch {
+      // OIDC endpoint unavailable — use legacy profile endpoint
+      try {
+        const me = await axios.get<Record<string, unknown>>(
+          'https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,localizedHeadline,profilePicture(displayImage~:playableStreams))',
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 15_000 },
+        );
+        const fn = this.asRecord(me.data.firstName);
+        const ln = this.asRecord(me.data.lastName);
+        const locale = this.text(Object.keys(this.asRecord(fn.localized))[0] ?? '');
+        name = [
+          this.text((this.asRecord(fn.localized) as Record<string, unknown>)[locale]),
+          this.text((this.asRecord(ln.localized) as Record<string, unknown>)[locale]),
+        ].filter(Boolean).join(' ') || undefined;
+        headline = this.text(me.data.localizedHeadline as string) || undefined;
+        profileId = this.text(me.data.id as string) || undefined;
+        // Extract picture from playableStreams
+        const streams = (this.asRecord(
+          this.asRecord(me.data.profilePicture)['displayImage~'],
+        ).elements ?? []) as Array<Record<string, unknown>>;
+        const largest = streams[streams.length - 1];
+        const identifiers = (largest?.identifiers ?? []) as Array<Record<string, unknown>>;
+        profileImageUrl = this.text(identifiers[0]?.identifier) || undefined;
+      } catch { /* ignore */ }
+    }
+
+    // Always try the headline endpoint separately (not in OIDC)
+    if (!headline) {
+      try {
+        const meBasic = await axios.get<Record<string, unknown>>(
+          'https://api.linkedin.com/v2/me',
+          { headers: { Authorization: `Bearer ${token}` }, timeout: 10_000 },
+        );
+        if (!name) {
+          name = `${this.text(meBasic.data.localizedFirstName)} ${this.text(meBasic.data.localizedLastName)}`.trim() || undefined;
+        }
+        headline = this.text(meBasic.data.localizedHeadline as string) || undefined;
+        profileId = this.text(meBasic.data.id as string) || profileId;
+      } catch { /* ignore */ }
+    }
+
+    return {
+      provider: 'linkedin',
+      name,
+      headline,
+      summary,
+      profileImageUrl,
+      skills: [],
+      projects: [],
+      certifications: [],
+      links: profileId ? { linkedin: `https://www.linkedin.com/in/${profileId}` } : {},
+      raw: { name, headline, profileId, profileImageUrl },
+    };
+  }
+
+  private async fetchFigma(token: string): Promise<ProviderImportData> {
+    const meRes = await axios.get<Record<string, unknown>>(
+      'https://api.figma.com/v1/me',
+      { headers: { 'X-Figma-Token': token }, timeout: 15_000 },
+    );
+    const handle = this.text(meRes.data.handle);
+    const name = this.text(meRes.data.name) || undefined;
+    const profileImageUrl = this.text(meRes.data.img_url) || undefined;
+    const profileUrl = handle ? `https://www.figma.com/@${handle}` : undefined;
+
+    // Attempt to list the user's draft files (may not be available on all plans)
+    let projects: ProviderImportData['projects'] = [];
+    try {
+      const filesRes = await axios.get<Record<string, unknown>>(
+        'https://api.figma.com/v1/me/files?page_size=12',
+        { headers: { 'X-Figma-Token': token }, timeout: 15_000 },
+      );
+      const files = (filesRes.data.files ?? []) as Array<Record<string, unknown>>;
+      projects = files.slice(0, 12).map((file) => ({
+        name: this.text(file.name) || 'Figma File',
+        description: 'Figma design file',
+        url: file.key ? `https://www.figma.com/file/${this.text(file.key)}` : undefined,
+        imageUrl: this.text(file.thumbnail_url) || undefined,
+      }));
+    } catch { /* files endpoint may 403 for non-Enterprise — safe to ignore */ }
+
+    return {
+      provider: 'figma',
+      name,
+      profileImageUrl,
+      skills: ['Figma', 'UI Design', 'Prototyping'],
+      projects,
+      certifications: [],
+      links: profileUrl ? { figma: profileUrl } : {},
+      raw: meRes.data,
+    };
+  }
+
+  private async fetchDribbble(token: string): Promise<ProviderImportData> {
+    const [userRes, shotsRes] = await Promise.all([
+      axios.get<Record<string, unknown>>(
+        'https://api.dribbble.com/v2/user',
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 15_000 },
+      ),
+      axios.get<Array<Record<string, unknown>>>(
+        'https://api.dribbble.com/v2/user/shots?per_page=12',
+        { headers: { Authorization: `Bearer ${token}` }, timeout: 15_000 },
+      ).catch(() => ({ data: [] as Array<Record<string, unknown>> })),
+    ]);
+
+    const user = userRes.data;
+    const shots = shotsRes.data;
+
+    const projects: ProviderImportData['projects'] = shots.map((shot) => {
+      const images = this.asRecord(shot.images);
+      const imageUrl = this.text(images.hidpi) || this.text(images.normal) || undefined;
+      return {
+        name: this.text(shot.title) || 'Dribbble Shot',
+        description: this.text(shot.description).replace(/<[^>]+>/g, '').slice(0, 200) || 'Dribbble design shot',
+        url: this.text(shot.html_url) || undefined,
+        imageUrl,
+        tags: (Array.isArray(shot.tags) ? shot.tags : []).map((t: unknown) => this.text(t)).filter(Boolean).slice(0, 6),
+      };
+    });
+
+    return {
+      provider: 'dribbble',
+      name: this.text(user.name) || undefined,
+      summary: this.text(user.bio) || undefined,
+      profileImageUrl: this.text(this.asRecord(user.avatar_urls).medium) || this.text(user.avatar_url as string) || undefined,
+      skills: ['UI Design', 'Visual Design', 'Illustration'],
+      projects,
+      certifications: [],
+      links: user.html_url ? { dribbble: this.text(user.html_url as string) } : {},
+      raw: { user, shots },
+    };
+  }
+
+  private async fetchCanva(token: string): Promise<ProviderImportData> {
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    const meRes = await axios.get<Record<string, unknown>>(
+      'https://api.canva.com/rest/v1/users/me',
+      { headers, timeout: 15_000 },
+    );
+    const profile = this.asRecord(meRes.data.profile ?? meRes.data);
+    const displayName = this.text(profile.display_name) || undefined;
+    const profileImageUrl = this.text(profile.avatar_url) || undefined;
+
+    let projects: ProviderImportData['projects'] = [];
+    try {
+      const designsRes = await axios.get<Record<string, unknown>>(
+        'https://api.canva.com/rest/v1/designs?ownership=owned&limit=12',
+        { headers, timeout: 20_000 },
+      );
+      const designs = (designsRes.data.items ?? []) as Array<Record<string, unknown>>;
+      projects = designs.map((design) => {
+        const thumbnail = this.asRecord(design.thumbnail);
+        return {
+          name: this.text(design.title) || 'Canva Design',
+          description: `Canva design — ${this.text(design.design_type) || 'graphic'}`,
+          url: this.text(design.view_url) || this.text(design.urls?.view_url as string) || undefined,
+          imageUrl: this.text(thumbnail.url) || undefined,
+        };
+      });
+    } catch { /* designs endpoint may 403 without proper scope */ }
+
+    return {
+      provider: 'canva',
+      name: displayName,
+      profileImageUrl,
+      skills: ['Canva', 'Graphic Design', 'Visual Communication'],
+      projects,
+      certifications: [],
+      links: {},
+      raw: meRes.data,
+    };
+  }
+
+  // ─── Merge ──────────────────────────────────────────────────────────────
+
   private async mergeAndGenerateAbout(
     imported: ProviderImportData[],
     persona: string,
@@ -527,7 +716,9 @@ export class ImportUnifyProcessor extends WorkerHost {
         (project) =>
           project.source === 'github' ||
           project.source === 'behance' ||
-          project.source === 'figma',
+          project.source === 'figma' ||
+          project.source === 'dribbble' ||
+          project.source === 'canva',
       )
       .slice(0, 12);
     const certifications = imported

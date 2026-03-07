@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { assetsApi, scannerApi } from '@/lib/api';
 import { AppLoadingScreen } from '@/components/shared/app-loading-screen';
+import { SectionOrderPanel, DEFAULT_SECTION_ORDER } from '@/components/portfolio/editor/SectionOrderPanel';
 import { TemplatePicker } from '@/components/portfolio/template-picker';
 import {
   DEFAULT_PORTFOLIO_TEMPLATE_ID,
@@ -38,6 +39,7 @@ interface EditorContent {
   projects: string[];
   skills: string[];
   certifications: string[];
+  sectionOrder: string[];
 }
 
 interface VersionRow {
@@ -73,6 +75,7 @@ const EMPTY_EDITOR_CONTENT: EditorContent = {
   projects: [],
   skills: [],
   certifications: [],
+  sectionOrder: [...DEFAULT_SECTION_ORDER],
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -149,6 +152,10 @@ function normalizeContent(raw: ContentRecord | undefined): EditorContent {
   const contact = asRecord(raw.contact);
   const profile = asRecord(raw.profile);
   const meta = asRecord(raw.meta);
+  const layout = asRecord(raw.layout);
+  const rawOrder = asArray(layout.sectionOrder);
+  const sectionOrder =
+    rawOrder.length > 0 ? rawOrder.map(asString).filter(Boolean) : [...DEFAULT_SECTION_ORDER];
   return {
     templateId: normalizePortfolioTemplateId(asString(raw.templateId)),
     focusQuestion: asString(meta.focusQuestion),
@@ -161,6 +168,7 @@ function normalizeContent(raw: ContentRecord | undefined): EditorContent {
     projects: extractItemList(raw.projects, 'projects'),
     skills: extractItemList(raw.skills, 'generic'),
     certifications: extractItemList(raw.certifications, 'certifications'),
+    sectionOrder,
   };
 }
 
@@ -218,6 +226,7 @@ function buildUpdatedContent(previous: ContentRecord, editor: EditorContent): Co
   const next = { ...previous };
   next.templateId = normalizePortfolioTemplateId(editor.templateId);
   next.meta = { ...asRecord(previous.meta), focusQuestion: editor.focusQuestion.trim() };
+  next.layout = { ...asRecord(previous.layout), sectionOrder: editor.sectionOrder };
   next.profile = { ...asRecord(previous.profile), avatarUrl: editor.profileImageUrl.trim() };
   next.hero = { ...asRecord(previous.hero), heading: editor.heroHeading.trim(), body: editor.heroBody.trim() };
   next.about = { ...asRecord(previous.about), body: editor.about.trim() };
@@ -946,6 +955,12 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
             </button>
             <p className="text-[11px] text-slate-600 text-center">AI rewrites your portfolio content based on your focus prompt.</p>
           </div>
+
+          {/* Section order */}
+          <SectionOrderPanel
+            order={content.sectionOrder}
+            onChange={(order) => setContent((prev) => ({ ...prev, sectionOrder: order }))}
+          />
 
           {/* Versions */}
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 space-y-3">

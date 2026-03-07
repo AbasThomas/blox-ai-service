@@ -25,6 +25,7 @@ const ALLOWED_PROVIDERS = new Set<ImportProvider>([
   'fiverr',
   'behance',
   'dribbble',
+  'canva',
   'figma',
   'coursera',
   'udemy',
@@ -664,7 +665,9 @@ export class OnboardingService {
       (item) =>
         item.source === 'github' ||
         item.source === 'behance' ||
-        item.source === 'figma',
+        item.source === 'figma' ||
+        item.source === 'dribbble' ||
+        item.source === 'canva',
     );
     const deduped = filtered.filter(
       (item, index, list) =>
@@ -678,7 +681,8 @@ export class OnboardingService {
 
     const fallbackProvider = providers.find(
       (provider) =>
-        provider === 'github' || provider === 'behance' || provider === 'figma',
+        provider === 'github' || provider === 'behance' || provider === 'figma' ||
+        provider === 'dribbble' || provider === 'canva',
     );
     if (!fallbackProvider) return [];
     return [

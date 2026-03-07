@@ -339,6 +339,11 @@ export function mapAssetToPublicProfile(input: {
   const seoConfig = asRecord(asset.seoConfig);
   const templateId = asString(content.templateId) || 'portfolio-modern-001';
 
+  const layout = asRecord(content.layout);
+  const sectionOrder = Array.isArray(layout.sectionOrder)
+    ? layout.sectionOrder.filter((s): s is string => typeof s === 'string')
+    : undefined;
+
   const hero = asRecord(content.hero);
   const about = asRecord(content.about);
   const experience = asRecord(content.experience);
@@ -417,6 +422,7 @@ export function mapAssetToPublicProfile(input: {
   return {
     subdomain,
     templateId,
+    ...(sectionOrder && sectionOrder.length > 0 ? { sectionOrder } : {}),
     canonicalUrl: `https://${subdomain}.${getAppHost()}`,
     user: {
       fullName: asset.user.fullName,

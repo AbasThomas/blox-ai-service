@@ -7,6 +7,7 @@ export type ImportProvider =
   | 'fiverr'
   | 'behance'
   | 'dribbble'
+  | 'canva'
   | 'figma'
   | 'coursera'
   | 'udemy';
