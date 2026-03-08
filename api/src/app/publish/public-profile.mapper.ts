@@ -419,10 +419,13 @@ export function mapAssetToPublicProfile(input: {
     asString(seoConfig.ogImageUrl) ||
     `https://dummyimage.com/1200x630/0f172a/ffffff.png&text=${encodeURIComponent(heroHeading)}`;
 
+  const resumeAssetId = asString(content.resumeAssetId) || undefined;
+
   return {
     subdomain,
     templateId,
     ...(sectionOrder && sectionOrder.length > 0 ? { sectionOrder } : {}),
+    ...(resumeAssetId ? { resumeAssetId } : {}),
     canonicalUrl: `https://${subdomain}.${getAppHost()}`,
     user: {
       fullName: asset.user.fullName,

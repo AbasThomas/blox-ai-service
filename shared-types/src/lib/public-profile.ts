@@ -64,6 +64,8 @@ export interface PublicProfilePayload {
   templateId?: string;
   sectionOrder?: string[];
   canonicalUrl: string;
+  /** ID of the resume asset linked to this portfolio for visitor download */
+  resumeAssetId?: string;
   user: {
     fullName: string;
     emailInitials?: string;

@@ -1,5 +1,8 @@
 import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import { normalizePortfolioTemplateId } from '@/lib/portfolio-templates';
+import { ArcadeTemplate } from './ArcadeTemplate';
+import { GardenStudioTemplate } from './GardenStudioTemplate';
+import { BentoStudioTemplate } from './BentoStudioTemplate';
 import { CanvasDesignerTemplate } from './CanvasDesignerTemplate';
 import { DevTerminalTemplate } from './DevTerminalTemplate';
 import { FreelanceTemplate } from './FreelanceTemplate';
@@ -147,6 +150,12 @@ export function PortfolioTemplateRenderer({
       return <StudioDesignerTemplate profile={safeProfile} subdomain={subdomain} />;
     case 'portfolio-canvas-designer':
       return <CanvasDesignerTemplate profile={safeProfile} subdomain={subdomain} />;
+    case 'portfolio-garden-studio':
+      return <GardenStudioTemplate profile={safeProfile} subdomain={subdomain} />;
+    case 'portfolio-arcade':
+      return <ArcadeTemplate profile={safeProfile} subdomain={subdomain} />;
+    case 'portfolio-bento-studio':
+      return <BentoStudioTemplate profile={safeProfile} subdomain={subdomain} />;
     case 'portfolio-freelance-conversion':
       return <FreelanceTemplate profile={safeProfile} subdomain={subdomain} />;
     case 'portfolio-timeline-dev':

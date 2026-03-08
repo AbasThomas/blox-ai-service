@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import { ContactForm } from './shared/ContactForm';
+import { ResumeDownloadButton } from './shared/ResumeDownloadButton';
 import { SmoothScroll } from './shared/SmoothScroll';
 import { SkillBadge, detectSkillPersona } from './shared/SkillBadge';
 import { FadeIn, FadeInGroup, FadeInItem } from './shared/FadeIn';
@@ -318,6 +319,13 @@ export function NightfallTemplate({ profile, subdomain }: NightfallTemplateProps
               >
                 Contact Me
               </button>
+              {profile.resumeAssetId && (
+                <ResumeDownloadButton
+                  subdomain={subdomain}
+                  ownerName={name}
+                  className="rounded-full px-6 py-2.5 text-sm font-semibold transition border border-white/10 bg-white/5 text-white hover:bg-white/10"
+                />
+              )}
             </div>
             {socialLinks.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">

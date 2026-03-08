@@ -40,6 +40,7 @@ interface EditorContent {
   skills: string[];
   certifications: string[];
   sectionOrder: string[];
+  resumeAssetId: string;
 }
 
 interface VersionRow {
@@ -76,6 +77,7 @@ const EMPTY_EDITOR_CONTENT: EditorContent = {
   skills: [],
   certifications: [],
   sectionOrder: [...DEFAULT_SECTION_ORDER],
+  resumeAssetId: '',
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -169,6 +171,7 @@ function normalizeContent(raw: ContentRecord | undefined): EditorContent {
     skills: extractItemList(raw.skills, 'generic'),
     certifications: extractItemList(raw.certifications, 'certifications'),
     sectionOrder,
+    resumeAssetId: asString(raw.resumeAssetId),
   };
 }
 
@@ -235,6 +238,8 @@ function buildUpdatedContent(previous: ContentRecord, editor: EditorContent): Co
   next.projects = { items: editor.projects.map((i) => i.trim()).filter(Boolean).map(parseProjectLine) };
   next.skills = { items: editor.skills.map((i) => i.trim()).filter(Boolean) };
   next.certifications = { items: editor.certifications.map((i) => i.trim()).filter(Boolean).map(parseCertificationLine) };
+  if (editor.resumeAssetId) next.resumeAssetId = editor.resumeAssetId;
+  else delete next.resumeAssetId;
   return next;
 }
 
@@ -284,6 +289,7 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
   const [notice, setNotice] = useState('');
   const [noticeKind, setNoticeKind] = useState<NoticeKind>('info');
   const [showAiOverlay, setShowAiOverlay] = useState(false);
+  const [resumes, setResumes] = useState<Array<{ id: string; title: string }>>([]);
 
   function showNotice(msg: string, kind: NoticeKind = 'info') {
     setNotice(msg);
@@ -313,6 +319,13 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
   }, [id]);
 
   useEffect(() => { void loadAsset(); void loadVersions(); }, [loadAsset, loadVersions]);
+
+  useEffect(() => {
+    assetsApi.list('RESUME').then((list) => {
+      const rows = (Array.isArray(list) ? list : []) as Array<Record<string, unknown>>;
+      setResumes(rows.map((r) => ({ id: asString(r.id), title: asString(r.title) || 'Untitled Resume' })).filter((r) => r.id));
+    }).catch(() => setResumes([]));
+  }, []);
 
   useEffect(() => {
     if (generatingStatus !== 'processing' && generatingStatus !== 'queued') {
@@ -740,6 +753,33 @@ export default function PortfolioEditPage({ params }: { params: Promise<{ id: st
                     placeholder="e.g. Frontend engineer seeking roles in fintech"
                     className={INPUT_CLS} />
                 </label>
+
+                <div className="space-y-1.5">
+                  <FieldLabel hint="(optional — adds a Download Resume button to your live portfolio)">
+                    Linked resume for download
+                  </FieldLabel>
+                  {resumes.length === 0 ? (
+                    <p className="rounded-xl border border-white/8 bg-white/[0.02] px-3 py-2.5 text-xs text-slate-500">
+                      No resumes found. <a href="/resumes" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2">Create one</a> to enable resume download on your portfolio.
+                    </p>
+                  ) : (
+                    <select
+                      value={content.resumeAssetId}
+                      onChange={(e) => setContent((prev) => ({ ...prev, resumeAssetId: e.target.value }))}
+                      className={INPUT_CLS}
+                    >
+                      <option value="">— No resume linked —</option>
+                      {resumes.map((r) => (
+                        <option key={r.id} value={r.id}>{r.title}</option>
+                      ))}
+                    </select>
+                  )}
+                  {content.resumeAssetId && (
+                    <p className="text-[11px] text-emerald-400">
+                      ✓ Visitors will see a "Download Resume" button on your published portfolio.
+                    </p>
+                  )}
+                </div>
 
                 <SectionDivider label="Hero" />
 

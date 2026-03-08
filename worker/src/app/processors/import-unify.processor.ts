@@ -737,21 +737,38 @@ export class ImportUnifyProcessor extends WorkerHost {
       .filter(Boolean)
       .join('\n');
 
+    const linkedinSummary = linkedin?.summary?.trim() ?? '';
+    const upworkOverview = upwork?.summary?.trim() ?? '';
+    const githubBio = github?.bio?.trim() ?? '';
+    const rawBio = [linkedinSummary, upworkOverview, githubBio, summaryText].filter(Boolean).join('\n\n---\n\n');
+    const certList = certifications.map((item) => item.title).filter(Boolean).join(', ');
+    const projectList = merged.projects?.slice(0, 4).map((p) => p.name || p.title).filter(Boolean).join(', ') ?? '';
+
     const prompt = [
-      'Refine this user professional bio into a compelling, SEO-optimized About section for a portfolio (150-300 words).',
-      'Make it first-person, engaging, and achievement-focused.',
-      `Tone: ${this.personaTone(persona)}.`,
+      `You are a world-class personal branding copywriter. Transform the professional data below into a premium, SEO-optimised About section for ${name}'s portfolio website.`,
+      '',
+      'WRITING RULES:',
+      '- First-person voice, confident and specific — never use clichés like "passionate", "guru", "ninja", "rockstar"',
+      '- Lead with impact or a distinctive professional identity statement',
+      '- Weave in real skills, actual projects, and specific expertise — not generic claims',
+      '- Include a subtle forward-looking statement (what they are working on or seeking)',
+      `- Tone: ${this.personaTone(persona)} — match the persona exactly`,
+      '- Length: 180–250 words. Dense with value, not fluff.',
+      '- Output ONLY the final About section text — no labels, no headings, no explanations',
+      '',
+      '--- PROFESSIONAL DATA ---',
       `Name: ${name}`,
-      `Headline: ${headline}`,
-      `LinkedIn Summary: ${linkedin?.summary ?? ''}`,
-      `Upwork Overview: ${upwork?.summary ?? ''}`,
-      `Skills: ${skills.join(', ')}`,
-      `Certifications: ${certifications.map((item) => item.title).join(', ')}`,
+      `Professional headline: ${headline}`,
       `What they do: ${whatTheyDo}`,
-      `Location: ${location ?? ''}`,
-      `Focus Question: ${focusQuestion ?? ''}`,
-      `Fallback source: ${summaryText}`,
-      'Output only final text.',
+      ...(location ? [`Location: ${location}`] : []),
+      ...(focusQuestion ? [`Career focus / target: ${focusQuestion}`] : []),
+      `Core skills: ${skills.join(', ')}`,
+      ...(certList ? [`Certifications: ${certList}`] : []),
+      ...(projectList ? [`Notable projects: ${projectList}`] : []),
+      ...(rawBio ? [`Raw bio data to refine:\n${rawBio.slice(0, 1200)}`] : []),
+      '--- END DATA ---',
+      '',
+      'Now write the About section:',
     ].join('\n');
 
     const about = await this.generateAbout(prompt, name, headline, skills);

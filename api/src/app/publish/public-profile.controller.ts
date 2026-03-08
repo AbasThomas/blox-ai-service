@@ -5,6 +5,16 @@ import { PublicProfileService } from './public-profile.service';
 export class PublicProfileController {
   constructor(private readonly publicProfileService: PublicProfileService) {}
 
+  @Get(':subdomain/resume')
+  @Header('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+  async getResume(@Param('subdomain') subdomain: string) {
+    const resume = await this.publicProfileService.getResumeBySubdomain(subdomain);
+    if (!resume) {
+      throw new NotFoundException('No resume linked to this portfolio');
+    }
+    return resume;
+  }
+
   @Get(':subdomain')
   @Header('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=86400')
   async getBySubdomain(@Param('subdomain') subdomain: string) {
