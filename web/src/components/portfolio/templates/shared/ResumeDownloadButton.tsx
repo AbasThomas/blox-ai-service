@@ -197,6 +197,7 @@ export function ResumeDownloadButton({
     <div>
       <button
         type="button"
+        data-resume-download
         onClick={() => void handleDownload()}
         disabled={loading}
         className={className ?? defaultClass}

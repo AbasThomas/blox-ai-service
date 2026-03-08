@@ -25,7 +25,8 @@
       "Bash(npx tsc:*)",
       "Bash(xargs grep:*)",
       "Bash(npx prisma:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(grep:*)"
     ]
   }
 }

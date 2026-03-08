@@ -143,6 +143,17 @@ export const PORTFOLIO_TEMPLATE_OPTIONS: PortfolioTemplateOption[] = [
     layout: 'grid-showcase',
     tags: ['light', 'minimal', 'designer', 'photographer'],
   },
+  {
+    id: 'portfolio-macos',
+    name: 'macOS Desktop',
+    description: 'Interactive macOS Ventura-style portfolio with draggable windows and dock.',
+    accent: '#007aff',
+    bg: '#1d3461',
+    surface: '#ffffff',
+    text: '#1e293b',
+    layout: 'grid-showcase',
+    tags: ['light', 'interactive', 'creative', 'unique', 'developer'],
+  },
 ];
 
 export const DEFAULT_PORTFOLIO_TEMPLATE_ID = 'portfolio-modern-001';
