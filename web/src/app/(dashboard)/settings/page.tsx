@@ -5,7 +5,7 @@ import { FeaturePage } from '@/components/shared/feature-page';
 import { useBloxStore } from '@/lib/store/app-store';
 import { authApi, billingApi, integrationsApi } from '@/lib/api';
 import { PlanTier } from '@nextjs-blox/shared-types';
-import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, Settings, BriefcaseBusiness, ArrowUpRight } from '@/components/ui/icons';
+import { User, Shield, Link as LinkIcon, CreditCard, Download, Zap, BriefcaseBusiness, ArrowUpRight } from '@/components/ui/icons';
 
 const TABS = ['Account', 'Security', 'Integrations', 'Subscription', 'Export', 'Career'] as const;
 type Tab = typeof TABS[number];
@@ -34,18 +34,93 @@ interface Subscription {
   invoices?: Array<{ id: string; amount: number; currency: string; createdAt: string }>;
 }
 
+const TAB_ICONS: Record<Tab, React.ReactNode> = {
+  Account: <User size={14} />,
+  Security: <Shield size={14} />,
+  Integrations: <LinkIcon size={14} />,
+  Subscription: <CreditCard size={14} />,
+  Export: <Download size={14} />,
+  Career: <BriefcaseBusiness size={14} />,
+};
+
+const TAB_LABELS: Record<Tab, string> = {
+  Account: 'Account',
+  Security: 'Security',
+  Integrations: 'Integrations',
+  Subscription: 'Subscription',
+  Export: 'Export',
+  Career: 'Career Hub',
+};
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="font-mono text-[11px] uppercase tracking-wide text-[#4E5C6E]">{children}</label>;
+}
+
+function Input({ type = 'text', value, onChange, placeholder, readOnly }: {
+  type?: string; value?: string; onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string; readOnly?: boolean;
+}) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      readOnly={readOnly}
+      className="w-full h-10 rounded border border-[#1B2131] bg-[#0d1018] px-3 text-[13px] text-white placeholder-[#3A4452] outline-none focus:border-[#2A3A50] disabled:opacity-50 transition-colors"
+    />
+  );
+}
+
+function Msg({ text, isError }: { text: string; isError?: boolean }) {
+  if (!text) return null;
+  return (
+    <div className={`rounded border px-3 py-2 text-[12px] ${isError ? 'border-rose-500/20 bg-rose-500/5 text-rose-400' : 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400'}`}>
+      {text}
+    </div>
+  );
+}
+
+function PrimaryBtn({ type = 'button', disabled, onClick, children }: {
+  type?: 'button' | 'submit'; disabled?: boolean; onClick?: () => void; children: React.ReactNode;
+}) {
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className="inline-flex items-center justify-center h-9 px-5 rounded bg-[#1ECEFA] text-[#060810] text-[12px] font-bold hover:bg-[#3DD5FF] disabled:opacity-50 transition-colors"
+    >
+      {children}
+    </button>
+  );
+}
+
+function GhostBtn({ type = 'button', disabled, onClick, className = '', children }: {
+  type?: 'button' | 'submit'; disabled?: boolean; onClick?: () => void; className?: string; children: React.ReactNode;
+}) {
+  return (
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={`inline-flex items-center justify-center h-9 px-4 rounded border border-[#1B2131] text-[12px] font-medium text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] disabled:opacity-50 transition-colors ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function SettingsPage() {
   const user = useBloxStore((s) => s.user);
   const updateUser = useBloxStore((s) => s.updateUser);
   const [activeTab, setActiveTab] = useState<Tab>('Account');
 
-  // Account tab
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
   const [savingAccount, setSavingAccount] = useState(false);
   const [accountMsg, setAccountMsg] = useState('');
 
-  // Security tab
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [confirmPw, setConfirmPw] = useState('');
@@ -55,12 +130,10 @@ export default function SettingsPage() {
   const [mfaCode, setMfaCode] = useState('');
   const [mfaMsg, setMfaMsg] = useState('');
 
-  // Integrations tab
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loadingIntegrations, setLoadingIntegrations] = useState(false);
   const [integrationMsg, setIntegrationMsg] = useState('');
 
-  // Subscription tab
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loadingSub, setLoadingSub] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -71,8 +144,7 @@ export default function SettingsPage() {
     try {
       const data = await integrationsApi.list() as Integration[];
       setIntegrations(data);
-    } catch { /* ignore */ }
-    finally { setLoadingIntegrations(false); }
+    } catch { /* ignore */ } finally { setLoadingIntegrations(false); }
   }, []);
 
   const loadSubscription = useCallback(async () => {
@@ -80,24 +152,18 @@ export default function SettingsPage() {
     try {
       const data = await billingApi.getSubscription() as Subscription;
       setSubscription(data);
-    } catch { /* ignore */ }
-    finally { setLoadingSub(false); }
+    } catch { /* ignore */ } finally { setLoadingSub(false); }
   }, []);
 
-  // Handle OAuth callback result and deep-link tab from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') as Tab | null;
     const connected = params.get('connected');
     const errorParam = params.get('error');
-
     if (tabParam && TABS.includes(tabParam)) setActiveTab(tabParam);
     if (connected) setIntegrationMsg(`${connected} connected successfully.`);
     if (errorParam) setIntegrationMsg(`Connection failed: ${errorParam.replace(/_/g, ' ')}`);
-
-    if (tabParam || connected || errorParam) {
-      window.history.replaceState({}, '', '/settings');
-    }
+    if (tabParam || connected || errorParam) window.history.replaceState({}, '', '/settings');
   }, []);
 
   useEffect(() => {
@@ -110,7 +176,7 @@ export default function SettingsPage() {
     setSavingAccount(true);
     setAccountMsg('');
     try {
-      await authApi.me(); // Would be authApi.updateProfile in a real impl
+      await authApi.me();
       updateUser({ name, email });
       setAccountMsg('Profile updated successfully.');
     } catch (err) {
@@ -120,12 +186,12 @@ export default function SettingsPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPw !== confirmPw) { setPwMsg('New passwords do not match.'); return; }
+    if (newPw !== confirmPw) { setPwMsg('Passwords do not match.'); return; }
     if (newPw.length < 8) { setPwMsg('Password must be at least 8 characters.'); return; }
     setSavingPw(true);
     setPwMsg('');
     try {
-      await authApi.resetPassword('', newPw); // In prod: dedicated changePassword endpoint
+      await authApi.resetPassword('', newPw);
       setPwMsg('Password changed successfully.');
       setCurrentPw(''); setNewPw(''); setConfirmPw('');
     } catch (err) {
@@ -146,7 +212,7 @@ export default function SettingsPage() {
     if (mfaCode.length !== 6) { setMfaMsg('Enter the 6-digit code.'); return; }
     try {
       await authApi.verifyMfa(mfaCode, '');
-      setMfaMsg('MFA enabled successfully!');
+      setMfaMsg('MFA enabled!');
       setMfaSetup(null);
       setMfaCode('');
     } catch (err) {
@@ -165,33 +231,20 @@ export default function SettingsPage() {
   const handleConnectIntegration = async (provider: string) => {
     setIntegrationMsg('');
     try {
-      const res = await integrationsApi.connect(provider) as {
-        authUrl?: string | null;
-        connected?: boolean;
-        message?: string;
-      };
-
+      const res = await integrationsApi.connect(provider) as { authUrl?: string | null; connected?: boolean; message?: string };
       if (res.authUrl) {
         const token = localStorage.getItem('blox_access_token') ?? '';
-        if (!token) {
-          setIntegrationMsg('Missing access token. Please sign in again.');
-          return;
-        }
+        if (!token) { setIntegrationMsg('Missing access token. Please sign in again.'); return; }
         const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || window.location.origin;
         const authUrl = new URL(res.authUrl, baseUrl);
         authUrl.searchParams.set('token', token);
         window.location.href = authUrl.toString();
         return;
       }
-
-      if (res.connected) {
-        setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
-      }
-      if (res.message) {
-        setIntegrationMsg(res.message);
-      }
+      if (res.connected) setIntegrations((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: true } : item)));
+      if (res.message) setIntegrationMsg(res.message);
     } catch (err) {
-      setIntegrationMsg(err instanceof Error ? err.message : 'Failed to connect integration.');
+      setIntegrationMsg(err instanceof Error ? err.message : 'Failed to connect.');
     }
   };
 
@@ -201,7 +254,7 @@ export default function SettingsPage() {
     setCancelMsg('');
     try {
       await billingApi.cancel({ immediate: false });
-      setCancelMsg('Subscription cancelled. Your plan remains active until the current period ends.');
+      setCancelMsg('Subscription cancelled. Your plan remains active until the period ends.');
       await loadSubscription();
     } catch (err) {
       setCancelMsg(err instanceof Error ? err.message : 'Failed to cancel subscription.');
@@ -209,338 +262,229 @@ export default function SettingsPage() {
   };
 
   return (
-    <FeaturePage 
+    <FeaturePage
       title="Settings & Career"
-      description="Manage your account, security protocols, system integrations, and explore the career hub."
-      headerIcon={<Settings className="h-6 w-6" />}
+      description="Manage your account, security, integrations, and career tools."
     >
-      <div className="flex flex-col lg:flex-row gap-8 md:gap-10">
-        {/* Tab Navigation Sidebar */}
-        <aside className="lg:w-64 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Sidebar nav */}
+        <aside className="lg:w-52 shrink-0">
           <div className="lg:sticky lg:top-24">
-            <nav className="flex lg:flex-col gap-1 p-1 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm overflow-x-auto lg:overflow-x-visible">
-              {[
-                { id: 'Account', icon: <User className="h-4 w-4" /> },
-                { id: 'Security', icon: <Shield className="h-4 w-4" /> },
-                { id: 'Integrations', icon: <LinkIcon className="h-4 w-4" /> },
-                { id: 'Subscription', icon: <CreditCard className="h-4 w-4" /> },
-                { id: 'Export', icon: <Download className="h-4 w-4" /> },
-                { id: 'Career', icon: <BriefcaseBusiness className="h-4 w-4" />, label: 'Career Hub' },
-              ].map((tab) => (
-                <button 
-                  key={tab.id} 
-                  type="button" 
-                  onClick={() => setActiveTab(tab.id as Tab)}
-                  className={`flex-shrink-0 lg:flex-shrink flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold tracking-wide transition-all duration-200 focus:outline-none ${
-                    activeTab === tab.id 
-                      ? 'bg-[#1ECEFA] text-black shadow-sm' 
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            <nav className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible">
+              {TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`group flex items-center gap-2.5 h-9 rounded text-[13px] font-medium transition-colors shrink-0 ${
+                    activeTab === tab
+                      ? 'bg-[#141C28] text-white pl-3 pr-4'
+                      : 'text-[#46566A] hover:text-[#8899AA] pl-3 pr-4'
                   }`}
                 >
-                  <span className={activeTab === tab.id ? 'opacity-100' : 'opacity-60'}>{tab.icon}</span>
-                  <span className="whitespace-nowrap">{tab.id === 'Career' ? 'Career Hub' : tab.id}</span>
+                  <span className={activeTab === tab ? 'text-[#1ECEFA]' : 'text-[#2E3847] group-hover:text-[#46566A] transition-colors'}>
+                    {TAB_ICONS[tab]}
+                  </span>
+                  <span className="whitespace-nowrap">{TAB_LABELS[tab]}</span>
                 </button>
               ))}
             </nav>
           </div>
         </aside>
 
-        {/* Tab Content */}
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          {/* Account Tab */}
+
+          {/* Account */}
           {activeTab === 'Account' && (
-            <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black text-white tracking-tight">Account Identity</h2>
-                <p className="text-sm text-slate-400">Update your core identity and persona within the system.</p>
+            <div className="max-w-lg space-y-6">
+              <div>
+                <h2 className="text-[14px] font-semibold text-white">Account Identity</h2>
+                <p className="mt-0.5 text-[12px] text-[#4E5C6E]">Update your core profile details.</p>
               </div>
 
-              <form onSubmit={handleSaveAccount} className="space-y-6">
-                <div className="grid gap-6 rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Identity Name</label>
-                    <input 
-                      value={name} 
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name"
-                      className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
-                    />
+              <form onSubmit={handleSaveAccount} className="space-y-4">
+                <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4 space-y-4">
+                  <div className="space-y-1.5">
+                    <FieldLabel>Name</FieldLabel>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Comms Address</label>
-                    <input 
-                      type="email" 
-                      value={email} 
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="email@example.com"
-                      className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white placeholder-slate-600 transition-all focus:border-[#1ECEFA]/50 focus:bg-black/40 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50" 
-                    />
+                  <div className="space-y-1.5">
+                    <FieldLabel>Email</FieldLabel>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Persona Profile</label>
-                      <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-white/5 bg-white/5 px-4 md:px-5 py-3 md:py-4">
-                        <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{user.persona ?? 'NOT ASSIGNED'}</span>
-                        <span className="ml-auto rounded-full bg-slate-800 px-2 py-0.5 text-[9px] font-black text-slate-500 uppercase border border-white/5">Immutable</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <FieldLabel>Persona</FieldLabel>
+                      <div className="h-10 rounded border border-[#1B2131] bg-[#0d1018] px-3 flex items-center">
+                        <span className="text-[12px] text-[#7A8DA0]">{user.persona ?? '—'}</span>
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Clearance Level</label>
-                      <div className="flex items-center gap-3 rounded-xl md:rounded-2xl border border-white/5 bg-white/5 px-4 md:px-5 py-3 md:py-4">
-                        <span className={`text-sm font-black uppercase tracking-wider ${
-                          user.tier === PlanTier.FREE ? 'text-slate-400' :
-                          user.tier === PlanTier.PRO ? 'text-[#1ECEFA]' :
-                          'text-purple-400'
-                        }`}>{user.tier}</span>
-                        <LinkIcon className="ml-auto h-3 w-3 text-slate-600" />
+                    <div className="space-y-1.5">
+                      <FieldLabel>Plan Tier</FieldLabel>
+                      <div className="h-10 rounded border border-[#1B2131] bg-[#0d1018] px-3 flex items-center">
+                        <span className={`text-[12px] font-medium ${user.tier === PlanTier.PRO ? 'text-[#1ECEFA]' : user.tier === PlanTier.FREE ? 'text-[#4E5C6E]' : 'text-violet-400'}`}>
+                          {user.tier}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {accountMsg && (
-                  <div className={`rounded-xl md:rounded-2xl border p-4 text-sm font-bold animate-in zoom-in-95 duration-200 ${
-                    accountMsg.includes('success') 
-                      ? 'border-green-500/20 bg-green-500/10 text-green-400' 
-                      : 'border-red-500/20 bg-red-500/10 text-red-400'
-                  }`}>
-                    {accountMsg}
-                  </div>
-                )}
-
-                <button 
-                  type="submit" 
-                  disabled={savingAccount}
-                  className="flex items-center justify-center gap-2 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95 disabled:opacity-50"
-                >
-                  {savingAccount ? 'SYNCHRONIZING...' : 'COMMIT CHANGES'}
-                </button>
+                <Msg text={accountMsg} isError={!accountMsg.includes('success')} />
+                <PrimaryBtn type="submit" disabled={savingAccount}>
+                  {savingAccount ? 'Saving...' : 'Save changes'}
+                </PrimaryBtn>
               </form>
             </div>
           )}
 
-          {/* Security Tab */}
+          {/* Security */}
           {activeTab === 'Security' && (
-            <div className="max-w-2xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black text-white tracking-tight uppercase">Access Credentials</h2>
-                  <p className="text-sm text-slate-400">Manage your system passcodes and authentication layers.</p>
-                </div>
+            <div className="max-w-lg space-y-6">
+              <div>
+                <h2 className="text-[14px] font-semibold text-white">Security</h2>
+                <p className="mt-0.5 text-[12px] text-[#4E5C6E]">Change your password and set up two-factor auth.</p>
+              </div>
 
-                <form onSubmit={handleChangePassword} className="space-y-6 rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
+              <form onSubmit={handleChangePassword} className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4 space-y-4">
+                <p className="text-[13px] font-medium text-white">Change Password</p>
+                <div className="space-y-1.5">
+                  <FieldLabel>Current Password</FieldLabel>
+                  <Input type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <FieldLabel>New Password</FieldLabel>
+                    <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <FieldLabel>Confirm</FieldLabel>
+                    <Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} />
+                  </div>
+                </div>
+                <Msg text={pwMsg} isError={!pwMsg.includes('success')} />
+                <GhostBtn type="submit" disabled={savingPw}>
+                  {savingPw ? 'Updating...' : 'Update password'}
+                </GhostBtn>
+              </form>
+
+              <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4 space-y-4">
+                <p className="text-[13px] font-medium text-white">Two-Factor Authentication</p>
+                {!mfaSetup ? (
+                  <div className="flex items-center justify-between">
+                    <p className="text-[12px] text-[#4E5C6E] max-w-xs">Add a TOTP authenticator for extra account security.</p>
+                    <GhostBtn onClick={handleSetupMfa}>Set up 2FA</GhostBtn>
+                  </div>
+                ) : (
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Current Passcode</label>
-                      <input 
-                        type="password" 
-                        value={currentPw} 
-                        onChange={(e) => setCurrentPw(e.target.value)}
-                        className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
-                      />
-                    </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">New Passcode</label>
-                        <input 
-                          type="password" 
-                          value={newPw} 
-                          onChange={(e) => setNewPw(e.target.value)}
-                          className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
-                        />
+                    <div className="flex gap-6">
+                      <div className="rounded border border-[#1B2131] p-2 bg-white inline-block">
+                        <img src={mfaSetup.qrCode} alt="MFA QR code" className="h-32 w-32 object-contain" />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Confirm Passcode</label>
-                        <input 
-                          type="password" 
-                          value={confirmPw} 
-                          onChange={(e) => setConfirmPw(e.target.value)}
-                          className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-4 md:px-5 py-3 md:py-4 text-sm text-white focus:border-[#1ECEFA]/50 focus:outline-none focus:ring-1 focus:ring-[#1ECEFA]/50 transition-all" 
-                        />
+                      <div className="flex-1 space-y-3">
+                        <div className="space-y-1">
+                          <FieldLabel>Manual key</FieldLabel>
+                          <code className="block rounded border border-[#1B2131] bg-[#0d1018] px-3 py-2 font-mono text-[11px] text-[#1ECEFA] select-all">
+                            {mfaSetup.secret}
+                          </code>
+                        </div>
+                        <div className="space-y-1.5">
+                          <FieldLabel>Verify token</FieldLabel>
+                          <div className="flex gap-2">
+                            <input
+                              value={mfaCode}
+                              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                              placeholder="000000"
+                              className="flex-1 h-10 rounded border border-[#1B2131] bg-[#0d1018] px-3 font-mono text-center text-[14px] tracking-[0.2em] text-white outline-none focus:border-[#2A3A50] transition-colors"
+                            />
+                            <PrimaryBtn onClick={handleVerifyMfa}>Verify</PrimaryBtn>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                  {pwMsg && (
-                    <div className={`rounded-xl md:rounded-2xl border p-4 text-sm font-bold ${pwMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
-                      {pwMsg}
-                    </div>
-                  )}
-
-                  <button 
-                    type="submit" 
-                    disabled={savingPw}
-                    className="rounded-xl md:rounded-2xl border border-white/10 bg-white/5 px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-white transition-all hover:bg-white/10 hover:border-[#1ECEFA]/50 hover:text-[#1ECEFA] disabled:opacity-50"
-                  >
-                    {savingPw ? 'ENCRYPTING...' : 'ROTATE CREDENTIALS'}
-                  </button>
-                </form>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black text-white tracking-tight uppercase">Multi-Factor Protocol</h2>
-                  <p className="text-sm text-slate-400">Add an extra layer of encryption to your access terminal.</p>
-                </div>
-
-                <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-6 md:p-8 shadow-xl">
-                  {!mfaSetup ? (
-                    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                        <Shield className="h-8 w-8" />
-                      </div>
-                      <div className="flex-1 text-center md:text-left">
-                        <p className="text-sm text-slate-400 leading-relaxed">Secure your terminal with a Time-based One-Time Password (TOTP). This adds a required second key during authentication.</p>
-                        <button 
-                          onClick={handleSetupMfa}
-                          className="mt-4 rounded-xl md:rounded-2xl border border-purple-500/30 bg-purple-500/10 px-5 py-2.5 md:px-6 md:py-3 text-xs font-black tracking-widest text-purple-300 transition-all hover:bg-purple-600 hover:text-white hover:shadow-md"
-                        >
-                          INITIALIZE 2FA
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-8 animate-in fade-in duration-300">
-                      <div className="grid gap-6 md:gap-8 md:grid-cols-2">
-                        <div className="space-y-4 text-center md:text-left">
-                          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-400">1. Scan visual matrix</p>
-                          <div className="inline-block rounded-2xl border-2 border-purple-500/30 p-3 bg-white">
-                            <img src={mfaSetup.qrCode} alt="MFA QR code" className="h-32 w-32 md:h-40 md:w-40 object-contain" />
-                          </div>
-                        </div>
-                        <div className="space-y-6">
-                          <div className="space-y-3">
-                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500">Manual decryption key</p>
-                            <code className="block rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-xs font-mono text-[#1ECEFA] select-all">
-                              {mfaSetup.secret}
-                            </code>
-                          </div>
-                          <div className="space-y-3">
-                            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-400">2. Verify Token</p>
-                            <div className="flex gap-2">
-                              <input 
-                                value={mfaCode} 
-                                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                                placeholder="000000"
-                                className="w-full rounded-xl md:rounded-2xl border border-white/10 bg-black/60 px-4 py-3 md:px-5 md:py-4 text-center font-mono text-lg md:text-xl tracking-[0.3em] text-white focus:border-purple-500/50 focus:outline-none transition-all" 
-                              />
-                              <button 
-                                onClick={handleVerifyMfa}
-                                className="rounded-xl md:rounded-2xl bg-purple-600 px-6 md:px-8 text-sm font-black text-white hover:bg-white hover:text-purple-600 transition-all"
-                              >
-                                VERIFY
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {mfaMsg && (
-                    <div className={`mt-6 rounded-xl md:rounded-2xl border p-4 text-sm font-bold ${mfaMsg.includes('success') ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
-                      {mfaMsg}
-                    </div>
-                  )}
-                </div>
+                )}
+                <Msg text={mfaMsg} isError={!mfaMsg.includes('success') && !mfaMsg.includes('enabled')} />
               </div>
             </div>
           )}
 
-          {/* Integrations Tab */}
+          {/* Integrations */}
           {activeTab === 'Integrations' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black text-white tracking-tight uppercase">System Links</h2>
-                  <p className="text-sm text-slate-400">Connect external nodes to synchronize your career data.</p>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-[14px] font-semibold text-white">Connected Integrations</h2>
+                  <p className="mt-0.5 text-[12px] text-[#4E5C6E]">Link external services to sync your career data.</p>
                 </div>
-                <div className="flex items-center gap-2 rounded-xl md:rounded-2xl border border-blue-500/20 bg-blue-500/5 px-4 py-2 text-[10px] font-black text-blue-400 uppercase tracking-widest">
-                  <Shield className="h-3 w-3" /> Privacy Protocol Active
+                <div className="flex items-center gap-1.5 rounded border border-[#1B2131] px-2.5 py-1.5">
+                  <Shield size={11} className="text-[#1ECEFA]" />
+                  <span className="text-[11px] text-[#4E5C6E]">Privacy active</span>
                 </div>
               </div>
 
+              {integrationMsg && (
+                <div className="rounded border border-[#1ECEFA]/20 bg-[#1ECEFA]/5 px-3 py-2 text-[12px] text-[#1ECEFA]">
+                  {integrationMsg}
+                </div>
+              )}
+
               {loadingIntegrations ? (
-                <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="h-48 animate-pulse rounded-2xl md:rounded-3xl border border-white/5 bg-black/20" />
+                    <div key={i} className="h-40 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-4 md:gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {integrations.map((integration) => (
-                    <div 
-                      key={integration.id} 
-                      className={`group relative flex flex-col justify-between overflow-hidden rounded-2xl md:rounded-3xl border p-5 md:p-6 transition-all duration-300 ${
-                        integration.connected 
-                          ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 shadow-inner' 
-                          : 'border-white/10 bg-black/40 hover:border-white/20'
+                    <div
+                      key={integration.id}
+                      className={`rounded-md border p-4 flex flex-col gap-3 ${
+                        integration.connected ? 'border-emerald-500/20 bg-[#0B0E14]' : 'border-[#1B2131] bg-[#0B0E14]'
                       }`}
                     >
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <h3 className="font-black text-white tracking-tight uppercase">{integration.name}</h3>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{integration.category}</p>
-                          </div>
-                          {integration.connected ? (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 text-green-400 border border-green-500/20">
-                              <Zap className="h-4 w-4 fill-current" />
-                            </div>
-                          ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-600 border border-white/5">
-                              <LinkIcon className="h-4 w-4" />
-                            </div>
-                          )}
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-[13px] font-semibold text-white">{integration.name}</h3>
+                          <p className="mt-0.5 font-mono text-[10px] text-[#4E5C6E] uppercase">{integration.category}</p>
                         </div>
-                        
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                            <span className="text-slate-600">Mode</span>
-                            <span className="text-slate-500">{integration.mode}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                            <span className="text-slate-600">Status</span>
-                            <span className={integration.connected ? 'text-green-400' : 'text-slate-600'}>{integration.connected ? 'LINKED' : 'DISCONNECTED'}</span>
-                          </div>
-                          {integration.mode === 'oauth' && !integration.oauthConfigured && (
-                            <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
-                              <span className="text-amber-500">Config</span>
-                              <span className="text-amber-500">ENV MISSING</span>
-                            </div>
-                          )}
-                        </div>
+                        <span className={`h-1.5 w-1.5 rounded-full mt-1.5 ${integration.connected ? 'bg-emerald-500' : 'bg-[#2E3847]'}`} />
+                      </div>
+
+                      <div className="text-[11px] text-[#4E5C6E] space-y-0.5">
+                        <p>Mode: <span className="text-[#7A8DA0]">{integration.mode}</span></p>
+                        {integration.mode === 'oauth' && !integration.oauthConfigured && (
+                          <p className="text-amber-400">Missing env credentials</p>
+                        )}
                       </div>
 
                       {integration.connected ? (
                         <button
                           onClick={() => handleDisconnect(integration.id)}
-                          className="mt-6 w-full rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-red-400 transition-all hover:bg-red-500 hover:text-white"
+                          className="mt-auto inline-flex w-full items-center justify-center h-7 rounded border border-rose-500/20 text-[11px] text-rose-400 hover:bg-rose-500/10 transition-colors"
                         >
-                          TERMINATE
+                          Disconnect
                         </button>
                       ) : integration.mode === 'manual' ? (
-                        <div className="mt-6 w-full rounded-xl md:rounded-2xl border border-white/5 bg-white/5 py-3 text-center text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
-                          MANUAL IMPORT
-                        </div>
+                        <div className="mt-auto text-center text-[11px] text-[#3A4452]">Manual import only</div>
                       ) : (
-                        <div className="mt-6 space-y-2">
+                        <div className="mt-auto space-y-1.5">
                           <button
                             onClick={() => handleConnectIntegration(integration.id)}
-                            className="w-full rounded-xl md:rounded-2xl bg-white/5 border border-white/10 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-[#1ECEFA] hover:text-black hover:shadow-md"
+                            className="inline-flex w-full items-center justify-center h-7 rounded bg-[#1ECEFA] text-[#060810] text-[11px] font-bold hover:bg-[#3DD5FF] transition-colors"
                           >
-                            INITIALIZE LINK
+                            Connect
                           </button>
                           {integration.mode === 'oauth' && !integration.oauthConfigured && integration.setupDocsUrl && (
                             <a
                               href={integration.setupDocsUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-center justify-center gap-1 text-[10px] text-amber-500/70 hover:text-amber-400"
+                              className="flex items-center justify-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 transition-colors"
                             >
-                              <ArrowUpRight className="h-3 w-3" /> Setup credentials
+                              Setup guide <ArrowUpRight size={9} />
                             </a>
                           )}
                         </div>
@@ -549,227 +493,164 @@ export default function SettingsPage() {
                   ))}
                 </div>
               )}
-              {integrationMsg && (
-                <div className="inline-block rounded-xl md:rounded-2xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 px-5 py-4 text-xs font-bold tracking-wide text-[#1ECEFA]">
-                  {integrationMsg}
-                </div>
-              )}
             </div>
           )}
 
-          {/* Subscription Tab */}
+          {/* Subscription */}
           {activeTab === 'Subscription' && (
-            <div className="max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-1">
-                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Clearance Status</h2>
-                <p className="text-sm text-slate-400">View and manage your active subscription protocol.</p>
+            <div className="max-w-lg space-y-5">
+              <div>
+                <h2 className="text-[14px] font-semibold text-white">Subscription</h2>
+                <p className="mt-0.5 text-[12px] text-[#4E5C6E]">View and manage your active plan.</p>
               </div>
 
               {loadingSub ? (
-                <div className="h-64 animate-pulse rounded-2xl md:rounded-3xl border border-white/5 bg-black/20" />
+                <div className="h-48 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
               ) : subscription ? (
-                <div className="space-y-8">
-                  <div className="relative overflow-hidden rounded-2xl md:rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-[#0C0F13] via-black to-purple-900/10 p-8 md:p-10 shadow-2xl">
-                    <div className="absolute right-0 top-0 h-96 w-96 -translate-y-1/2 translate-x-1/3 rounded-full bg-purple-500/10 blur-[100px] pointer-events-none" />
-                    
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-8">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">
-                          <Zap className="h-3 w-3 fill-current" /> Active Protocol
+                <div className="space-y-4">
+                  <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] overflow-hidden">
+                    <div className="relative px-5 py-5">
+                      <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1ECEFA]" />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-mono text-[11px] text-[#4E5C6E] uppercase">Active plan</p>
+                          <p className="mt-1 text-2xl font-bold text-white">{subscription.tier}</p>
+                          <p className="mt-0.5 font-mono text-[11px] text-[#4E5C6E]">{subscription.cycle} cycle</p>
                         </div>
-                        <h3 className="text-4xl md:text-5xl font-black text-white tracking-tighter">{subscription.tier}</h3>
-                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{subscription.cycle} CYCLE</p>
-                      </div>
-                      
-                      <div className="flex flex-col items-start md:items-end gap-3">
-                        <span className={`inline-flex items-center gap-2 rounded-xl md:rounded-2xl border px-4 py-2 md:px-5 md:py-2.5 text-xs font-black uppercase tracking-widest shadow-inner ${
-                          subscription.status === 'ACTIVE' ? 'border-green-500/20 bg-green-500/10 text-green-400' :
-                          'border-red-500/20 bg-red-500/10 text-red-400'
-                        }`}>
-                          <div className={`h-2 w-2 rounded-full ${subscription.status === 'ACTIVE' ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-                          {subscription.status}
-                        </span>
-                        <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Renewal: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</p>
+                        <div className="text-right">
+                          <span className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium ${
+                            subscription.status === 'ACTIVE' ? 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' : 'border-rose-500/20 text-rose-400 bg-rose-500/5'
+                          }`}>
+                            <span className={`h-1 w-1 rounded-full ${subscription.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                            {subscription.status}
+                          </span>
+                          <p className="mt-1.5 text-[11px] text-[#4E5C6E]">
+                            Renews {new Date(subscription.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {subscription.invoices && subscription.invoices.length > 0 && (
-                    <div className="space-y-4">
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 px-2">Ledger History</h4>
-                      <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-black/30 p-2 overflow-hidden">
+                    {subscription.invoices && subscription.invoices.length > 0 && (
+                      <div className="border-t border-[#1B2131]">
+                        <p className="px-4 py-2.5 font-mono text-[10px] uppercase text-[#3A4452] tracking-wide border-b border-[#1B2131]">Invoice history</p>
                         {subscription.invoices.slice(0, 5).map((inv) => (
-                          <div key={inv.id} className="flex items-center justify-between rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 transition-all hover:bg-white/5">
-                            <div className="flex items-center gap-3 md:gap-4">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/5">
-                                <CreditCard className="h-5 w-5 text-slate-500" />
-                              </div>
-                              <span className="text-sm font-bold text-slate-300">{new Date(inv.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <span className="font-mono text-sm font-black text-white uppercase">
-                              {inv.currency} {(inv.amount / 100).toFixed(2)}
-                            </span>
+                          <div key={inv.id} className="flex items-center justify-between px-4 py-2.5 border-b border-[#1B2131] last:border-b-0 hover:bg-[#0d1018] transition-colors">
+                            <span className="text-[12px] text-[#7A8DA0]">{new Date(inv.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="font-mono text-[12px] text-white">{inv.currency} {(inv.amount / 100).toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <a 
-                      href="/pricing"
-                      className="flex-1 flex items-center justify-center rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md active:scale-95"
-                    >
-                      ELEVATE CLEARANCE
-                    </a>
+                  <Msg text={cancelMsg} isError={!cancelMsg.includes('cancelled')} />
+
+                  <div className="flex gap-2">
+                    <PrimaryBtn onClick={() => window.location.href = '/pricing'}>Upgrade Plan</PrimaryBtn>
                     {subscription.status === 'ACTIVE' && user.tier !== PlanTier.FREE && (
-                      <button 
-                        onClick={handleCancelSubscription} 
+                      <button
+                        onClick={handleCancelSubscription}
                         disabled={cancelling}
-                        className="flex-1 rounded-xl md:rounded-2xl border border-red-500/20 bg-red-500/5 px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-red-400 transition-all hover:bg-red-500 hover:text-white disabled:opacity-50"
+                        className="inline-flex items-center justify-center h-9 px-4 rounded border border-rose-500/20 text-rose-400 text-[12px] font-medium hover:bg-rose-500/10 disabled:opacity-50 transition-colors"
                       >
-                        {cancelling ? 'PROCESSING...' : 'ABORT SUBSCRIPTION'}
+                        {cancelling ? 'Processing...' : 'Cancel subscription'}
                       </button>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center rounded-2xl md:rounded-[2.5rem] border-2 border-dashed border-white/5 bg-black/20 p-12 md:p-16 text-center">
-                  <div className="mb-6 flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-2xl md:rounded-3xl bg-white/5 text-slate-700">
-                    <Shield className="h-8 w-8 md:h-10 md:w-10" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase">No Active Protocols</h3>
-                  <p className="mt-2 text-sm text-slate-500 max-w-xs leading-relaxed">Your system is currently operating on standard free-tier boundaries.</p>
-                  <a 
-                    href="/pricing" 
-                    className="mt-8 rounded-xl md:rounded-2xl bg-white px-6 md:px-8 py-3 md:py-4 text-sm font-black uppercase tracking-widest text-black transition-all hover:bg-[#1ECEFA] hover:shadow-md"
-                  >
-                    VIEW UPGRADE PROTOCOLS
-                  </a>
+                <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-[#1B2131] p-12 text-center gap-3">
+                  <Shield size={22} className="text-[#2E3847]" />
+                  <p className="text-[13px] font-medium text-[#8899AA]">No active subscription</p>
+                  <p className="text-[12px] text-[#4E5C6E]">Currently on free tier.</p>
+                  <GhostBtn onClick={() => window.location.href = '/pricing'}>View Plans</GhostBtn>
                 </div>
               )}
             </div>
           )}
 
-          {/* Export Tab */}
+          {/* Export */}
           {activeTab === 'Export' && (
-            <div className="max-w-2xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-black text-white tracking-tight uppercase">Data Extraction</h2>
-                  <p className="text-sm text-slate-400">Extract your compiled architecture blocks to offline storage.</p>
-                </div>
-
-                <div className="grid gap-4">
-                  {[
-                    { id: 'json', label: 'JSON METADATA DUMP', desc: 'Raw structured data schema capturing all node content.', icon: <Download className="h-5 w-5" /> },
-                    { id: 'pdf', label: 'PDF RENDER PIPELINE', desc: 'Print-ready vectorized output compiled from active assets.', icon: <Download className="h-5 w-5" /> },
-                    { id: 'docx', label: 'DOCX EXTRACTION', desc: 'Word compatible format stripped of advanced styling.', icon: <Download className="h-5 w-5" /> },
-                  ].map((opt) => (
-                    <div key={opt.id} className="group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/10 bg-black/40 p-1 transition-all hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl backdrop-blur-md">
-                      <div className="flex flex-col md:flex-row items-center justify-between rounded-xl md:rounded-[1.4rem] bg-black/40 p-4 md:p-6">
-                        <div className="space-y-1 text-center md:text-left mb-4 md:mb-0">
-                          <p className="text-sm font-black text-white group-hover:text-[#1ECEFA] transition-colors uppercase tracking-tight">{opt.label}</p>
-                          <p className="text-xs text-slate-500">{opt.desc}</p>
-                        </div>
-                        <button className="flex h-12 w-12 md:h-14 md:w-14 shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 text-slate-400 transition-all hover:bg-[#1ECEFA] hover:text-black group-hover:shadow-md">
-                          {opt.icon}
-                        </button>
-                      </div>
-                      <div className="absolute bottom-0 left-0 h-[2px] w-full scale-x-0 bg-gradient-to-r from-transparent via-[#1ECEFA] to-transparent transition-transform duration-500 group-hover:scale-x-100 opacity-50" />
-                    </div>
-                  ))}
-                </div>
+            <div className="max-w-lg space-y-5">
+              <div>
+                <h2 className="text-[14px] font-semibold text-white">Data Export</h2>
+                <p className="mt-0.5 text-[12px] text-[#4E5C6E]">Download your data in various formats.</p>
               </div>
 
-              <div className="rounded-2xl md:rounded-3xl border border-red-500/20 bg-red-500/5 p-6 md:p-8 backdrop-blur-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <Shield className="h-5 w-5 text-red-500" />
-                  <h3 className="text-sm font-black uppercase tracking-[0.2em] text-red-500">Terminal Purge Sequence</h3>
-                </div>
-                <p className="mb-8 text-xs text-red-400/70 leading-relaxed max-w-lg">
-                  Initiating this sequence will permanently purge your identity context, compiled nodes, and credentials from our servers. This action is irreversible.
+              <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] overflow-hidden">
+                {[
+                  { id: 'json', label: 'JSON Metadata', desc: 'Structured data for all your assets.' },
+                  { id: 'pdf', label: 'PDF Export', desc: 'Print-ready compiled asset output.' },
+                  { id: 'docx', label: 'DOCX Export', desc: 'Word-compatible format.' },
+                ].map((opt, i) => (
+                  <div key={opt.id} className={`flex items-center justify-between px-4 py-3 ${i > 0 ? 'border-t border-[#1B2131]' : ''}`}>
+                    <div>
+                      <p className="text-[13px] font-medium text-white">{opt.label}</p>
+                      <p className="text-[11px] text-[#4E5C6E]">{opt.desc}</p>
+                    </div>
+                    <button className="flex h-8 w-8 items-center justify-center rounded border border-[#1B2131] text-[#4E5C6E] hover:text-white hover:border-[#2A3A50] transition-colors">
+                      <Download size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-md border border-rose-500/20 bg-rose-500/5 p-4 space-y-3">
+                <p className="text-[13px] font-semibold text-rose-400">Danger Zone</p>
+                <p className="text-[12px] text-rose-400/60">
+                  Permanently delete your account and all associated data. This cannot be undone.
                 </p>
-                <button className="rounded-xl md:rounded-2xl border border-red-500 bg-red-500/10 px-6 md:px-8 py-3 md:py-4 text-xs font-black uppercase tracking-widest text-red-500 transition-all hover:bg-red-500 hover:text-white shadow-sm">
-                  INITIATE PURGE
+                <button className="inline-flex items-center h-8 px-4 rounded border border-rose-500/30 text-rose-400 text-[12px] font-medium hover:bg-rose-500/10 transition-colors">
+                  Delete Account
                 </button>
               </div>
             </div>
           )}
 
-          {/* Career Hub Tab */}
+          {/* Career Hub */}
           {activeTab === 'Career' && (
-            <div className="max-w-4xl space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="space-y-1">
-                <h2 className="text-2xl md:text-3xl font-black text-white tracking-tighter uppercase">Career Hub</h2>
-                <p className="text-sm text-slate-400">Advanced career tools to optimize your professional trajectory.</p>
+            <div className="space-y-5">
+              <div>
+                <h2 className="text-[14px] font-semibold text-white">Career Hub</h2>
+                <p className="mt-0.5 text-[12px] text-[#4E5C6E]">Advanced tools to optimize your professional trajectory.</p>
               </div>
 
-              <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+              <div className="grid gap-3 md:grid-cols-2">
                 {[
-                  {
-                    title: 'Career Coach',
-                    desc: 'Personalized guidance and progress tracking powered by AI.',
-                    href: '/coach',
-                    icon: <User className="h-6 w-6" />,
-                    color: 'blue'
-                  },
-                  {
-                    title: 'Job Matching',
-                    desc: 'Align your assets to openings and find optimized fits.',
-                    href: '/jobs',
-                    icon: <BriefcaseBusiness className="h-6 w-6" />,
-                    color: 'cyan'
-                  },
-                  {
-                    title: 'Mock Interview',
-                    desc: 'Practice interview rounds with real-time feedback.',
-                    href: '/interview',
-                    icon: <Shield className="h-6 w-6" />,
-                    color: 'purple'
-                  },
-                  {
-                    title: 'Networking',
-                    desc: 'Manage outreach messages and professional connections.',
-                    href: '/network',
-                    icon: <LinkIcon className="h-6 w-6" />,
-                    color: 'indigo'
-                  },
+                  { title: 'Career Coach', desc: 'Personalized guidance and progress tracking.', href: '/coach', icon: <User size={16} /> },
+                  { title: 'Job Matching', desc: 'Align your assets to openings.', href: '/jobs', icon: <BriefcaseBusiness size={16} /> },
+                  { title: 'Mock Interview', desc: 'Practice rounds with real-time feedback.', href: '/interview', icon: <Shield size={16} /> },
+                  { title: 'Networking', desc: 'Manage outreach and connections.', href: '/network', icon: <LinkIcon size={16} /> },
                 ].map((item) => (
                   <a
                     key={item.href}
                     href={item.href}
-                    className="group relative overflow-hidden rounded-2xl md:rounded-[2rem] border border-white/10 bg-black/40 p-6 md:p-8 transition-all duration-300 hover:border-[#1ECEFA]/50 hover:bg-black/60 shadow-xl"
+                    className="group rounded-md border border-[#1B2131] bg-[#0B0E14] p-4 hover:border-[#2A3A50] transition-colors flex gap-3"
                   >
-                    <div className="relative z-10 flex flex-col h-full">
-                      <div className="mb-6 flex h-12 w-12 md:h-14 md:w-14 items-center justify-center rounded-xl md:rounded-2xl bg-white/5 border border-white/5 text-slate-400 group-hover:bg-[#1ECEFA] group-hover:text-black transition-all duration-300">
-                        {item.icon}
-                      </div>
-                      <div className="mt-auto">
-                        <h3 className="text-lg md:text-xl font-black text-white tracking-tight uppercase group-hover:text-[#1ECEFA] transition-colors">{item.title}</h3>
-                        <p className="mt-2 text-sm text-slate-500 leading-relaxed">{item.desc}</p>
-                      </div>
-                      <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#1ECEFA] opacity-0 group-hover:opacity-100 transition-opacity">
-                        Initialize Module <ArrowUpRight className="h-3 w-3" />
-                      </div>
+                    <div className="h-8 w-8 shrink-0 flex items-center justify-center rounded border border-[#1B2131] text-[#4E5C6E] group-hover:text-[#1ECEFA] group-hover:border-[#1ECEFA]/30 transition-colors">
+                      {item.icon}
                     </div>
-                    {/* Background glow on hover */}
-                    <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-[#1ECEFA]/5 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <div>
+                      <p className="text-[13px] font-medium text-white group-hover:text-[#1ECEFA] transition-colors">{item.title}</p>
+                      <p className="mt-0.5 text-[11px] text-[#4E5C6E]">{item.desc}</p>
+                    </div>
+                    <ArrowUpRight size={12} className="ml-auto self-start mt-0.5 text-[#2E3847] group-hover:text-[#4E5C6E] transition-colors shrink-0" />
                   </a>
                 ))}
               </div>
 
-              <div className="rounded-2xl md:rounded-3xl border border-white/10 bg-gradient-to-br from-black to-[#1ECEFA]/5 p-6 md:p-8">
-                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
-                  <div className="shrink-0 rounded-xl md:rounded-2xl bg-[#1ECEFA]/10 p-4 md:p-5 border border-[#1ECEFA]/20">
-                    <Zap className="h-6 w-6 md:h-8 md:w-8 text-[#1ECEFA]" />
-                  </div>
-                  <div className="flex-1 text-center md:text-left space-y-2">
-                    <h4 className="text-base md:text-lg font-black text-white tracking-tight uppercase">Career Roadmap</h4>
-                    <p className="text-sm text-slate-500 leading-relaxed">Your professional trajectory is being analyzed. Complete more assets to unlock personalized roadmap milestones.</p>
-                  </div>
-                  <div className="w-full md:w-48 bg-white/5 rounded-full h-2 overflow-hidden border border-white/5">
-                    <div className="bg-[#1ECEFA] h-full w-1/3 shadow-sm" />
+              <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4 flex items-center gap-4">
+                <div className="h-9 w-9 shrink-0 flex items-center justify-center rounded border border-[#1ECEFA]/20 bg-[#1ECEFA]/5 text-[#1ECEFA]">
+                  <Zap size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-white">Career Roadmap</p>
+                  <p className="text-[11px] text-[#4E5C6E]">Complete more assets to unlock personalized milestones.</p>
+                </div>
+                <div className="w-32 shrink-0">
+                  <div className="h-[3px] rounded-full bg-[#1B2131]">
+                    <div className="h-[3px] rounded-full bg-[#1ECEFA] w-1/3" />
                   </div>
                 </div>
               </div>
@@ -780,4 +661,3 @@ export default function SettingsPage() {
     </FeaturePage>
   );
 }
-

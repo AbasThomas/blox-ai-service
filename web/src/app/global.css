@@ -11,6 +11,12 @@ body {
   min-height: 100vh;
 }
 
+/* Subtle dot grid for dashboard pages */
+.dot-grid-bg {
+  background-image: radial-gradient(circle, #1e2a38 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
 h1,
 h2,
 h3,

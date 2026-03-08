@@ -36,36 +36,26 @@ interface ConnectResponse {
   message?: string;
 }
 
-const CATEGORY_STYLES: Record<string, string> = {
-  professional: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
-  developer: 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
-  freelance: 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
-  creative: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
-  education: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  productivity: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-};
-
-const PRIORITY_STYLES: Record<string, string> = {
-  primary: 'text-[#1ECEFA]',
-  secondary: 'text-slate-300',
-  optional: 'text-slate-500',
-};
-
 function formatDate(value?: string | null) {
   if (!value) return 'Not available';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'Not available';
-  return parsed.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function callbackUrlFor(provider: string) {
   const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3333').replace(/\/$/, '');
   return `${apiBase}/v1/auth/oauth/${provider}/callback`;
 }
+
+const CATEGORY_DOT: Record<string, string> = {
+  professional: 'bg-blue-400',
+  developer: 'bg-indigo-400',
+  freelance: 'bg-[#1ECEFA]',
+  creative: 'bg-rose-400',
+  education: 'bg-amber-400',
+  productivity: 'bg-emerald-400',
+};
 
 export default function ConnectedAccountsPage() {
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
@@ -86,18 +76,10 @@ export default function ConnectedAccountsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
+  useEffect(() => { loadAccounts(); }, [loadAccounts]);
 
-  const connectedAccounts = useMemo(
-    () => accounts.filter((account) => account.connected),
-    [accounts],
-  );
-  const availableAccounts = useMemo(
-    () => accounts.filter((account) => !account.connected),
-    [accounts],
-  );
+  const connectedAccounts = useMemo(() => accounts.filter((a) => a.connected), [accounts]);
+  const availableAccounts = useMemo(() => accounts.filter((a) => !a.connected), [accounts]);
 
   const handleConnect = async (provider: string) => {
     setConnectLoading(provider);
@@ -106,22 +88,16 @@ export default function ConnectedAccountsPage() {
       const result = await integrationsApi.connect(provider) as ConnectResponse;
       if (result.authUrl) {
         const token = localStorage.getItem('blox_access_token') ?? '';
-        if (!token) {
-          setFeedback('Missing access token. Please sign in again.');
-          return;
-        }
+        if (!token) { setFeedback('Missing access token. Please sign in again.'); return; }
         const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL || window.location.origin;
         const authUrl = new URL(result.authUrl, baseUrl);
         authUrl.searchParams.set('token', token);
         window.location.href = authUrl.toString();
         return;
       }
-
       setAccounts((prev) =>
         prev.map((item) =>
-          item.id === provider
-            ? { ...item, connected: result.connected ?? true, connectedAt: new Date().toISOString() }
-            : item,
+          item.id === provider ? { ...item, connected: result.connected ?? true, connectedAt: new Date().toISOString() } : item,
         ),
       );
       setFeedback(result.message ?? 'Account connected.');
@@ -137,9 +113,7 @@ export default function ConnectedAccountsPage() {
     setFeedback('');
     try {
       await integrationsApi.disconnect(provider);
-      setAccounts((prev) =>
-        prev.map((item) => (item.id === provider ? { ...item, connected: false } : item)),
-      );
+      setAccounts((prev) => prev.map((item) => (item.id === provider ? { ...item, connected: false } : item)));
       setFeedback('Account disconnected.');
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : 'Failed to disconnect account.');
@@ -151,85 +125,76 @@ export default function ConnectedAccountsPage() {
   return (
     <FeaturePage
       title="Connected Accounts"
-      description="Review and manage professional account links like LinkedIn, Upwork, GitHub, and more."
-      headerIcon={<ShieldCheck className="h-6 w-6" />}
+      description="Manage professional account links — LinkedIn, GitHub, Figma, and more."
     >
       <div className="space-y-8">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total Providers</p>
-            <p className="mt-2 text-2xl font-black text-white">{accounts.length}</p>
-          </div>
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-300">Connected</p>
-            <p className="mt-2 text-2xl font-black text-white">{connectedAccounts.length}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Available</p>
-            <p className="mt-2 text-2xl font-black text-white">{availableAccounts.length}</p>
-          </div>
+        {/* Stat row */}
+        <div className="grid gap-px sm:grid-cols-3 bg-[#1B2131] border border-[#1B2131] rounded-md overflow-hidden">
+          {[
+            { label: 'Total providers', value: accounts.length, accent: 'bg-[#4E5C6E]' },
+            { label: 'Connected', value: connectedAccounts.length, accent: 'bg-emerald-500' },
+            { label: 'Available', value: availableAccounts.length, accent: 'bg-[#2E3847]' },
+          ].map((s) => (
+            <div key={s.label} className="relative bg-[#0B0E14] px-5 py-4">
+              <span className={`absolute left-0 top-0 bottom-0 w-[3px] ${s.accent}`} />
+              <p className="font-mono text-[11px] text-[#4E5C6E] uppercase tracking-wide">{s.label}</p>
+              <p className="mt-1.5 text-2xl font-bold text-white tabular-nums">{s.value}</p>
+            </div>
+          ))}
         </div>
 
-        {feedback ? (
-          <div className="rounded-2xl border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-4 py-3 text-sm font-semibold text-[#1ECEFA]">
+        {feedback && (
+          <div className="rounded border border-[#1ECEFA]/20 bg-[#1ECEFA]/5 px-3 py-2 text-[12px] text-[#1ECEFA]">
             {feedback}
           </div>
-        ) : null}
+        )}
 
-        <section className="space-y-4">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-300">
-            Connected Accounts
-          </h2>
+        {/* Connected */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <h2 className="text-[13px] font-semibold text-white">Connected</h2>
+          </div>
           {loading ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="h-48 animate-pulse rounded-2xl border border-white/10 bg-black/20" />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-40 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
               ))}
             </div>
           ) : connectedAccounts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center text-sm text-slate-500">
+            <div className="rounded-md border border-dashed border-[#1B2131] p-8 text-center text-[13px] text-[#4E5C6E]">
               No accounts connected yet.
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {connectedAccounts.map((account) => (
-                <article
-                  key={account.id}
-                  className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5"
-                >
-                  <div className="flex items-start justify-between gap-3">
+                <article key={account.id} className="rounded-md border border-emerald-500/20 bg-[#0B0E14] p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-white">{account.name}</h3>
-                      <p className="mt-1 text-xs text-slate-400 uppercase tracking-wider">{account.id}</p>
+                      <h3 className="text-[14px] font-semibold text-white">{account.name}</h3>
+                      <p className="mt-0.5 font-mono text-[10px] text-[#4E5C6E] uppercase">{account.id}</p>
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-300">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> linked
+                    <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">
+                      <CheckCircle2 size={10} /> linked
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${CATEGORY_STYLES[account.category] ?? 'border-white/20 bg-white/5 text-slate-300'}`}>
-                      {account.category}
-                    </span>
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${PRIORITY_STYLES[account.priority] ?? 'text-slate-400'}`}>
-                      {account.priority}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {account.mode}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className={`h-1.5 w-1.5 rounded-full ${CATEGORY_DOT[account.category] ?? 'bg-[#4E5C6E]'}`} />
+                    <span className="text-[11px] text-[#7A8DA0]">{account.category}</span>
+                    <span className="text-[11px] text-[#3A4452]">·</span>
+                    <span className="text-[11px] text-[#4E5C6E]">{account.mode}</span>
                   </div>
 
-                  <p className="mt-4 text-xs text-slate-400">
-                    Connected on {formatDate(account.connectedAt ?? account.updatedAt)}
-                  </p>
+                  <p className="text-[11px] text-[#3A4452]">Since {formatDate(account.connectedAt ?? account.updatedAt)}</p>
 
                   <button
                     type="button"
                     onClick={() => handleDisconnect(account.id)}
                     disabled={disconnectLoading === account.id}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-300 transition-colors hover:bg-red-500/20 disabled:opacity-60"
+                    className="mt-4 inline-flex w-full items-center justify-center gap-1.5 h-8 rounded border border-rose-500/20 text-rose-400 text-[11px] font-medium hover:bg-rose-500/10 disabled:opacity-60 transition-colors"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X size={11} />
                     {disconnectLoading === account.id ? 'Disconnecting...' : 'Disconnect'}
                   </button>
                 </article>
@@ -238,97 +203,86 @@ export default function ConnectedAccountsPage() {
           )}
         </section>
 
-        <section className="space-y-4">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-300">
-            Available Accounts
-          </h2>
+        {/* Available */}
+        <section className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2E3847]" />
+            <h2 className="text-[13px] font-semibold text-white">Available</h2>
+          </div>
           {loading ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((item) => (
-                <div key={item} className="h-52 animate-pulse rounded-2xl border border-white/10 bg-black/20" />
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-48 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
               ))}
             </div>
           ) : availableAccounts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-black/20 p-8 text-center text-sm text-slate-500">
-              All available accounts are already connected.
+            <div className="rounded-md border border-dashed border-[#1B2131] p-8 text-center text-[13px] text-[#4E5C6E]">
+              All accounts are already connected.
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {availableAccounts.map((account) => (
-                <article key={account.id} className="rounded-2xl border border-white/10 bg-black/20 p-5">
-                  <div className="flex items-start justify-between gap-3">
+                <article key={account.id} className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-white">{account.name}</h3>
-                      <p className="mt-1 text-xs text-slate-400 uppercase tracking-wider">{account.id}</p>
+                      <h3 className="text-[14px] font-semibold text-white">{account.name}</h3>
+                      <p className="mt-0.5 font-mono text-[10px] text-[#4E5C6E] uppercase">{account.id}</p>
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      <LinkIcon className="h-3.5 w-3.5" /> not linked
+                    <span className="inline-flex items-center gap-1 rounded border border-[#1B2131] px-1.5 py-0.5 text-[10px] text-[#4E5C6E]">
+                      <LinkIcon size={10} /> not linked
                     </span>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase tracking-wider ${CATEGORY_STYLES[account.category] ?? 'border-white/20 bg-white/5 text-slate-300'}`}>
-                      {account.category}
-                    </span>
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${PRIORITY_STYLES[account.priority] ?? 'text-slate-400'}`}>
-                      {account.priority}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      {account.mode}
-                    </span>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className={`h-1.5 w-1.5 rounded-full ${CATEGORY_DOT[account.category] ?? 'bg-[#4E5C6E]'}`} />
+                    <span className="text-[11px] text-[#7A8DA0]">{account.category}</span>
+                    <span className="text-[11px] text-[#3A4452]">·</span>
+                    <span className="text-[11px] text-[#4E5C6E]">{account.mode}</span>
+                    <span className="text-[11px] text-[#3A4452]">·</span>
+                    <span className="text-[11px] text-[#4E5C6E]">{account.priority}</span>
                   </div>
 
-                  {account.scopes.length > 0 ? (
-                    <p className="mt-3 text-[11px] text-slate-500">
+                  {account.scopes.length > 0 && (
+                    <p className="text-[11px] text-[#3A4452] mb-3">
                       Scopes: {account.scopes.join(', ')}
                     </p>
-                  ) : (
-                    <p className="mt-3 text-[11px] text-slate-500">No scopes required for this provider.</p>
                   )}
 
                   {account.mode === 'oauth' ? (
-                    <div className="mt-3 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
-                        OAuth App Fields
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                    <div className="rounded border border-amber-500/15 bg-amber-500/5 p-2.5 mb-3">
+                      <p className="text-[11px] font-medium text-amber-400 mb-1.5">OAuth credentials required</p>
+                      <div className="flex flex-wrap gap-1">
                         {(account.oauthEnvKeys ?? []).map((key) => (
-                          <span
-                            key={`${account.id}-${key}`}
-                            className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] font-bold text-amber-200"
-                          >
+                          <span key={`${account.id}-${key}`} className="font-mono text-[10px] text-amber-300/70 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">
                             {key}
                           </span>
                         ))}
                       </div>
                       {account.oauthConfigured === false ? (
-                        <p className="mt-2 text-[11px] text-amber-200/90">
+                        <p className="mt-1.5 text-[10px] text-amber-300/70">
                           Missing: {(account.missingOauthEnvKeys ?? []).join(', ')}
                         </p>
                       ) : (
-                        <p className="mt-2 text-[11px] text-emerald-300/90">
-                          Credentials configured in backend environment.
-                        </p>
+                        <p className="mt-1.5 text-[10px] text-emerald-400/70">Credentials configured.</p>
                       )}
-                      <p className="mt-2 break-all text-[11px] text-slate-400">
-                        Callback URL: {callbackUrlFor(account.id)}
+                      <p className="mt-1.5 text-[10px] text-[#3A4452] break-all">
+                        Callback: {callbackUrlFor(account.id)}
                       </p>
-                      {account.setupDocsUrl ? (
+                      {account.setupDocsUrl && (
                         <a
                           href={account.setupDocsUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-[#1ECEFA] hover:text-white"
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#1ECEFA] hover:text-white transition-colors"
                         >
-                          Open provider setup guide
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          Setup guide <ExternalLink size={10} />
                         </a>
-                      ) : null}
+                      )}
                     </div>
                   ) : (
-                    <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-[11px] text-slate-400">
-                        No client ID/secret needed. Use fallback profile details in the portfolio import flow.
+                    <div className="rounded border border-[#1B2131] bg-[#0d1018] p-2.5 mb-3">
+                      <p className="text-[11px] text-[#4E5C6E]">
+                        No client credentials needed. Use fallback profile import.
                       </p>
                     </div>
                   )}
@@ -337,18 +291,12 @@ export default function ConnectedAccountsPage() {
                     type="button"
                     onClick={() => handleConnect(account.id)}
                     disabled={connectLoading === account.id}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-black transition-colors hover:bg-[#1ECEFA] disabled:opacity-60"
+                    className="inline-flex w-full items-center justify-center gap-1.5 h-8 rounded bg-[#1ECEFA] text-[#060810] text-[11px] font-bold hover:bg-[#3DD5FF] disabled:opacity-60 transition-colors"
                   >
                     {connectLoading === account.id ? (
-                      <>
-                        <Zap className="h-3.5 w-3.5" />
-                        Connecting...
-                      </>
+                      <><Zap size={11} /> Connecting...</>
                     ) : (
-                      <>
-                        Connect Account
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </>
+                      <>Connect <ArrowUpRight size={11} /></>
                     )}
                   </button>
                 </article>

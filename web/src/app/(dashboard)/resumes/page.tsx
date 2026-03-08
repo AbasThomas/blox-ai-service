@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
-import { FileText, PlusCircle, ArrowUpRight, ScanSearch, Download } from '@/components/ui/icons';
+import { FileText, Plus, ArrowUpRight, ScanSearch, Download } from '@/components/ui/icons';
 
 interface ResumeAsset {
   id: string;
@@ -22,7 +22,7 @@ const ROLE_FILTERS = ['All', 'Frontend', 'Backend', 'Product', 'Design', 'Data']
 function formatDate(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'N/A';
-  return parsed.toLocaleDateString();
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function inferRole(title: string) {
@@ -40,28 +40,19 @@ function flattenText(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) return value.map((item) => flattenText(item)).join('\n');
   if (value && typeof value === 'object') {
-    return Object.values(value as Record<string, unknown>)
-      .map((item) => flattenText(item))
-      .join('\n');
+    return Object.values(value as Record<string, unknown>).map((item) => flattenText(item)).join('\n');
   }
   return '';
 }
 
 function escapeHtml(value: string) {
   return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
 function toFilename(title: string) {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 60) || 'resume';
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'resume';
 }
 
 export default function ResumesPage() {
@@ -84,9 +75,7 @@ export default function ResumesPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadResumes();
-  }, [loadResumes]);
+  useEffect(() => { loadResumes(); }, [loadResumes]);
 
   const filteredResumes = useMemo(() => {
     return resumes.filter((resume) => {
@@ -102,61 +91,24 @@ export default function ResumesPage() {
     setExportingId(assetId);
     setExportMessage('');
     try {
-      const fullAsset = await assetsApi.getById(assetId) as {
-        title?: string;
-        content?: unknown;
-        updatedAt?: string;
-      };
-
+      const fullAsset = await assetsApi.getById(assetId) as { title?: string; content?: unknown; updatedAt?: string };
       const title = fullAsset.title ?? 'Resume';
       const body = flattenText(fullAsset.content) || 'No resume content found.';
       const filename = toFilename(title);
 
       if (format === 'docx') {
-        const html = `
-          <html>
-            <head><meta charset="utf-8" /></head>
-            <body>
-              <h1>${escapeHtml(title)}</h1>
-              <p>Exported on ${escapeHtml(new Date().toLocaleString())}</p>
-              <pre style="white-space:pre-wrap;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;">${escapeHtml(body)}</pre>
-            </body>
-          </html>
-        `;
+        const html = `<html><head><meta charset="utf-8" /></head><body><h1>${escapeHtml(title)}</h1><p>Exported on ${escapeHtml(new Date().toLocaleString())}</p><pre style="white-space:pre-wrap;">${escapeHtml(body)}</pre></body></html>`;
         const blob = new Blob([html], { type: 'application/msword' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
-        link.download = `${filename}.doc`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        link.href = url; link.download = `${filename}.doc`;
+        document.body.appendChild(link); link.click(); link.remove();
         URL.revokeObjectURL(url);
       } else {
         const exportWindow = window.open('', '_blank', 'noopener,noreferrer');
         if (!exportWindow) throw new Error('Pop-up blocked. Allow pop-ups to export PDF.');
-
-        exportWindow.document.write(`
-          <html>
-            <head>
-              <title>${escapeHtml(title)} - PDF Export</title>
-              <style>
-                body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 32px; color: #111; }
-                h1 { margin-bottom: 8px; }
-                p { color: #444; margin-bottom: 20px; }
-                pre { white-space: pre-wrap; line-height: 1.5; font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; }
-              </style>
-            </head>
-            <body>
-              <h1>${escapeHtml(title)}</h1>
-              <p>Exported on ${escapeHtml(new Date().toLocaleString())}</p>
-              <pre>${escapeHtml(body)}</pre>
-            </body>
-          </html>
-        `);
-        exportWindow.document.close();
-        exportWindow.focus();
-        exportWindow.print();
+        exportWindow.document.write(`<html><head><title>${escapeHtml(title)}</title><style>body{font-family:system-ui,sans-serif;padding:32px;color:#111;}pre{white-space:pre-wrap;}</style></head><body><h1>${escapeHtml(title)}</h1><pre>${escapeHtml(body)}</pre></body></html>`);
+        exportWindow.document.close(); exportWindow.focus(); exportWindow.print();
       }
 
       setExportMessage(`${title} exported as ${format.toUpperCase()}.`);
@@ -170,21 +122,21 @@ export default function ResumesPage() {
   return (
     <FeaturePage
       title="Resumes & CVs"
-      description="Manage all resumes and CVs with role filters, ATS preview, tailoring actions, and PDF/DOCX export."
-      headerIcon={<FileText className="h-6 w-6" />}
+      description="Manage all resumes with role filters, ATS preview, and PDF/DOCX export."
     >
-      <div className="space-y-6">
+      <div className="space-y-5">
+        {/* Filters + actions row */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            {ROLE_FILTERS.map((role) => (
+          <div className="flex items-center h-8 rounded border border-[#1B2131] bg-[#0B0E14] overflow-hidden">
+            {ROLE_FILTERS.map((role, i) => (
               <button
                 key={role}
                 type="button"
                 onClick={() => setRoleFilter(role)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                className={`h-8 px-3 text-[12px] font-medium transition-colors border-r border-[#1B2131] last:border-r-0 ${
                   roleFilter === role
-                    ? 'border border-[#1ECEFA]/40 bg-[#1ECEFA]/15 text-[#1ECEFA]'
-                    : 'border border-white/10 bg-black/20 text-slate-400 hover:text-white'
+                    ? 'bg-[#141C28] text-white'
+                    : 'text-[#46566A] hover:text-[#8899AA]'
                 }`}
               >
                 {role}
@@ -194,97 +146,94 @@ export default function ResumesPage() {
           <div className="flex items-center gap-2">
             <Link
               href="/resumes/drafts"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold uppercasex text-slate-200 transition-colors hover:border-[#1ECEFA]/40 hover:bg-[#1ECEFA]/10 hover:text-white"
+              className="inline-flex items-center h-8 px-3 rounded border border-[#1B2131] text-[12px] font-medium text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] transition-colors"
             >
-              Resume Drafts
+              Drafts
             </Link>
             <Link
               href="/resumes/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-white"
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-[#1ECEFA] text-[#060810] text-[12px] font-bold hover:bg-[#3DD5FF] transition-colors"
             >
-              <PlusCircle className="h-4 w-4" />
-              New Resume
+              <Plus size={13} strokeWidth={3} /> New Resume
             </Link>
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-          <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
-            Target Role / Search
-          </label>
+        {/* Search */}
+        <div className="relative">
           <input
             value={targetFilter}
-            onChange={(event) => setTargetFilter(event.target.value)}
-            placeholder="Filter by role or target title..."
-            className="mt-2 w-full rounded-lg border border-white/10 bg-[#0d151d] px-3 py-2 text-sm text-white outline-none focus:border-[#1ECEFA]/40"
+            onChange={(e) => setTargetFilter(e.target.value)}
+            placeholder="Search by role or title..."
+            className="w-full h-9 rounded border border-[#1B2131] bg-[#0B0E14] px-3 text-[13px] text-white placeholder-[#3A4452] outline-none focus:border-[#2A3A50] transition-colors"
           />
         </div>
 
-        {exportMessage ? (
-          <div className="rounded-lg border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-3 py-2 text-xs text-[#1ECEFA]">
+        {/* Export message */}
+        {exportMessage && (
+          <div className="rounded border border-[#1ECEFA]/20 bg-[#1ECEFA]/5 px-3 py-2 text-[12px] text-[#1ECEFA]">
             {exportMessage}
           </div>
-        ) : null}
+        )}
 
+        {/* List */}
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-52 animate-pulse rounded-2xl border border-white/10 bg-black/20" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-28 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
             ))}
           </div>
         ) : filteredResumes.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/20 bg-black/20 p-12 text-center">
-            <p className="text-sm text-slate-400">No resumes match your filters.</p>
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-[#1B2131] p-12 text-center gap-2">
+            <FileText size={22} className="text-[#2E3847]" />
+            <p className="text-[13px] text-[#4E5C6E]">No resumes match your filters.</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
             {filteredResumes.map((resume) => (
               <article
                 key={resume.id}
-                className="rounded-2xl border border-white/10 bg-black/20 p-5 transition-colors hover:border-[#1ECEFA]/40"
+                className="rounded-md border border-[#1B2131] bg-[#0B0E14] px-4 py-4 hover:border-[#2A3A50] transition-colors"
               >
-                <h2 className="line-clamp-2 text-base font-bold text-white">{resume.title}</h2>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
-                  <p>
-                    ATS Score Preview: <span className="font-bold text-white">{resume.healthScore ?? 0}%</span>
-                  </p>
-                  <p>
-                    Last Tailored: <span className="font-bold text-white">{formatDate(resume.updatedAt)}</span>
-                  </p>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <Link
-                    href={`/resumes/${resume.id}/edit`}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white"
-                  >
-                    Edit <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
-                  <Link
-                    href={`/scanner?assetId=${encodeURIComponent(resume.id)}`}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white"
-                  >
-                    <ScanSearch className="h-3.5 w-3.5" />
-                    Tailor for Job
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => handleExport(resume.id, 'pdf')}
-                    disabled={exportingId === resume.id}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white disabled:opacity-50"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    {exportingId === resume.id ? 'Exporting...' : 'Export PDF'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExport(resume.id, 'docx')}
-                    disabled={exportingId === resume.id}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white disabled:opacity-50"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Export DOCX
-                  </button>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h2 className="text-[14px] font-semibold text-white truncate">{resume.title}</h2>
+                    <div className="mt-1 flex items-center gap-3 text-[11px] text-[#4E5C6E]">
+                      <span>ATS <span className="text-white font-medium">{resume.healthScore ?? 0}%</span></span>
+                      <span>·</span>
+                      <span>Updated <span className="text-white font-medium">{formatDate(resume.updatedAt)}</span></span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Link
+                      href={`/resumes/${resume.id}/edit`}
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded border border-[#1B2131] text-[11px] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] transition-colors"
+                    >
+                      Edit <ArrowUpRight size={11} />
+                    </Link>
+                    <Link
+                      href={`/scanner?assetId=${encodeURIComponent(resume.id)}`}
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded border border-[#1B2131] text-[11px] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] transition-colors"
+                    >
+                      <ScanSearch size={11} /> Tailor
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleExport(resume.id, 'pdf')}
+                      disabled={exportingId === resume.id}
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded border border-[#1B2131] text-[11px] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] disabled:opacity-40 transition-colors"
+                    >
+                      <Download size={11} /> PDF
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExport(resume.id, 'docx')}
+                      disabled={exportingId === resume.id}
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded border border-[#1B2131] text-[11px] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] disabled:opacity-40 transition-colors"
+                    >
+                      <Download size={11} /> DOCX
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}

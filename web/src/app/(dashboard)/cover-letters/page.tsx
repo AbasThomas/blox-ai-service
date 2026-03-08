@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi } from '@/lib/api';
-import { Mail, PlusCircle, ArrowUpRight, History, Sparkles } from '@/components/ui/icons';
+import { Mail, Plus, ArrowUpRight, History, Sparkles } from '@/components/ui/icons';
 
 interface CoverLetterAsset {
   id: string;
@@ -25,15 +25,13 @@ interface AssetVersion {
 function formatDate(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return 'N/A';
-  return parsed.toLocaleDateString();
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function getJobHint(title: string) {
   const normalized = title.toLowerCase();
-  if (normalized.includes('tailor') || normalized.includes('job')) {
-    return 'Linked to a job-specific draft';
-  }
-  return 'General-purpose letter';
+  if (normalized.includes('tailor') || normalized.includes('job')) return 'Job-specific draft';
+  return 'General-purpose';
 }
 
 export default function CoverLettersPage() {
@@ -60,9 +58,7 @@ export default function CoverLettersPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadCoverLetters();
-  }, [loadCoverLetters]);
+  useEffect(() => { loadCoverLetters(); }, [loadCoverLetters]);
 
   const recentLetters = useMemo(
     () => [...letters].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)),
@@ -71,18 +67,14 @@ export default function CoverLettersPage() {
 
   useEffect(() => {
     let cancelled = false;
-
     const loadJobContext = async () => {
       const targets = recentLetters.slice(0, 10);
       const entries = await Promise.all(
         targets.map(async (letter) => {
           try {
-            const fullAsset = await assetsApi.getById(letter.id) as {
-              content?: { jobDescription?: string };
-            };
+            const fullAsset = await assetsApi.getById(letter.id) as { content?: { jobDescription?: string } };
             const rawJobDescription = fullAsset.content?.jobDescription?.trim();
             if (!rawJobDescription) return null;
-
             const cleaned = rawJobDescription.replace(/^Job URL:\s*/i, '').trim();
             if (cleaned.startsWith('http')) {
               try {
@@ -92,52 +84,28 @@ export default function CoverLettersPage() {
                 return [letter.id, cleaned.slice(0, 80)] as const;
               }
             }
-
             return [letter.id, cleaned.slice(0, 80)] as const;
-          } catch {
-            return null;
-          }
+          } catch { return null; }
         }),
       );
-
       if (cancelled) return;
       const mappedEntries = entries.filter((entry): entry is readonly [string, string] => entry !== null);
       if (mappedEntries.length === 0) return;
-
-      setJobContextMap((prev) => ({
-        ...prev,
-        ...Object.fromEntries(mappedEntries),
-      }));
+      setJobContextMap((prev) => ({ ...prev, ...Object.fromEntries(mappedEntries) }));
     };
-
     loadJobContext();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [recentLetters]);
 
   const handleCreateFromJobUrl = useCallback(async () => {
     const trimmedUrl = jobUrl.trim();
-    if (!trimmedUrl) {
-      setMessage('Enter a job URL first.');
-      return;
-    }
-
+    if (!trimmedUrl) { setMessage('Enter a job URL first.'); return; }
     setCreatingFromJob(true);
     setMessage('');
     try {
       let source = 'Job';
-      try {
-        source = new URL(trimmedUrl).hostname.replace(/^www\./, '');
-      } catch {
-        source = 'Job Source';
-      }
-
-      const created = await assetsApi.create({
-        type: AssetType.COVER_LETTER,
-        title: `Cover Letter - ${source}`,
-      }) as { id: string };
-
+      try { source = new URL(trimmedUrl).hostname.replace(/^www\./, ''); } catch { source = 'Job Source'; }
+      const created = await assetsApi.create({ type: AssetType.COVER_LETTER, title: `Cover Letter - ${source}` }) as { id: string };
       router.push(`/cover-letters/${created.id}/edit?jobUrl=${encodeURIComponent(trimmedUrl)}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not create cover letter.');
@@ -147,14 +115,9 @@ export default function CoverLettersPage() {
   }, [jobUrl, router]);
 
   const toggleVersions = useCallback(async (assetId: string) => {
-    if (expandedVersionId === assetId) {
-      setExpandedVersionId(null);
-      return;
-    }
-
+    if (expandedVersionId === assetId) { setExpandedVersionId(null); return; }
     setExpandedVersionId(assetId);
     if (versionMap[assetId]) return;
-
     setVersionLoadingId(assetId);
     try {
       const versions = await assetsApi.listVersions(assetId) as AssetVersion[];
@@ -169,101 +132,109 @@ export default function CoverLettersPage() {
   return (
     <FeaturePage
       title="Cover Letters"
-      description="Manage generated and edited cover letters, create from job URLs, and review version history."
-      headerIcon={<Mail className="h-6 w-6" />}
+      description="Generate tailored cover letters from job URLs or write from scratch."
     >
-      <div className="space-y-6">
-        <div className="grid gap-4 rounded-2xl border border-white/10 bg-black/20 p-4 lg:grid-cols-[1fr_auto_auto]">
-          <input
-            value={jobUrl}
-            onChange={(event) => setJobUrl(event.target.value)}
-            placeholder="Paste job posting URL to generate a tailored letter"
-            className="w-full rounded-lg border border-white/10 bg-[#0d151d] px-3 py-2 text-sm text-white outline-none focus:border-[#1ECEFA]/40"
-          />
-          <button
-            type="button"
-            onClick={handleCreateFromJobUrl}
-            disabled={creatingFromJob}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1ECEFA]/40 bg-[#1ECEFA]/10 px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-[#1ECEFA] transition-colors hover:bg-[#1ECEFA]/20 disabled:opacity-50"
-          >
-            <Sparkles className="h-4 w-4" />
-            {creatingFromJob ? 'Generating...' : 'Generate from Job URL'}
-          </button>
-          <Link
-            href="/cover-letters/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1ECEFA] px-4 py-2.5 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-white"
-          >
-            <PlusCircle className="h-4 w-4" />
-            New Cover Letter
-          </Link>
+      <div className="space-y-5">
+        {/* Job URL generator */}
+        <div className="rounded-md border border-[#1B2131] bg-[#0B0E14] p-4">
+          <p className="text-[12px] font-medium text-[#7A8DA0] mb-2">Generate from job posting</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              value={jobUrl}
+              onChange={(e) => setJobUrl(e.target.value)}
+              placeholder="Paste job posting URL..."
+              className="flex-1 h-9 rounded border border-[#1B2131] bg-[#0d1018] px-3 text-[13px] text-white placeholder-[#3A4452] outline-none focus:border-[#2A3A50] transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleCreateFromJobUrl}
+              disabled={creatingFromJob}
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded border border-[#1ECEFA]/30 text-[#1ECEFA] text-[12px] font-medium hover:bg-[#1ECEFA]/10 disabled:opacity-50 transition-colors"
+            >
+              <Sparkles size={13} />
+              {creatingFromJob ? 'Generating...' : 'Generate'}
+            </button>
+            <Link
+              href="/cover-letters/new"
+              className="inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded bg-[#1ECEFA] text-[#060810] text-[12px] font-bold hover:bg-[#3DD5FF] transition-colors"
+            >
+              <Plus size={13} strokeWidth={3} /> New Letter
+            </Link>
+          </div>
         </div>
 
-        {message ? (
-          <div className="rounded-lg border border-[#1ECEFA]/30 bg-[#1ECEFA]/10 px-3 py-2 text-xs text-[#1ECEFA]">
+        {message && (
+          <div className="rounded border border-[#1ECEFA]/20 bg-[#1ECEFA]/5 px-3 py-2 text-[12px] text-[#1ECEFA]">
             {message}
           </div>
-        ) : null}
+        )}
 
+        {/* List */}
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-36 animate-pulse rounded-2xl border border-white/10 bg-black/20" />
+              <div key={i} className="h-24 animate-pulse rounded-md border border-[#1B2131] bg-[#0B0E14]" />
             ))}
           </div>
         ) : recentLetters.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/20 bg-black/20 p-12 text-center">
-            <p className="text-sm text-slate-400">No cover letters yet. Create one to start applying faster.</p>
+          <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-[#1B2131] p-12 text-center gap-2">
+            <Mail size={22} className="text-[#2E3847]" />
+            <p className="text-[13px] text-[#4E5C6E]">No cover letters yet. Create one to start applying faster.</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {recentLetters.map((letter) => (
               <article
                 key={letter.id}
-                className="rounded-2xl border border-white/10 bg-black/20 p-5 transition-colors hover:border-[#1ECEFA]/40"
+                className="rounded-md border border-[#1B2131] bg-[#0B0E14] px-4 py-4 hover:border-[#2A3A50] transition-colors"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <h2 className="truncate text-base font-bold text-white">{letter.title}</h2>
-                    <p className="mt-1 text-xs text-slate-500">Updated: {formatDate(letter.updatedAt)}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Job link status: {jobContextMap[letter.id] ? `Linked to ${jobContextMap[letter.id]}` : getJobHint(letter.title)}
-                    </p>
+                    <h2 className="text-[14px] font-semibold text-white truncate">{letter.title}</h2>
+                    <div className="mt-1 flex items-center gap-3 text-[11px] text-[#4E5C6E]">
+                      <span>Updated {formatDate(letter.updatedAt)}</span>
+                      <span>·</span>
+                      <span>{jobContextMap[letter.id] ? `Linked: ${jobContextMap[letter.id]}` : getJobHint(letter.title)}</span>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 sm:w-auto">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Link
                       href={`/cover-letters/${letter.id}/edit`}
-                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white"
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded border border-[#1B2131] text-[11px] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50] transition-colors"
                     >
-                      Edit <ArrowUpRight className="h-3.5 w-3.5" />
+                      Edit <ArrowUpRight size={11} />
                     </Link>
                     <button
                       type="button"
                       onClick={() => toggleVersions(letter.id)}
-                      className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-slate-200 hover:border-[#1ECEFA]/50 hover:text-white"
+                      className={`inline-flex items-center gap-1 h-7 px-2.5 rounded border text-[11px] transition-colors ${
+                        expandedVersionId === letter.id
+                          ? 'border-[#1ECEFA]/30 bg-[#1ECEFA]/5 text-[#1ECEFA]'
+                          : 'border-[#1B2131] text-[#7A8DA0] hover:text-white hover:border-[#2A3A50]'
+                      }`}
                     >
-                      <History className="h-3.5 w-3.5" />
-                      Version History
+                      <History size={11} /> History
                     </button>
                   </div>
                 </div>
 
-                {expandedVersionId === letter.id ? (
-                  <div className="mt-4 rounded-xl border border-white/10 bg-[#0d151d] p-3">
+                {expandedVersionId === letter.id && (
+                  <div className="mt-3 rounded border border-[#1B2131] bg-[#0d1018] p-3">
                     {versionLoadingId === letter.id ? (
-                      <p className="text-xs text-slate-500">Loading version history...</p>
+                      <p className="text-[11px] text-[#4E5C6E]">Loading version history...</p>
                     ) : (versionMap[letter.id] ?? []).length === 0 ? (
-                      <p className="text-xs text-slate-500">No saved versions yet.</p>
+                      <p className="text-[11px] text-[#4E5C6E]">No saved versions yet.</p>
                     ) : (
                       <ul className="space-y-2">
                         {(versionMap[letter.id] ?? []).slice(0, 6).map((version) => (
-                          <li key={version.id} className="flex items-center justify-between text-xs">
+                          <li key={version.id} className="flex items-center justify-between text-[11px]">
                             <div className="min-w-0">
-                              <p className="truncate font-semibold text-slate-200">
+                              <p className="truncate font-medium text-[#8899AA]">
                                 {version.versionLabel ?? 'Untitled version'}
                               </p>
-                              <p className="text-slate-500">{formatDate(version.createdAt)}</p>
+                              <p className="text-[#4E5C6E]">{formatDate(version.createdAt)}</p>
                             </div>
-                            <span className="ml-3 rounded-md border border-white/10 px-2 py-1 text-[10px] uppercase text-slate-400">
+                            <span className="ml-3 font-mono text-[10px] text-[#3A4452] uppercase">
                               {version.branchName ?? 'main'}
                             </span>
                           </li>
@@ -271,7 +242,7 @@ export default function CoverLettersPage() {
                       </ul>
                     )}
                   </div>
-                ) : null}
+                )}
               </article>
             ))}
           </div>

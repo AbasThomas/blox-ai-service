@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { SidebarLeft, SidebarRight, Bell } from '@/components/ui/icons';
+import { Menu, Bell, Plus } from '@/components/ui/icons';
 import { SIDEBAR_ITEMS } from '@/lib/navigation';
 import { notificationsApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
@@ -12,6 +13,13 @@ interface NavbarProps {
   onToggle: (collapsed: boolean) => void;
 }
 
+// Which sections get a "New" shortcut button
+const QUICK_CREATE: Record<string, string> = {
+  '/portfolios':    '/portfolios/new',
+  '/resumes':       '/resumes/new',
+  '/cover-letters': '/cover-letters/new',
+};
+
 export function Navbar({ collapsed, onToggle }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -19,22 +27,23 @@ export function Navbar({ collapsed, onToggle }: NavbarProps) {
   const setUnreadCount = useBloxStore((s) => s.setUnreadNotificationCount);
   const isAuthenticated = useBloxStore((s) => s.isAuthenticated);
 
-  // Find current page title from SIDEBAR_ITEMS
-  const currentItem = SIDEBAR_ITEMS.find((item) =>
-    pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+  const currentItem = SIDEBAR_ITEMS.find(
+    (item) => pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href + '/'))
   );
-  const pageTitle = currentItem ? currentItem.label : pathname === '/notifications' ? 'Notifications' : 'Overview';
+  const pageTitle = currentItem?.label ?? (pathname === '/notifications' ? 'Notifications' : 'Overview');
 
-  // Poll unread count every 60 seconds
+  // Determine quick-create href based on current path prefix
+  const quickCreateHref = Object.entries(QUICK_CREATE).find(([prefix]) =>
+    pathname === prefix || pathname.startsWith(prefix + '/')
+  )?.[1] ?? null;
+
   useEffect(() => {
     if (!isAuthenticated) return;
-
     const fetchCount = () => {
       notificationsApi.unreadCount()
         .then((res) => setUnreadCount(res.count))
         .catch(() => undefined);
     };
-
     fetchCount();
     const interval = setInterval(fetchCount, 60_000);
     return () => clearInterval(interval);
@@ -43,40 +52,49 @@ export function Navbar({ collapsed, onToggle }: NavbarProps) {
   const displayCount = Math.min(unreadCount, 99);
 
   return (
-    <header className="sticky top-0 z-20 w-full border-b border-white/5 bg-[#0C0F13]/60 backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => onToggle(!collapsed)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all active:scale-95"
-            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {collapsed ? (
-              <SidebarRight className="h-5 w-5" strokeWidth={2} />
-            ) : (
-              <SidebarLeft className="h-5 w-5" strokeWidth={2} />
-            )}
-          </button>
+    <header className="sticky top-0 z-20 w-full border-b border-[#13171F] bg-[#080A0E]/95 backdrop-blur-md">
+      <div className="flex h-14 items-center justify-between px-5">
 
-          <div className="h-6 w-[1px] bg-white/10 hidden sm:block" />
-
-          <h1 className="text-sm font-semibold text-white">
-            {pageTitle}
-          </h1>
-        </div>
-
+        {/* Left — toggle + breadcrumb */}
         <div className="flex items-center gap-3">
           <button
+            onClick={() => onToggle(!collapsed)}
+            className="flex h-8 w-8 items-center justify-center rounded text-[#46566A] hover:text-white transition-colors"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Menu size={18} strokeWidth={2} />
+          </button>
+
+          {/* Divider + page title */}
+          <div className="flex items-center gap-2 select-none">
+            <span className="font-mono text-[13px] text-[#2E3847]">/</span>
+            <span className="text-[14px] font-semibold text-white tracking-tight">{pageTitle}</span>
+          </div>
+        </div>
+
+        {/* Right — actions */}
+        <div className="flex items-center gap-1.5">
+          {/* Context-aware New button */}
+          {quickCreateHref && (
+            <Link
+              href={quickCreateHref}
+              className="flex items-center gap-1.5 h-[30px] px-3 rounded bg-[#1ECEFA] text-[#06080C] text-[12px] font-bold hover:bg-[#3DD5FF] transition-colors"
+            >
+              <Plus size={13} strokeWidth={3} />
+              New
+            </Link>
+          )}
+
+          {/* Notifications */}
+          <button
             onClick={() => router.push('/notifications')}
-            className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-[#1ECEFA] hover:border-[#1ECEFA]/30 transition-all active:scale-95"
-            title="Notifications"
+            className="relative flex h-8 w-8 items-center justify-center rounded text-[#46566A] hover:text-white transition-colors"
+            title={`Notifications${unreadCount > 0 ? ` — ${displayCount} unread` : ''}`}
             aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
           >
-            <Bell className="h-5 w-5" strokeWidth={2} />
+            <Bell size={18} strokeWidth={1.8} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white leading-none ring-2 ring-[#0C0F13]">
-                {displayCount}
-              </span>
+              <span className="absolute top-[6px] right-[6px] h-[6px] w-[6px] rounded-full bg-rose-500" />
             )}
           </button>
         </div>

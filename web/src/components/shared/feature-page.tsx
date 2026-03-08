@@ -13,28 +13,16 @@ interface FeaturePageProps {
   headerIcon?: ReactNode;
 }
 
-export function FeaturePage({ title, description, minTier, children, className, headerIcon }: FeaturePageProps) {
+export function FeaturePage({ title, description, minTier, children, className }: FeaturePageProps) {
   return (
     <TierGate minTier={minTier}>
-      <section className={`mx-auto max-w-7xl space-y-8 ${className || ''}`}>
-        <div className="flex items-start gap-4 pb-4 border-b border-white/10">
-          {headerIcon && (
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#1ECEFA]/20 bg-[#1ECEFA]/10 shadow-sm text-[#1ECEFA]">
-              {headerIcon}
-            </div>
-          )}
-          <div>
-            <h1 className="font-display text-3xl font-black tracking-tight text-white">{title}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">{description}</p>
-          </div>
+      <section className={`mx-auto max-w-7xl space-y-7 ${className ?? ''}`}>
+        <div className="space-y-1">
+          <h1 className="text-xl font-semibold text-white tracking-tight">{title}</h1>
+          <p className="text-[13px] text-[#4E5C6E] leading-relaxed">{description}</p>
         </div>
-        
-        <div className="">
-          {children}
-        </div>
+        {children}
       </section>
     </TierGate>
   );
 }
-
-
