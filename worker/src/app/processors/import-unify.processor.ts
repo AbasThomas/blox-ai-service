@@ -653,7 +653,7 @@ export class ImportUnifyProcessor extends WorkerHost {
         return {
           name: this.text(design.title) || 'Canva Design',
           description: `Canva design — ${this.text(design.design_type) || 'graphic'}`,
-          url: this.text(design.view_url) || this.text(design.urls?.view_url as string) || undefined,
+          url: this.text(design.view_url) || this.text((this.asRecord(design.urls)).view_url as string) || undefined,
           imageUrl: this.text(thumbnail.url) || undefined,
         };
       });
@@ -739,10 +739,10 @@ export class ImportUnifyProcessor extends WorkerHost {
 
     const linkedinSummary = linkedin?.summary?.trim() ?? '';
     const upworkOverview = upwork?.summary?.trim() ?? '';
-    const githubBio = github?.bio?.trim() ?? '';
+    const githubBio = github?.summary?.trim() ?? '';
     const rawBio = [linkedinSummary, upworkOverview, githubBio, summaryText].filter(Boolean).join('\n\n---\n\n');
     const certList = certifications.map((item) => item.title).filter(Boolean).join(', ');
-    const projectList = merged.projects?.slice(0, 4).map((p) => p.name || p.title).filter(Boolean).join(', ') ?? '';
+    const projectList = projects.slice(0, 4).map((p) => p.name).filter(Boolean).join(', ') ?? '';
 
     const prompt = [
       `You are a world-class personal branding copywriter. Transform the professional data below into a premium, SEO-optimised About section for ${name}'s portfolio website.`,

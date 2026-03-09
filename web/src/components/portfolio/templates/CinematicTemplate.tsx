@@ -336,7 +336,7 @@ export function CinematicTemplate({ profile, subdomain }: CinematicTemplateProps
                 <span style={{ color: '#525252' }}>We construct impact.</span>
               </h2>
               <p style={{ color: '#737373', fontWeight: 300, lineHeight: 1.8, marginBottom: 32, fontSize: 15 }}>
-                {about || 'Every decision is intentional. Every deliverable is crafted with raw emotion and technical precision. The work is designed to linger long after it's experienced.'}
+                {about || "Every decision is intentional. Every deliverable is crafted with raw emotion and technical precision. The work is designed to linger long after it\u2019s experienced."}
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 28, paddingTop: 28, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 <div>
