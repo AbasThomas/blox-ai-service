@@ -144,6 +144,17 @@ export const PORTFOLIO_TEMPLATE_OPTIONS: PortfolioTemplateOption[] = [
     tags: ['light', 'minimal', 'designer', 'photographer'],
   },
   {
+    id: 'portfolio-cinematic',
+    name: 'Cinematic',
+    description: 'Dark film-production aesthetic with video hero, marquee, bento services grid and masonry gallery.',
+    accent: '#dc2626',
+    bg: '#050505',
+    surface: '#080808',
+    text: '#e5e5e5',
+    layout: 'grid-showcase',
+    tags: ['dark', 'cinematic', 'creative', 'filmmaker', 'designer', 'bold'],
+  },
+  {
     id: 'portfolio-macos',
     name: 'macOS Desktop',
     description: 'Interactive macOS Ventura-style portfolio with draggable windows and dock.',
