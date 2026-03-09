@@ -878,7 +878,6 @@ export function MacOSTemplate({ profile, subdomain }: MacOSTemplateProps) {
         return (
           <div
             key={win.id}
-            style={style}
             className="win-animate flex flex-col overflow-hidden"
             onClick={() => bringToFront(win.id)}
             style={{

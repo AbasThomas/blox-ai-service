@@ -212,7 +212,7 @@ function SocialIcon({ label }: { label: string }) {
 
 // ── main component ────────────────────────────────────────────────────────────
 
-export function BentoStudioTemplate({ profile }: BentoStudioTemplateProps) {
+export function BentoStudioTemplate({ profile, subdomain }: BentoStudioTemplateProps) {
   const { sections, user } = profile;
 
   const name = user.fullName || 'Studio';
@@ -228,13 +228,11 @@ export function BentoStudioTemplate({ profile }: BentoStudioTemplateProps) {
     'We capture authentic moments and craft visual stories blending clean minimalism with soft emotion—every frame composed with intention.';
 
   // Build carousel slides from projects
-  const slides: Slide[] = sections.projects
-    .map((p) => {
-      const imgUrl = p.snapshotUrl || p.imageUrl || p.images?.[0]?.url || '';
-      if (!imgUrl) return null;
-      return { imgUrl, title: p.title, url: p.url };
-    })
-    .filter((s): s is Slide => s !== null);
+  const slides: Slide[] = sections.projects.flatMap((p) => {
+    const imgUrl = p.snapshotUrl || p.imageUrl || p.images?.[0]?.url || '';
+    if (!imgUrl) return [];
+    return [{ imgUrl, title: p.title, url: p.url }];
+  });
 
   // Decorative aside background — avatar or first project image
   const asideBgImg =

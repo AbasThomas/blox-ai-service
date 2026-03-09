@@ -397,7 +397,7 @@ export function GardenStudioTemplate({ profile }: GardenStudioTemplateProps) {
               style={{
                 width: 'clamp(2rem, 8vw, 6rem)',
                 height: 'clamp(2.5rem, 10vw, 7.5rem)',
-                translateY: '10%',
+                transform: 'translateY(10%)',
                 filter: 'drop-shadow(0 0 15px rgba(236,72,153,0.3))',
               }}
             >
@@ -635,7 +635,7 @@ export function GardenStudioTemplate({ profile }: GardenStudioTemplateProps) {
                       <FlowerTiny color="#ec4899" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 10, color: '#f8fafc' }}>{cert.name || cert.title}</div>
+                      <div style={{ fontSize: 10, color: '#f8fafc' }}>{cert.title}</div>
                       {cert.issuer && (
                         <div style={{ fontSize: 9, color: 'rgba(248,250,252,0.35)', marginTop: 2 }}>{cert.issuer}</div>
                       )}
