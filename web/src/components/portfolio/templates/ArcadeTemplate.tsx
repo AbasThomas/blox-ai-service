@@ -96,7 +96,7 @@ function SectionHeader({ label, sub }: { label: string; sub?: string }) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-export function ArcadeTemplate({ profile }: ArcadeTemplateProps) {
+export function ArcadeTemplate({ profile, subdomain }: ArcadeTemplateProps) {
   const { sections, user } = profile;
 
   const name = (user.fullName || 'PLAYER ONE').toUpperCase();
