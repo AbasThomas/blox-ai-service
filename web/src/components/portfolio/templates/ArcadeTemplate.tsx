@@ -567,7 +567,7 @@ export function ArcadeTemplate({ profile }: ArcadeTemplateProps) {
                 <div className="space-y-2">
                   {sections.certifications.map((cert, i) => (
                     <div key={i} style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)' }}>
-                      ▸ {(cert.name || cert.title || 'CERT').toUpperCase()}
+                      ▸ {(cert.title || 'CERT').toUpperCase()}
                       {cert.issuer && <span style={{ color: 'rgba(255,255,255,0.3)' }}> — {cert.issuer.toUpperCase()}</span>}
                     </div>
                   ))}
