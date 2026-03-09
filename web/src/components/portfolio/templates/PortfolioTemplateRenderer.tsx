@@ -14,6 +14,8 @@ import { NeonDevTemplate } from './NeonDevTemplate';
 import { NightfallTemplate } from './NightfallTemplate';
 import { ShowcaseTemplate } from './ShowcaseTemplate';
 import { StudioDesignerTemplate } from './StudioDesignerTemplate';
+import { RamondTemplate } from './RamondTemplate';
+import { AlchemistTemplate } from './AlchemistTemplate';
 
 interface PortfolioTemplateRendererProps {
   profile?: PublicProfilePayload | null;
@@ -170,6 +172,10 @@ export function PortfolioTemplateRenderer({
       return <MinimalTemplate profile={safeProfile} subdomain={subdomain} />;
     case 'portfolio-grid-showcase':
       return <ShowcaseTemplate profile={safeProfile} subdomain={subdomain} />;
+    case 'portfolio-ramond':
+      return <RamondTemplate profile={safeProfile} subdomain={subdomain} />;
+    case 'portfolio-alchemist':
+      return <AlchemistTemplate profile={safeProfile} subdomain={subdomain} />;
     case 'portfolio-modern-001':
     default:
       return <NightfallTemplate profile={safeProfile} subdomain={subdomain} />;
