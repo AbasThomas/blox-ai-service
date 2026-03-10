@@ -5,6 +5,7 @@ import type { KeyboardEventHandler } from 'react';
 import { PORTFOLIO_TEMPLATE_OPTIONS, type PortfolioTemplateOption } from '@/lib/portfolio-templates';
 import { PortfolioTemplateRenderer } from './templates/PortfolioTemplateRenderer';
 import { MOCK_PORTFOLIO_PROFILE } from './mock-profile';
+import { Sparkles } from '@/components/ui/icons';
 
 /* ─── Template Preview ────────────────────────────────────────────────────── */
 
@@ -53,15 +54,16 @@ function TemplateCard({
   template,
   selected,
   onSelect,
+  onEditCode,
   deviceMode,
 }: {
   template: PortfolioTemplateOption;
   selected: boolean;
   onSelect: (id: string) => void;
+  onEditCode?: (id: string) => void;
   deviceMode: DeviceMode;
 }) {
   const [hovered, setHovered] = useState(false);
-
   const handleActivate = () => onSelect(template.id);
   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -139,11 +141,24 @@ function TemplateCard({
       <div className="flex flex-col gap-1 border-t border-white/5 bg-[#0C0F13] px-3 py-2.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold text-slate-200">{template.name}</span>
-          <div
-            className="h-2 w-2 shrink-0 rounded-full"
-            style={{ background: template.accent }}
-            aria-hidden
-          />
+          <div className="flex items-center gap-1.5">
+            {onEditCode && selected && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onEditCode(template.id); }}
+                title="Edit template code"
+                className="flex items-center gap-1 rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-400 hover:border-indigo-500/30 hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors"
+              >
+                <Sparkles size={9} />
+                Edit Code
+              </button>
+            )}
+            <div
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ background: template.accent }}
+              aria-hidden
+            />
+          </div>
         </div>
         <p className="truncate text-[10px] text-slate-500">{template.description}</p>
       </div>
@@ -157,9 +172,16 @@ interface TemplatePickerProps {
   value: string;
   onChange: (id: string) => void;
   columns?: 2 | 3;
+  /** Called when user clicks "Edit Code" on the selected template */
+  onEditCode?: (templateId: string) => void;
 }
 
-export function TemplatePicker({ value, onChange, columns = 3 }: TemplatePickerProps) {
+export function TemplatePicker({
+  value,
+  onChange,
+  columns = 3,
+  onEditCode,
+}: TemplatePickerProps) {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop');
 
   return (
@@ -197,6 +219,7 @@ export function TemplatePicker({ value, onChange, columns = 3 }: TemplatePickerP
             template={template}
             selected={value === template.id}
             onSelect={onChange}
+            onEditCode={onEditCode}
             deviceMode={deviceMode}
           />
         ))}

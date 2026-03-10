@@ -91,6 +91,7 @@
     "@hugeicons/core-free-icons": "^3.3.0",
     "@hugeicons/react": "^1.1.5",
     "@huggingface/transformers": "^3.8.1",
+    "@monaco-editor/react": "^4.7.0",
     "@nestjs/apollo": "^13.2.4",
     "@nestjs/axios": "^4.0.1",
     "@nestjs/bullmq": "^11.0.4",

@@ -71,6 +71,10 @@ export interface PublicProfilePayload {
     emailInitials?: string;
     headline?: string;
     avatarUrl?: string;
+    /** Human-readable location string, e.g. "Lagos, Nigeria" */
+    location?: string;
+    /** Twitter/X handle without @, e.g. "johndoe" */
+    twitterHandle?: string;
   };
   seo: PublicProfileSeoConfig;
   sections: PublicProfileSections;

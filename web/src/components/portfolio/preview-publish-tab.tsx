@@ -10,6 +10,7 @@ import {
 import { buildPreviewProfile } from '@/lib/portfolio-preview';
 import { TemplatePicker } from './template-picker';
 import { PortfolioTemplateRenderer } from './templates/PortfolioTemplateRenderer';
+import { CodeEditorModal, type CodeCustomizations } from './code-editor/CodeEditorModal';
 import { ArrowUpRight, Globe, Sparkles, Zap } from '@/components/ui/icons';
 
 type ViewMode = 'desktop' | 'tablet' | 'mobile';
@@ -101,6 +102,9 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
   const [rawContent, setRawContent] = useState<Record<string, unknown>>({});
   const [assetTitle, setAssetTitle] = useState('');
   const [assetUser, setAssetUser] = useState<{ fullName?: string; email?: string }>({});
+  // Code editor state
+  const [codeEditorOpen, setCodeEditorOpen] = useState(false);
+  const [codeCustomizations, setCodeCustomizations] = useState<CodeCustomizations>({ css: '', config: '' });
 
   const publicUrl = useMemo(() => {
     if (typeof window === 'undefined') return '';
@@ -140,6 +144,12 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
       const content = toRecord(data.content);
       setRawContent(content);
       setTemplateId(normalizePortfolioTemplateId(asStr(content.templateId)));
+      // Load existing code customizations
+      const customizations = toRecord(content.codeCustomizations);
+      setCodeCustomizations({
+        css: asStr(customizations.css),
+        config: asStr(customizations.config),
+      });
       const seo = toRecord(data.seoConfig);
       setSeoRaw(seo);
       setSeoForm({
@@ -272,9 +282,33 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
     finally { setAuditing(false); }
   };
 
+  const handleSaveCode = useCallback(async (customizations: CodeCustomizations) => {
+    const nextContent = { ...rawContent, codeCustomizations: customizations };
+    await assetsApi.update(assetId, { content: nextContent });
+    setRawContent(nextContent);
+    setCodeCustomizations(customizations);
+  }, [assetId, rawContent]);
+
+  const handleOpenCodeEditor = useCallback((id: string) => {
+    setTemplateId(id);
+    setCodeEditorOpen(true);
+  }, []);
+
   const isLive = !!publishedUrl;
 
   return (
+    <>
+    {/* Code editor modal (full-screen) */}
+    <CodeEditorModal
+      isOpen={codeEditorOpen}
+      onClose={() => setCodeEditorOpen(false)}
+      templateId={templateId}
+      profile={previewProfile}
+      initialCss={codeCustomizations.css}
+      initialConfig={codeCustomizations.config}
+      onSave={handleSaveCode}
+    />
+
     <div className="space-y-6">
       {/* Global message */}
       {msg && (
@@ -296,12 +330,28 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <Heading>Choose a template</Heading>
-              <button type="button" onClick={() => void handleSaveTemplate()} disabled={savingTemplate}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#1ECEFA] px-3 py-1.5 text-xs font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors">
-                {savingTemplate ? 'Saving…' : 'Apply template'}
-              </button>
+              <div className="flex items-center gap-2">
+                {/* "Edit Code" standalone button for selected template */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenCodeEditor(templateId)}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition-colors"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  Edit Code
+                </button>
+                <button type="button" onClick={() => void handleSaveTemplate()} disabled={savingTemplate}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#1ECEFA] px-3 py-1.5 text-xs font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors">
+                  {savingTemplate ? 'Saving…' : 'Apply template'}
+                </button>
+              </div>
             </div>
-            <TemplatePicker value={templateId} onChange={setTemplateId} columns={3} />
+            <TemplatePicker
+              value={templateId}
+              onChange={setTemplateId}
+              columns={3}
+              onEditCode={handleOpenCodeEditor}
+            />
           </div>
 
           {/* Preview viewport */}
@@ -328,6 +378,10 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
 
             <div className="flex justify-center overflow-hidden rounded-xl border border-white/8 bg-[#060A12]">
               <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] w-full overflow-y-auto transition-all duration-300 transform-gpu`}>
+                {/* Inject saved CSS customizations into the preview */}
+                {codeCustomizations.css && (
+                  <style dangerouslySetInnerHTML={{ __html: codeCustomizations.css }} />
+                )}
                 <PortfolioTemplateRenderer
                   profile={previewProfile}
                   subdomain={normSub(subdomain) || previewProfile.subdomain}
@@ -469,5 +523,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
         </aside>
       </div>
     </div>
+    </>
   );
 }

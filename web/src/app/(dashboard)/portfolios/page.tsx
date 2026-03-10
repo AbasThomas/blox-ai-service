@@ -8,6 +8,7 @@ import { AssetType } from '@nextjs-blox/shared-types';
 import { FeaturePage } from '@/components/shared/feature-page';
 import { assetsApi, onboardingApi } from '@/lib/api';
 import { useBloxStore } from '@/lib/store/app-store';
+import { getTemplateById } from '@/lib/portfolio-templates';
 import {
   BriefcaseBusiness,
   Plus,
@@ -24,6 +25,8 @@ interface PortfolioAsset {
   type: AssetType;
   healthScore?: number | null;
   publishedUrl?: string | null;
+  snapshotUrl?: string | null;
+  templateId?: string | null;
   updatedAt: string;
 }
 
@@ -57,6 +60,9 @@ function writeIgnored(uid: string, ids: string[]) {
 
 function PortfolioCard({ portfolio, onClick }: { portfolio: PortfolioAsset; onClick: () => void }) {
   const isLive = !!portfolio.publishedUrl;
+  const template = getTemplateById(portfolio.templateId ?? 'portfolio-modern-001');
+  const [imgError, setImgError] = useState(false);
+  const showSnapshot = !!portfolio.snapshotUrl && !imgError;
 
   return (
     <motion.div
@@ -71,41 +77,89 @@ function PortfolioCard({ portfolio, onClick }: { portfolio: PortfolioAsset; onCl
         onClick={onClick}
         className="group relative w-full overflow-hidden rounded-md border border-[#1B2131] bg-[#0B0E14] hover:border-[#2A3A50] transition-colors focus:outline-none"
       >
-        <div className="relative aspect-video overflow-hidden bg-[#080A0E]">
-          {/* Browser chrome */}
-          <div className="absolute inset-0 flex flex-col">
-            <div className="h-7 border-b border-[#1B2131] bg-[#080A0E] flex items-center gap-1.5 px-3 shrink-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-rose-500/40" />
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500/40" />
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/40" />
-              <div className="ml-2 h-3 w-28 rounded-sm bg-[#1B2131]" />
-            </div>
-            <div className="flex-1 p-4 space-y-2 opacity-20 group-hover:opacity-35 transition-opacity">
-              <div className="h-3 w-3/4 rounded-sm bg-[#4E5C6E]" />
-              <div className="h-2 w-1/2 rounded-sm bg-[#2E3847]" />
-              <div className="mt-3 h-2 w-full rounded-sm bg-[#2E3847]" />
-              <div className="h-2 w-5/6 rounded-sm bg-[#2E3847]" />
-              <div className="h-2 w-4/6 rounded-sm bg-[#2E3847]" />
-            </div>
+        {/* Preview area — browser chrome + thumbnail */}
+        <div className="relative aspect-video overflow-hidden" style={{ background: template.bg }}>
+
+          {/* Browser chrome bar */}
+          <div className="absolute inset-x-0 top-0 z-10 h-6 border-b border-black/30 flex items-center gap-1 px-2.5 shrink-0"
+            style={{ background: `${template.bg}ee` }}>
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500/50" />
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500/50" />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
+            <div className="ml-1.5 h-2.5 flex-1 max-w-[100px] rounded-sm"
+              style={{ background: `${template.surface}80` }} />
           </div>
 
+          {/* Snapshot image */}
+          {showSnapshot ? (
+            <img
+              src={portfolio.snapshotUrl!}
+              alt={`${portfolio.title} preview`}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+              style={{ marginTop: '24px', height: 'calc(100% - 24px)' }}
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            /* Template-themed placeholder — shows brand colors accurately */
+            <div
+              className="absolute inset-0 flex flex-col"
+              style={{ paddingTop: '24px' }}
+            >
+              {/* Hero block */}
+              <div className="flex flex-col gap-1.5 px-4 pt-4 pb-3">
+                <div className="h-3 w-2/3 rounded-sm opacity-60"
+                  style={{ background: template.text }} />
+                <div className="h-2 w-1/2 rounded-sm opacity-30"
+                  style={{ background: template.text }} />
+                {/* Accent line */}
+                <div className="mt-1 h-0.5 w-8 rounded-full"
+                  style={{ background: template.accent }} />
+              </div>
+              {/* Content skeleton */}
+              <div className="flex flex-1 gap-3 px-4 pb-3 opacity-20">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <div className="h-2 w-full rounded-sm" style={{ background: template.text }} />
+                  <div className="h-2 w-5/6 rounded-sm" style={{ background: template.text }} />
+                  <div className="h-2 w-4/6 rounded-sm" style={{ background: template.text }} />
+                </div>
+                <div className="w-12 flex flex-col gap-1.5">
+                  <div className="h-8 w-full rounded-sm" style={{ background: template.accent + '40' }} />
+                </div>
+              </div>
+              {/* Bottom accent strip */}
+              <div className="absolute bottom-0 inset-x-0 h-0.5 opacity-60"
+                style={{ background: `linear-gradient(90deg, transparent, ${template.accent}, transparent)` }} />
+            </div>
+          )}
+
           {/* Status badge */}
-          <div className="absolute top-9 right-3">
-            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium ${
-              isLive ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-[#1B2131] bg-[#080A0E] text-[#4E5C6E]'
+          <div className="absolute top-8 right-2 z-20">
+            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium backdrop-blur-sm ${
+              isLive
+                ? 'border-emerald-500/25 bg-emerald-950/70 text-emerald-400'
+                : 'border-white/10 bg-black/50 text-slate-500'
             }`}>
-              <span className={`h-1 w-1 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-[#2E3847]'}`} />
+              <span className={`h-1 w-1 rounded-full ${isLive ? 'bg-emerald-400' : 'bg-slate-600'}`} />
               {isLive ? 'Live' : 'Draft'}
             </span>
           </div>
 
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
-            <span className="rounded border border-[#2A3A50] bg-[#0B0E14] px-3 py-1.5 text-[11px] font-medium text-white">
+          {/* Template name badge — bottom-left */}
+          <div className="absolute bottom-2 left-2 z-20">
+            <span className="rounded border border-white/10 bg-black/50 px-1.5 py-0.5 text-[9px] text-slate-400 backdrop-blur-sm">
+              {template.name}
+            </span>
+          </div>
+
+          {/* Hover overlay */}
+          <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/50">
+            <span className="rounded border border-white/20 bg-black/70 px-3 py-1.5 text-[11px] font-medium text-white backdrop-blur-sm">
               Open
             </span>
           </div>
         </div>
 
+        {/* Card footer */}
         <div className="px-3 py-2.5 border-t border-[#1B2131] flex items-center justify-between gap-2">
           <h3 className="text-[13px] font-medium text-[#8899AA] truncate group-hover:text-white transition-colors">
             {portfolio.title}

@@ -6,15 +6,20 @@ export const runtime = 'edge';
  * Dynamic OG image generator.
  *
  * Query params:
- *   title    – main heading  (e.g. "Thomas Abas")
- *   subtitle – role/location (e.g. "Full-Stack Developer · Lagos, Nigeria")
+ *   title    – main heading    (e.g. "Thomas Abas")
+ *   subtitle – role/location   (e.g. "Full-Stack Developer · Lagos, Nigeria")
  *   domain   – shown at bottom (e.g. "thomas.blox.app")
+ *   avatar   – profile photo URL (optional — shown as circle portrait)
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const title    = searchParams.get('title')    ?? 'Blox Portfolio';
   const subtitle = searchParams.get('subtitle') ?? '';
   const domain   = searchParams.get('domain')   ?? 'blox.app';
+  const avatar   = searchParams.get('avatar')   ?? '';
+
+  // Validate avatar URL (must be https to avoid SSRF)
+  const safeAvatar = avatar.startsWith('https://') ? avatar : '';
 
   return new ImageResponse(
     (
@@ -61,6 +66,32 @@ export async function GET(request: Request) {
             BLOX
           </span>
         </div>
+
+        {/* Avatar portrait (top-left, circular) */}
+        {safeAvatar ? (
+          <div
+            style={{
+              position: 'absolute',
+              top: 44,
+              left: 72,
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '3px solid rgba(94,234,212,0.6)',
+              display: 'flex',
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={safeAvatar}
+              alt="Profile photo"
+              width={100}
+              height={100}
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            />
+          </div>
+        ) : null}
 
         {/* Main content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, zIndex: 1 }}>

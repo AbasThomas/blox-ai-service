@@ -421,6 +421,31 @@ export function mapAssetToPublicProfile(input: {
 
   const resumeAssetId = asString(content.resumeAssetId) || undefined;
 
+  const profileSection = asRecord(content.profile);
+  const avatarUrl = asString(profileSection.avatarUrl) || undefined;
+
+  // Extract location from common content fields
+  const rawLocation =
+    asString(profileSection.location) ||
+    asString(profileSection.city) ||
+    asString(asRecord(content.hero).location) ||
+    asString(asRecord(content.contact).location) ||
+    asString(asRecord(content.about).location) ||
+    '';
+  const location = rawLocation || undefined;
+
+  // Extract Twitter/X handle from already-computed links
+  const twitterLink = links.find(
+    (l) => l.url.includes('twitter.com') || l.url.includes('x.com'),
+  );
+  const rawTwitterHandle =
+    asString(profileSection.twitterHandle) ||
+    asString(profileSection.twitter) ||
+    (twitterLink
+      ? twitterLink.url.replace(/^https?:\/\/(www\.)?(twitter|x)\.com\/@?/, '').split('/')[0]
+      : '');
+  const twitterHandle = rawTwitterHandle.replace(/^@/, '') || undefined;
+
   return {
     subdomain,
     templateId,
@@ -431,7 +456,9 @@ export function mapAssetToPublicProfile(input: {
       fullName: asset.user.fullName,
       emailInitials: emailInitials(asset.user.email),
       headline: heroHeading,
-      avatarUrl: asString(asRecord(content.profile).avatarUrl) || undefined,
+      avatarUrl,
+      ...(location ? { location } : {}),
+      ...(twitterHandle ? { twitterHandle } : {}),
     },
     seo: {
       title: seoTitle,
@@ -456,5 +483,9 @@ export function mapAssetToPublicProfile(input: {
       contact: contactBody,
     },
     updatedAt: asset.updatedAt.toISOString(),
-  };
+    // Pass through code customizations for CSS injection on the live page
+    ...(asString(asRecord(content.codeCustomizations).css)
+      ? { codeCustomizations: { css: asString(asRecord(content.codeCustomizations).css) } }
+      : {}),
+  } as PublicProfilePayload & { codeCustomizations?: { css: string } };
 }

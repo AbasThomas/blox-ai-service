@@ -8,6 +8,8 @@ export interface PortfolioTemplateOption {
   text: string;
   layout: 'split-hero' | 'centered-cta' | 'timeline' | 'minimal' | 'grid-showcase';
   tags: string[];
+  /** Starter CSS shown in the code editor for this template */
+  starterCss?: string;
 }
 
 export const PORTFOLIO_TEMPLATE_OPTIONS: PortfolioTemplateOption[] = [
@@ -21,6 +23,50 @@ export const PORTFOLIO_TEMPLATE_OPTIONS: PortfolioTemplateOption[] = [
     text: '#E2E8F0',
     layout: 'split-hero',
     tags: ['dark', 'balanced', 'professional'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Nightfall Modern — CSS Overrides
+   These rules are injected on top of the template.
+   Use !important to override inline Tailwind styles.
+═══════════════════════════════════════════════ */
+
+/* ── Accent colour ─────────────────────────────
+   Change the cyan (#1ECEFA) to any colour.      */
+a, a:hover {
+  color: #1ECEFA !important;
+  text-decoration: none;
+}
+
+/* ── Hero heading ──────────────────────────────*/
+h1 {
+  font-size: 3.5rem !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.1 !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-size: 1.5rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #1ECEFA !important;
+}
+
+/* ── Body text ─────────────────────────────────*/
+p {
+  line-height: 1.75 !important;
+  color: #CBD5E1 !important;
+}
+
+/* ── Page background ───────────────────────────*/
+body, [data-template-root] {
+  background-color: #0C0F13 !important;
+}
+
+/* ── Card / surface colour ─────────────────────*/
+[data-card], .rounded-2xl, .rounded-xl {
+  background-color: #131A23 !important;
+  border-color: rgba(30, 206, 250, 0.12) !important;
+}`,
   },
   {
     id: 'portfolio-freelance-conversion',
