@@ -28,7 +28,7 @@ function TemplatePreview({
   return (
     <div
       className="relative h-full w-full overflow-hidden select-none pointer-events-none"
-      style={{ backgroundColor: template.bg }}
+      style={{ backgroundColor: template.bg, clipPath: 'inset(0)', isolation: 'isolate' }}
     >
       <div
         style={{

@@ -137,14 +137,14 @@ export function RamondTemplate({ profile, subdomain }: RamondTemplateProps) {
         .ramond-project-card:hover .ramond-img { filter: grayscale(0); transform: scale(1); }
         .ramond-project-card:hover .ramond-title { color: #ffffff; }
         .ramond-project-card:hover .ramond-cta { background: #ffffff; color: #000000; }
-        .ramond-parallax-bg { background-attachment: fixed; background-size: cover; background-position: center; }
+        .ramond-parallax-bg { background-attachment: scroll; background-size: cover; background-position: center; }
       `}</style>
 
       <div className="ramond-root" style={{ background: '#050505', color: '#d6d3d1', minHeight: '100vh' }}>
 
         {/* ── Nav ── */}
         <nav style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+          position: 'sticky', top: 0, left: 0, right: 0, zIndex: 50,
           mixBlendMode: 'difference', color: '#ffffff',
           padding: '24px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>

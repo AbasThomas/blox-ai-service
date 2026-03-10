@@ -298,7 +298,7 @@ export function CanvasDesignerTemplate({ profile, subdomain }: CanvasDesignerTem
 
           {/* Project image mosaic */}
           {sections.projects.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, maxHeight: 420 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {sections.projects.slice(0, 4).map((project, i) => {
                 const imgUrl = project.snapshotUrl || project.imageUrl || project.images?.[0]?.url;
                 return (

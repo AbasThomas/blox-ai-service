@@ -78,6 +78,37 @@ body, [data-template-root] {
     text: '#FEF3C7',
     layout: 'centered-cta',
     tags: ['dark', 'warm', 'cta-focused'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Freelance Conversion — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Amber accent colour ───────────────────────*/
+a, a:hover { color: #F59E0B !important; }
+
+/* ── Hero heading ──────────────────────────────*/
+h1 {
+  font-size: 3.25rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+}
+
+/* ── CTA buttons ───────────────────────────────*/
+button, [role="button"] {
+  border-radius: 0.5rem !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #F59E0B !important;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+}
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #FEF3C7 !important; line-height: 1.8 !important; }
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #0F0D0A !important; }`,
   },
   {
     id: 'portfolio-timeline-dev',
@@ -89,6 +120,41 @@ body, [data-template-root] {
     text: '#BBF7D0',
     layout: 'timeline',
     tags: ['dark', 'technical', 'timeline'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Dev Terminal — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Green accent ──────────────────────────────*/
+a, a:hover { color: #22C55E !important; }
+
+/* ── Terminal-style heading ────────────────────*/
+h1 {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 2.5rem !important;
+  color: #22C55E !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  color: #22C55E !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #BBF7D0 !important; line-height: 1.75 !important; }
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #060E06 !important; }
+
+/* ── Code / skill tags ─────────────────────────*/
+code, pre, kbd {
+  background-color: #0D160D !important;
+  border: 1px solid #22C55E33 !important;
+  border-radius: 0.25rem !important;
+}`,
   },
   {
     id: 'portfolio-minimal-clean',
@@ -100,6 +166,41 @@ body, [data-template-root] {
     text: '#1E1B4B',
     layout: 'minimal',
     tags: ['light', 'minimal', 'typography'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Minimal Editorial — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Indigo accent ─────────────────────────────*/
+a, a:hover { color: #6366F1 !important; }
+
+/* ── Clean serif hero ──────────────────────────*/
+h1 {
+  font-family: 'Georgia', 'Times New Roman', serif !important;
+  font-size: 3.75rem !important;
+  font-weight: 700 !important;
+  color: #1E1B4B !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  color: #1E1B4B !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Body text ─────────────────────────────────*/
+p {
+  color: #374151 !important;
+  line-height: 1.8 !important;
+  font-size: 1rem !important;
+}
+
+/* ── Page background ───────────────────────────*/
+body, [data-template-root] { background-color: #FAFAFA !important; }`,
   },
   {
     id: 'portfolio-grid-showcase',
@@ -111,6 +212,42 @@ body, [data-template-root] {
     text: '#FFE4E6',
     layout: 'grid-showcase',
     tags: ['dark', 'bold', 'grid'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Creative Gallery — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Gold accent ───────────────────────────────*/
+a, a:hover { color: #FBBF24 !important; }
+
+/* ── Bold hero ─────────────────────────────────*/
+h1 {
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+  color: #FFE4E6 !important;
+  line-height: 1.05 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #FBBF24 !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ── Body ──────────────────────────────────────*/
+p { color: #FFE4E6 !important; line-height: 1.7 !important; }
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #4A0916 !important; }
+
+/* ── Grid cards ────────────────────────────────*/
+[data-card], article {
+  background-color: #611126 !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+}`,
   },
   {
     id: 'portfolio-neon-dev',
@@ -122,6 +259,42 @@ body, [data-template-root] {
     text: '#DDD6FE',
     layout: 'timeline',
     tags: ['dark', 'neon', 'developer'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Neon Dev — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Purple neon accent ────────────────────────*/
+a, a:hover { color: #8B5CF6 !important; }
+
+/* ── Neon hero ─────────────────────────────────*/
+h1 {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
+  font-size: 2.75rem !important;
+  color: #8B5CF6 !important;
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.6) !important;
+  line-height: 1.2 !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #A78BFA !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  font-size: 0.9rem !important;
+}
+
+/* ── Glowing borders ───────────────────────────*/
+[data-card], .border {
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.08) !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #050008 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #DDD6FE !important; line-height: 1.75 !important; }`,
   },
   {
     id: 'portfolio-glass-dev',
@@ -133,6 +306,44 @@ body, [data-template-root] {
     text: '#E2E8F0',
     layout: 'split-hero',
     tags: ['dark', 'glass', 'developer'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Glass Dev — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Indigo accent ─────────────────────────────*/
+a, a:hover { color: #6366F1 !important; }
+
+/* ── Hero ──────────────────────────────────────*/
+h1 {
+  font-size: 3.25rem !important;
+  font-weight: 700 !important;
+  color: #F8FAFC !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.15 !important;
+}
+
+/* ── Glass cards ───────────────────────────────*/
+[data-card], .backdrop-blur-md, .backdrop-blur {
+  background: rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 1rem !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #6366F1 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #020617 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #CBD5E1 !important; line-height: 1.8 !important; }`,
   },
   {
     id: 'portfolio-studio-designer',
@@ -144,6 +355,44 @@ body, [data-template-root] {
     text: '#F5D0FE',
     layout: 'grid-showcase',
     tags: ['dark', 'designer', 'case-study'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Studio Designer — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Purple accent ─────────────────────────────*/
+a, a:hover { color: #A855F7 !important; }
+
+/* ── Editorial hero ────────────────────────────*/
+h1 {
+  font-family: 'Georgia', serif !important;
+  font-size: 3.5rem !important;
+  font-weight: 700 !important;
+  color: #F5D0FE !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #A855F7 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+}
+
+/* ── Case study cards ──────────────────────────*/
+[data-card], article {
+  background-color: #0F0F1A !important;
+  border: 1px solid rgba(168, 85, 247, 0.15) !important;
+  border-radius: 0.75rem !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #080812 !important; }
+
+/* ── Body ──────────────────────────────────────*/
+p { color: #E9D5FF !important; line-height: 1.8 !important; }`,
   },
   {
     id: 'portfolio-canvas-designer',
@@ -155,6 +404,44 @@ body, [data-template-root] {
     text: '#9A3412',
     layout: 'centered-cta',
     tags: ['light', 'designer', 'creative'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Canvas Designer — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Orange accent ─────────────────────────────*/
+a, a:hover { color: #F97316 !important; }
+
+/* ── Warm hero ─────────────────────────────────*/
+h1 {
+  font-family: 'Georgia', serif !important;
+  font-size: 3.5rem !important;
+  font-weight: 700 !important;
+  color: #7C2D12 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #EA580C !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* ── Cards / surfaces ──────────────────────────*/
+[data-card], .bg-white {
+  background-color: #FFFFFF !important;
+  border: 1px solid #FED7AA !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.08) !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #FFF7ED !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #9A3412 !important; line-height: 1.75 !important; }`,
   },
   {
     id: 'portfolio-garden-studio',
@@ -166,6 +453,43 @@ body, [data-template-root] {
     text: '#f8fafc',
     layout: 'centered-cta',
     tags: ['dark', 'designer', 'creative', 'minimal', 'botanical'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Garden Studio — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Pink botanical accent ─────────────────────*/
+a, a:hover { color: #ec4899 !important; }
+
+/* ── Serif hero ────────────────────────────────*/
+h1 {
+  font-family: 'Georgia', serif !important;
+  font-size: 3.25rem !important;
+  font-weight: 700 !important;
+  color: #f8fafc !important;
+  line-height: 1.15 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #ec4899 !important;
+  font-family: 'Georgia', serif !important;
+  font-size: 1.3rem !important;
+  font-weight: 600 !important;
+}
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #f0fdf4 !important; line-height: 1.8 !important; }
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #051a1a !important; }
+
+/* ── Surface cards ─────────────────────────────*/
+[data-card], article {
+  background-color: #0a2a2a !important;
+  border: 1px solid rgba(236, 72, 153, 0.2) !important;
+  border-radius: 0.75rem !important;
+}`,
   },
   {
     id: 'portfolio-arcade',
@@ -177,6 +501,51 @@ body, [data-template-root] {
     text: '#FFFFFF',
     layout: 'timeline',
     tags: ['dark', 'retro', 'arcade', 'pixel', 'developer'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Arcade HUD — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Matrix green accent ───────────────────────*/
+a, a:hover { color: #00ff41 !important; }
+
+/* ── Pixel hero ────────────────────────────────*/
+h1 {
+  font-family: 'Courier New', 'Courier', monospace !important;
+  font-size: 2.5rem !important;
+  color: #00ff41 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 65, 0.8) !important;
+  line-height: 1.2 !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-family: 'Courier New', monospace !important;
+  color: #00ff41 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  font-size: 0.875rem !important;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.6) !important;
+}
+
+/* ── Scanline overlay simulation ───────────────*/
+[data-template-root]::after {
+  content: '' !important;
+  position: fixed !important;
+  top: 0; left: 0; right: 0; bottom: 0 !important;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  ) !important;
+  pointer-events: none !important;
+  z-index: 9999 !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #050505 !important; }`,
   },
   {
     id: 'portfolio-bento-studio',
@@ -188,6 +557,44 @@ body, [data-template-root] {
     text: '#171717',
     layout: 'grid-showcase',
     tags: ['light', 'minimal', 'designer', 'photographer'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Bento Studio — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Monochrome accent ─────────────────────────*/
+a, a:hover { color: #171717 !important; text-decoration: underline !important; }
+
+/* ── Clean hero ────────────────────────────────*/
+h1 {
+  font-size: 3.5rem !important;
+  font-weight: 800 !important;
+  color: #0a0a0a !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.05 !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #737373 !important;
+}
+
+/* ── Bento grid cells ──────────────────────────*/
+[data-card], article {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E5E5E5 !important;
+  border-radius: 1.25rem !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #F5F5F5 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #404040 !important; line-height: 1.7 !important; }`,
   },
   {
     id: 'portfolio-alchemist',
@@ -199,6 +606,43 @@ body, [data-template-root] {
     text: '#e5e5e5',
     layout: 'minimal',
     tags: ['dark', 'luxury', '3d', 'interactive', 'creative', 'webgl', 'serif'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Digital Alchemist — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Gold luxury accent ────────────────────────*/
+a, a:hover { color: #D4AF37 !important; }
+
+/* ── Playfair Display hero ─────────────────────*/
+h1 {
+  font-family: 'Playfair Display', 'Georgia', serif !important;
+  font-size: 4rem !important;
+  font-weight: 700 !important;
+  color: #D4AF37 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+  font-style: italic !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-family: 'Playfair Display', 'Georgia', serif !important;
+  color: #D4AF37 !important;
+  font-size: 1.75rem !important;
+  font-weight: 600 !important;
+  font-style: italic !important;
+}
+
+/* ── Gold divider lines ────────────────────────*/
+hr {
+  border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #050505 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #d4c5a0 !important; line-height: 1.8 !important; }`,
   },
   {
     id: 'portfolio-ramond',
@@ -210,6 +654,46 @@ body, [data-template-root] {
     text: '#d6d3d1',
     layout: 'grid-showcase',
     tags: ['dark', 'luxury', 'corporate', 'real-estate', 'editorial', 'serif'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Ramond Holdings — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Orange corporate accent ───────────────────*/
+a, a:hover { color: #f97316 !important; }
+
+/* ── Cinzel serif hero ─────────────────────────*/
+h1 {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  font-size: 3.5rem !important;
+  font-weight: 700 !important;
+  color: #fafaf9 !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.1 !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-family: 'Cinzel', 'Georgia', serif !important;
+  color: #f97316 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+}
+
+/* ── Bento stat cards ──────────────────────────*/
+[data-card], article {
+  background-color: #080808 !important;
+  border: 1px solid rgba(249, 115, 22, 0.2) !important;
+  border-radius: 0.5rem !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #050505 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #d6d3d1 !important; line-height: 1.75 !important; }`,
   },
   {
     id: 'portfolio-cinematic',
@@ -221,6 +705,43 @@ body, [data-template-root] {
     text: '#e5e5e5',
     layout: 'grid-showcase',
     tags: ['dark', 'cinematic', 'creative', 'filmmaker', 'designer', 'bold'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   Cinematic — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Cinematic red accent ──────────────────────*/
+a, a:hover { color: #dc2626 !important; }
+
+/* ── Film title hero ───────────────────────────*/
+h1 {
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+  color: #FAFAFA !important;
+  letter-spacing: -0.04em !important;
+  line-height: 1.0 !important;
+  text-transform: uppercase !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  color: #dc2626 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.2em !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+}
+
+/* ── Gallery masonry items ─────────────────────*/
+[data-card], article, figure {
+  border-radius: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ── Background ────────────────────────────────*/
+body, [data-template-root] { background-color: #050505 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #d1d5db !important; line-height: 1.7 !important; }`,
   },
   {
     id: 'portfolio-macos',
@@ -232,6 +753,44 @@ body, [data-template-root] {
     text: '#1e293b',
     layout: 'grid-showcase',
     tags: ['light', 'interactive', 'creative', 'unique', 'developer'],
+    starterCss: `/* ═══════════════════════════════════════════════
+   macOS Desktop — CSS Overrides
+═══════════════════════════════════════════════ */
+
+/* ── Apple blue accent ─────────────────────────*/
+a, a:hover { color: #007aff !important; }
+
+/* ── Window title bars ─────────────────────────*/
+h1 {
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ── Section headings ──────────────────────────*/
+h2 {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: #64748b !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+/* ── macOS windows ─────────────────────────────*/
+[data-card], [class*="window"], article {
+  background: rgba(255,255,255,0.85) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important;
+}
+
+/* ── Desktop background ────────────────────────*/
+body, [data-template-root] { background-color: #1d3461 !important; }
+
+/* ── Body text ─────────────────────────────────*/
+p { color: #334155 !important; line-height: 1.6 !important; }`,
   },
 ];
 

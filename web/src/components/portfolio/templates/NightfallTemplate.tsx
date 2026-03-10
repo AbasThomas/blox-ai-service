@@ -266,7 +266,7 @@ export function NightfallTemplate({ profile, subdomain }: NightfallTemplateProps
       </div>
 
       {/* HERO */}
-      <section id="hero" className="relative flex min-h-screen items-center px-6 pt-28 pb-16">
+      <section id="hero" className="relative flex min-h-screen items-center px-4 pt-24 pb-12 md:px-6 md:pt-28 md:pb-16">
         <div
           aria-hidden
           style={{
@@ -276,7 +276,7 @@ export function NightfallTemplate({ profile, subdomain }: NightfallTemplateProps
             pointerEvents: 'none',
           }}
         />
-        <div className="relative mx-auto grid w-full max-w-5xl gap-12 lg:grid-cols-[1fr_320px] lg:items-center">
+        <div className="relative mx-auto grid w-full max-w-5xl gap-8 md:gap-12 lg:grid-cols-[1fr_320px] lg:items-center">
           <motion.div
             className="space-y-6"
             initial={{ opacity: 0, y: 32 }}

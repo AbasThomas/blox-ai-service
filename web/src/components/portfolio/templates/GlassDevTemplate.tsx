@@ -213,7 +213,7 @@ export function GlassDevTemplate({ profile }: GlassDevTemplateProps) {
       </header>
 
       {/* HERO — CENTERED WITH GLASS STAT CARDS */}
-      <section id="hero" style={{ position: 'relative', zIndex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '96px 24px 64px', textAlign: 'center' }}>
+      <section id="hero" style={{ position: 'relative', zIndex: 1, minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(72px, 12vw, 96px) clamp(16px, 4vw, 24px) clamp(40px, 8vw, 64px)', textAlign: 'center' }}>
         {/* Avatar with concentric glass rings */}
         <div style={{ position: 'relative', marginBottom: 28, display: 'inline-flex' }}>
           <div style={{ position: 'absolute', inset: -16, borderRadius: 9999, border: '1px solid rgba(99,102,241,0.12)', backdropFilter: 'blur(4px)' }} />

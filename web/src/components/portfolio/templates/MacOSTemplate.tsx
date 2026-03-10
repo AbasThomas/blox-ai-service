@@ -783,7 +783,7 @@ export function MacOSTemplate({ profile, subdomain }: MacOSTemplateProps) {
       className="relative overflow-hidden select-none"
       style={{
         width: '100%',
-        height: '100vh',
+        height: '100%',
         backgroundColor: '#fca5a5',
         backgroundImage: `
           radial-gradient(at 12% 87%, hsla(284,59%,46%,1) 0px, transparent 50%),
@@ -809,7 +809,7 @@ export function MacOSTemplate({ profile, subdomain }: MacOSTemplateProps) {
 
       {/* ── Menu bar ── */}
       <nav
-        className="fixed top-0 left-0 w-full h-7 z-[100] flex items-center justify-between px-4"
+        className="absolute top-0 left-0 w-full h-7 z-[100] flex items-center justify-between px-4"
         style={{ background: 'rgba(0,0,0,0.18)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div className="flex items-center gap-4 text-white text-[13px] font-medium">
@@ -872,8 +872,8 @@ export function MacOSTemplate({ profile, subdomain }: MacOSTemplateProps) {
 
         const isMax = win.maximized;
         const style: React.CSSProperties = isMax
-          ? { position: 'fixed', top: 28, left: 0, width: '100vw', height: 'calc(100vh - 28px)', zIndex: win.z }
-          : { position: 'fixed', top: win.y, left: win.x, width: win.w, height: win.h, zIndex: win.z };
+          ? { position: 'absolute', top: 28, left: 0, width: '100%', height: 'calc(100% - 28px)', zIndex: win.z }
+          : { position: 'absolute', top: win.y, left: win.x, width: win.w, height: win.h, zIndex: win.z };
 
         return (
           <div
@@ -967,7 +967,7 @@ export function MacOSTemplate({ profile, subdomain }: MacOSTemplateProps) {
       })}
 
       {/* ── Dock ── */}
-      <div className="fixed bottom-2 left-1/2 -translate-x-1/2 z-[200] px-2">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-[200] px-2">
         <div
           className="flex items-end gap-2 px-3 pb-2.5 pt-2.5 rounded-2xl"
           style={{

@@ -356,7 +356,7 @@ export function StudioDesignerTemplate({ profile }: StudioDesignerTemplateProps)
           <h2 style={{ fontWeight: 800, fontSize: '2rem', color: '#e2e8f0', marginBottom: 32 }}>Tools & Skills</h2>
 
           {sections.skills.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {sections.skills.map((skill) => {
                 const { icon: Icon, colorClass, hex } = getSkillIconData(skill);
                 const brand = isDesignerTool(skill) ? getToolBrand(skill) : null;

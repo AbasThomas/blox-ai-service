@@ -247,8 +247,8 @@ export function NeonDevTemplate({ profile, subdomain }: NeonDevTemplateProps) {
       </header>
 
       {/* HERO */}
-      <section id="hero" className="flex min-h-screen items-center px-6 pt-24 pb-16">
-        <div className="mx-auto grid w-full max-w-5xl gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+      <section id="hero" className="flex min-h-screen items-center px-4 pt-20 pb-12 sm:px-6 sm:pt-24 sm:pb-16">
+        <div className="mx-auto grid w-full max-w-5xl gap-8 sm:gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <NeonAvatar url={user.avatarUrl} name={name} />

@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { assetsApi, publishApi, scannerApi } from '@/lib/api';
 import type { PublicProfilePayload } from '@nextjs-blox/shared-types';
 import {
@@ -38,7 +39,6 @@ function asKeywords(v: unknown): string {
 function normSub(raw: string) {
   return raw.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 }
-
 function runLocalSeoAudit(form: SeoForm): SeoAudit {
   const tl = form.title.trim().length;
   const dl = form.description.trim().length;
@@ -52,7 +52,6 @@ function runLocalSeoAudit(form: SeoForm): SeoAudit {
   ];
   return { score: Math.round((checks.filter((c) => c.passed).length / checks.length) * 100), checks };
 }
-
 function resolvePublicUrl(publishedUrl: string, subdomain: string): string {
   if (!publishedUrl && !subdomain) return '';
   if (!publishedUrl) return `${window.location.origin}/${subdomain}`;
@@ -66,7 +65,191 @@ function resolvePublicUrl(publishedUrl: string, subdomain: string): string {
   }
 }
 
-/* ─── Section heading ─────────────────────────────────────────────────────── */
+/* ─── Alert Modal ──────────────────────────────────────────────────────────── */
+
+type AlertKind = 'ok' | 'error' | 'info';
+
+interface AlertState {
+  kind: AlertKind;
+  title: string;
+  message?: string;
+}
+
+const ALERT_DURATION = 5000; // ms before auto-close
+
+const ALERT_CONFIG: Record<AlertKind, {
+  bg: string; border: string; iconBg: string; iconColor: string;
+  barColor: string; icon: React.ReactNode;
+}> = {
+  ok: {
+    bg: 'rgba(6, 24, 18, 0.97)',
+    border: 'rgba(52, 211, 153, 0.3)',
+    iconBg: 'rgba(52, 211, 153, 0.12)',
+    iconColor: '#34d399',
+    barColor: '#34d399',
+    icon: (
+      <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+    ),
+  },
+  error: {
+    bg: 'rgba(24, 6, 6, 0.97)',
+    border: 'rgba(248, 113, 113, 0.3)',
+    iconBg: 'rgba(248, 113, 113, 0.12)',
+    iconColor: '#f87171',
+    barColor: '#f87171',
+    icon: (
+      <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="15" y1="9" x2="9" y2="15" />
+        <line x1="9" y1="9" x2="15" y2="15" />
+      </svg>
+    ),
+  },
+  info: {
+    bg: 'rgba(10, 10, 30, 0.97)',
+    border: 'rgba(99, 102, 241, 0.3)',
+    iconBg: 'rgba(99, 102, 241, 0.12)',
+    iconColor: '#818cf8',
+    barColor: '#818cf8',
+    icon: (
+      <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+    ),
+  },
+};
+
+function AlertModal({ alert, onClose }: { alert: AlertState; onClose: () => void }) {
+  const cfg = ALERT_CONFIG[alert.kind];
+  const [progress, setProgress] = useState(100);
+  const rafRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+
+  useEffect(() => {
+    startRef.current = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startRef.current;
+      const remaining = Math.max(0, 100 - (elapsed / ALERT_DURATION) * 100);
+      setProgress(remaining);
+      if (remaining > 0) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        onClose();
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [onClose]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center"
+      style={{ zIndex: 99990, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full overflow-hidden rounded-2xl shadow-2xl"
+        style={{
+          maxWidth: 460,
+          margin: '0 1rem',
+          background: cfg.bg,
+          border: `1px solid ${cfg.border}`,
+          animation: 'alert-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/10"
+          style={{ color: 'rgba(255,255,255,0.4)' }}
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        {/* Content */}
+        <div className="flex flex-col items-center px-8 pb-8 pt-10 text-center">
+          {/* Icon */}
+          <div
+            className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+            style={{ background: cfg.iconBg, color: cfg.iconColor, border: `1px solid ${cfg.border}` }}
+          >
+            {cfg.icon}
+          </div>
+
+          {/* Title */}
+          <p className="text-[18px] font-bold leading-tight text-white">
+            {alert.title}
+          </p>
+
+          {/* Message */}
+          {alert.message && (
+            <p className="mt-2 text-[14px] leading-relaxed" style={{ color: 'rgba(148,163,184,1)' }}>
+              {alert.message}
+            </p>
+          )}
+
+          {/* Dismiss button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-6 rounded-xl px-6 py-2.5 text-[13px] font-semibold transition-all hover:brightness-110 active:scale-95"
+            style={{ background: cfg.iconColor, color: '#060a10' }}
+          >
+            Got it
+          </button>
+        </div>
+
+        {/* Countdown progress bar */}
+        <div className="h-[3px] w-full" style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <div
+            className="h-full transition-none"
+            style={{ width: `${progress}%`, background: cfg.barColor, borderRadius: 2 }}
+          />
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes alert-in {
+          from { opacity: 0; transform: scale(0.88) translateY(16px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0); }
+        }
+      `}</style>
+    </div>,
+    document.body,
+  );
+}
+
+function useAlert() {
+  const [alert, setAlert] = useState<AlertState | null>(null);
+
+  const show = useCallback((kind: AlertKind, title: string, message?: string) => {
+    setAlert({ kind, title, message });
+  }, []);
+
+  const close = useCallback(() => setAlert(null), []);
+
+  return { alert, show, close };
+}
+
+/* ─── Helpers ──────────────────────────────────────────────────────────────── */
+
 function Heading({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold text-slate-400">{children}</p>;
 }
@@ -76,11 +259,13 @@ const TEXTAREA_CLS = `${INPUT_CLS} resize-y`;
 const BTN_GHOST = 'w-full rounded-xl border border-white/8 px-3 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/5 disabled:opacity-60 transition-colors';
 const BTN_PRIMARY = 'w-full rounded-xl bg-[#1ECEFA] px-3 py-2.5 text-sm font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors';
 
-interface PreviewPublishTabProps {
-  assetId: string;
-}
+/* ─── Main Component ───────────────────────────────────────────────────────── */
+
+interface PreviewPublishTabProps { assetId: string; }
 
 export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
+  const { alert, show: showAlert, close: closeAlert } = useAlert();
+
   const [viewMode, setViewMode] = useState<ViewMode>('desktop');
   const [publishedUrl, setPublishedUrl] = useState('');
   const [subdomain, setSubdomain] = useState('');
@@ -88,12 +273,8 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [unpublishing, setUnpublishing] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [msgKind, setMsgKind] = useState<'ok' | 'error' | 'info'>('info');
   const [seoForm, setSeoForm] = useState<SeoForm>(EMPTY_SEO);
   const [seoRaw, setSeoRaw] = useState<Record<string, unknown>>({});
-  const [seoMsg, setSeoMsg] = useState('');
-  const [seoMsgKind, setSeoMsgKind] = useState<'ok' | 'error'>('ok');
   const [savingSeo, setSavingSeo] = useState(false);
   const [suggestingSeo, setSuggestingSeo] = useState(false);
   const [generatingOg, setGeneratingOg] = useState(false);
@@ -102,7 +283,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
   const [rawContent, setRawContent] = useState<Record<string, unknown>>({});
   const [assetTitle, setAssetTitle] = useState('');
   const [assetUser, setAssetUser] = useState<{ fullName?: string; email?: string }>({});
-  // Code editor state
   const [codeEditorOpen, setCodeEditorOpen] = useState(false);
   const [codeCustomizations, setCodeCustomizations] = useState<CodeCustomizations>({ css: '', config: '' });
 
@@ -113,57 +293,36 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
 
   const previewProfile = useMemo<PublicProfilePayload>(() => {
     return buildPreviewProfile({
-      content: rawContent,
-      title: assetTitle,
-      seoConfig: seoRaw,
-      user: assetUser,
-      subdomain: normSub(subdomain) || 'preview',
-      publishedUrl: publicUrl,
-      templateId,
+      content: rawContent, title: assetTitle, seoConfig: seoRaw,
+      user: assetUser, subdomain: normSub(subdomain) || 'preview',
+      publishedUrl: publicUrl, templateId,
     });
   }, [rawContent, assetTitle, seoRaw, assetUser, subdomain, publicUrl, templateId]);
 
   const load = useCallback(async () => {
     try {
       const data = (await assetsApi.getById(assetId)) as {
-        slug?: string;
-        title?: string;
-        publishedUrl?: string;
-        content?: unknown;
-        seoConfig?: unknown;
+        slug?: string; title?: string; publishedUrl?: string;
+        content?: unknown; seoConfig?: unknown;
         user?: { fullName?: string; email?: string };
       };
       const seeded = normSub(asStr(data.slug) || asStr(data.title));
       if (seeded) setSubdomain(seeded);
       if (data.publishedUrl) setPublishedUrl(data.publishedUrl);
       setAssetTitle(asStr(data.title));
-      setAssetUser({
-        fullName: asStr(data.user?.fullName) || undefined,
-        email: asStr(data.user?.email) || undefined,
-      });
+      setAssetUser({ fullName: asStr(data.user?.fullName) || undefined, email: asStr(data.user?.email) || undefined });
       const content = toRecord(data.content);
       setRawContent(content);
       setTemplateId(normalizePortfolioTemplateId(asStr(content.templateId)));
-      // Load existing code customizations
       const customizations = toRecord(content.codeCustomizations);
-      setCodeCustomizations({
-        css: asStr(customizations.css),
-        config: asStr(customizations.config),
-      });
+      setCodeCustomizations({ css: asStr(customizations.css), config: asStr(customizations.config) });
       const seo = toRecord(data.seoConfig);
       setSeoRaw(seo);
-      setSeoForm({
-        title: asStr(seo.title),
-        description: asStr(seo.description),
-        keywords: asKeywords(seo.keywords),
-        ogImage: asStr(seo.ogImage),
-        ogImagePrompt: asStr(seo.ogImagePrompt),
-      });
+      setSeoForm({ title: asStr(seo.title), description: asStr(seo.description), keywords: asKeywords(seo.keywords), ogImage: asStr(seo.ogImage), ogImagePrompt: asStr(seo.ogImagePrompt) });
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Could not load preview data.');
-      setMsgKind('error');
+      showAlert('error', 'Could not load preview', err instanceof Error ? err.message : 'Unknown error');
     }
-  }, [assetId]);
+  }, [assetId, showAlert]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -178,50 +337,44 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
 
   const handleSaveTemplate = async () => {
     setSavingTemplate(true);
-    setMsg('');
     try {
       await persistTemplateSelection();
-      setMsg('Template applied to preview and saved.');
-      setMsgKind('ok');
+      showAlert('ok', 'Template applied!', 'Your template selection has been saved successfully.');
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Could not save template.');
-      setMsgKind('error');
-    } finally {
-      setSavingTemplate(false);
-    }
+      showAlert('error', 'Template save failed', err instanceof Error ? err.message : 'Unknown error');
+    } finally { setSavingTemplate(false); }
   };
 
   const handlePublish = async () => {
     const sub = normSub(subdomain);
-    if (!sub) { setMsg('Enter a valid subdomain.'); setMsgKind('error'); return; }
-    setPublishing(true); setMsg('');
+    if (!sub) { showAlert('error', 'Invalid subdomain', 'Enter a valid subdomain to publish.'); return; }
+    setPublishing(true);
     try {
       await persistTemplateSelection();
       const res = (await publishApi.publish({ assetId, subdomain: sub })) as { publishedUrl?: string; subdomain?: string; status?: string };
       const newSub = normSub(res.subdomain ?? sub);
       setSubdomain(newSub);
       if (res.publishedUrl) setPublishedUrl(res.publishedUrl);
-      setMsg(res.status === 'scheduled' ? 'Publish scheduled.' : 'Published successfully!');
-      setMsgKind('ok');
+      showAlert('ok', res.status === 'scheduled' ? 'Publish Scheduled' : 'Portfolio Published!', `Your portfolio is live at ${newSub}.blox.app`);
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Publish failed.'); setMsgKind('error');
+      showAlert('error', 'Publish Failed', err instanceof Error ? err.message : 'Unknown error');
     } finally { setPublishing(false); }
   };
 
   const handleUnpublish = async () => {
     if (!window.confirm('Unpublish this portfolio?')) return;
-    setUnpublishing(true); setMsg('');
+    setUnpublishing(true);
     try {
       await publishApi.unpublish(assetId);
       setPublishedUrl('');
-      setMsg('Unpublished.'); setMsgKind('info');
+      showAlert('info', 'Portfolio Unpublished', 'Your portfolio is no longer publicly accessible.');
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Unpublish failed.'); setMsgKind('error');
+      showAlert('error', 'Unpublish Failed', err instanceof Error ? err.message : 'Unknown error');
     } finally { setUnpublishing(false); }
   };
 
   const handleSuggestSeo = async () => {
-    setSuggestingSeo(true); setSeoMsg('');
+    setSuggestingSeo(true);
     try {
       const s = (await assetsApi.suggestSeo(assetId)) as { title?: string; description?: string; keywords?: string[]; ogImagePrompt?: string };
       setSeoForm((p) => ({
@@ -231,25 +384,25 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
         keywords: Array.isArray(s.keywords) ? s.keywords.join(', ') : p.keywords,
         ogImagePrompt: s.ogImagePrompt ?? p.ogImagePrompt,
       }));
-      setSeoMsg('AI suggestions applied.'); setSeoMsgKind('ok');
+      showAlert('ok', 'SEO Suggestions Applied', 'AI-generated metadata has been filled in. Review and save when ready.');
     } catch (err) {
-      setSeoMsg(err instanceof Error ? err.message : 'Could not generate suggestions.'); setSeoMsgKind('error');
+      showAlert('error', 'Could Not Generate Suggestions', err instanceof Error ? err.message : 'Unknown error');
     } finally { setSuggestingSeo(false); }
   };
 
   const handleGenerateOgImage = async () => {
-    setGeneratingOg(true); setSeoMsg('');
+    setGeneratingOg(true);
     try {
       const r = (await assetsApi.generateOgImage(assetId)) as { ogImage?: string };
       if (r.ogImage) { setSeoForm((p) => ({ ...p, ogImage: r.ogImage! })); setSeoRaw((p) => ({ ...p, ogImage: r.ogImage })); }
-      setSeoMsg('OG image generated.'); setSeoMsgKind('ok');
+      showAlert('ok', 'OG Image Generated', 'Your open-graph image is ready. Save SEO settings to apply it.');
     } catch (err) {
-      setSeoMsg(err instanceof Error ? err.message : 'Could not generate OG image.'); setSeoMsgKind('error');
+      showAlert('error', 'OG Image Failed', err instanceof Error ? err.message : 'Unknown error');
     } finally { setGeneratingOg(false); }
   };
 
   const handleSaveSeo = async () => {
-    setSavingSeo(true); setSeoMsg('');
+    setSavingSeo(true);
     try {
       const next = {
         ...seoRaw,
@@ -261,9 +414,9 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
       };
       await assetsApi.update(assetId, { seoConfig: next });
       setSeoRaw(next);
-      setSeoMsg('SEO settings saved.'); setSeoMsgKind('ok');
+      showAlert('ok', 'SEO Settings Saved', 'Your metadata has been updated and will apply on next publish.');
     } catch (err) {
-      setSeoMsg(err instanceof Error ? err.message : 'Could not save SEO.'); setSeoMsgKind('error');
+      showAlert('error', 'Could Not Save SEO', err instanceof Error ? err.message : 'Unknown error');
     } finally { setSavingSeo(false); }
   };
 
@@ -277,9 +430,12 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
         ...local.checks,
         ...(server.checks ?? []).filter((c) => !local.checks.some((l) => l.label === c.label)),
       ];
-      setSeoAudit({ score: Math.round((merged.filter((c) => c.passed).length / Math.max(merged.length, 1)) * 100), checks: merged });
-    } catch { /* local audit still shown */ }
-    finally { setAuditing(false); }
+      const finalScore = Math.round((merged.filter((c) => c.passed).length / Math.max(merged.length, 1)) * 100);
+      setSeoAudit({ score: finalScore, checks: merged });
+      showAlert(finalScore >= 75 ? 'ok' : finalScore >= 50 ? 'info' : 'error', `SEO Score: ${finalScore}/100`, finalScore >= 75 ? 'Great job! Your SEO is well optimised.' : 'Some improvements are needed — check the audit results below.');
+    } catch {
+      showAlert('info', `SEO Score: ${local.score}/100`, 'Local audit complete. Connect to server for a full scan.');
+    } finally { setAuditing(false); }
   };
 
   const handleSaveCode = useCallback(async (customizations: CodeCustomizations) => {
@@ -287,7 +443,8 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
     await assetsApi.update(assetId, { content: nextContent });
     setRawContent(nextContent);
     setCodeCustomizations(customizations);
-  }, [assetId, rawContent]);
+    showAlert('ok', 'Code Customizations Saved', 'Your CSS changes are saved and will appear on the published portfolio.');
+  }, [assetId, rawContent, showAlert]);
 
   const handleOpenCodeEditor = useCallback((id: string) => {
     setTemplateId(id);
@@ -298,53 +455,80 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
 
   return (
     <>
-    {/* Code editor modal (full-screen) */}
-    <CodeEditorModal
-      isOpen={codeEditorOpen}
-      onClose={() => setCodeEditorOpen(false)}
-      templateId={templateId}
-      profile={previewProfile}
-      initialCss={codeCustomizations.css}
-      initialConfig={codeCustomizations.config}
-      onSave={handleSaveCode}
-    />
+      {/* Alert modal (portal — renders at document.body) */}
+      {alert && <AlertModal alert={alert} onClose={closeAlert} />}
 
-    <div className="space-y-6">
-      {/* Global message */}
-      {msg && (
-        <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-xs ${
-          msgKind === 'error' ? 'border-rose-500/20 bg-rose-500/8 text-rose-300'
-          : msgKind === 'ok' ? 'border-emerald-500/20 bg-emerald-500/8 text-emerald-300'
-          : 'border-white/8 bg-white/[0.03] text-slate-300'
-        }`}>
-          <span>{msg}</span>
-          <button type="button" onClick={() => setMsg('')} className="ml-auto text-slate-500 hover:text-white">✕</button>
+      {/* Code editor modal (portal) */}
+      <CodeEditorModal
+        isOpen={codeEditorOpen}
+        onClose={() => setCodeEditorOpen(false)}
+        templateId={templateId}
+        profile={previewProfile}
+        initialCss={codeCustomizations.css}
+        initialConfig={codeCustomizations.config}
+        onSave={handleSaveCode}
+      />
+
+      {/* ── Top action bar ─────────────────────────────────────────────────── */}
+      <div
+        className="mb-6 flex items-center justify-between gap-4 rounded-2xl border px-5 py-4"
+        style={{
+          background: 'linear-gradient(135deg, rgba(30,206,250,0.07) 0%, rgba(99,102,241,0.05) 100%)',
+          borderColor: 'rgba(30,206,250,0.18)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+            style={{ background: 'rgba(30,206,250,0.12)', border: '1px solid rgba(30,206,250,0.25)' }}
+          >
+            <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#1ECEFA" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">Template Code Editor</p>
+            <p className="text-[11px] text-slate-500">
+              Edit CSS &amp; config — changes apply live in the editor preview
+              {codeCustomizations.css && (
+                <span className="ml-2 inline-flex items-center gap-1 rounded-full border border-[#1ECEFA]/25 bg-[#1ECEFA]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#1ECEFA]">
+                  ✦ custom code active
+                </span>
+              )}
+            </p>
+          </div>
         </div>
-      )}
 
+        <button
+          type="button"
+          onClick={() => handleOpenCodeEditor(templateId)}
+          className="shrink-0 flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+          style={{ background: '#1ECEFA', color: '#060a10' }}
+        >
+          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+          </svg>
+          Open Code Editor
+        </button>
+      </div>
+
+      {/* ── Main grid ──────────────────────────────────────────────────────── */}
       <div className="grid gap-6 xl:grid-cols-[1fr_300px]">
+
         {/* ── Left: Template picker + Preview ── */}
         <div className="space-y-5">
 
-          {/* Template picker */}
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 space-y-4">
             <div className="flex items-center justify-between">
               <Heading>Choose a template</Heading>
-              <div className="flex items-center gap-2">
-                {/* "Edit Code" standalone button for selected template */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenCodeEditor(templateId)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/20 transition-colors"
-                >
-                  <Sparkles className="h-3 w-3" />
-                  Edit Code
-                </button>
-                <button type="button" onClick={() => void handleSaveTemplate()} disabled={savingTemplate}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#1ECEFA] px-3 py-1.5 text-xs font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors">
-                  {savingTemplate ? 'Saving…' : 'Apply template'}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => void handleSaveTemplate()}
+                disabled={savingTemplate}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-[#1ECEFA] px-3 py-1.5 text-xs font-semibold text-[#0C0F13] hover:bg-white disabled:opacity-60 transition-colors"
+              >
+                {savingTemplate ? 'Saving…' : 'Apply template'}
+              </button>
             </div>
             <TemplatePicker
               value={templateId}
@@ -354,7 +538,9 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
             />
           </div>
 
-          {/* Preview viewport */}
+          {/* Preview — NOTE: we do NOT inject codeCustomizations.css here.
+              CSS rules would apply globally and break the sidebar + other UI.
+              The code editor's full-screen preview is the right place for that. */}
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Heading>Preview</Heading>
@@ -377,11 +563,7 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
             </div>
 
             <div className="flex justify-center overflow-hidden rounded-xl border border-white/8 bg-[#060A12]">
-              <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] w-full overflow-y-auto transition-all duration-300 transform-gpu`}>
-                {/* Inject saved CSS customizations into the preview */}
-                {codeCustomizations.css && (
-                  <style dangerouslySetInnerHTML={{ __html: codeCustomizations.css }} />
-                )}
+              <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] w-full overflow-y-auto transition-all duration-300`}>
                 <PortfolioTemplateRenderer
                   profile={previewProfile}
                   subdomain={normSub(subdomain) || previewProfile.subdomain}
@@ -392,10 +574,10 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
           </div>
         </div>
 
-        {/* ── Right sidebar: Publish + SEO ── */}
+        {/* ── Right sidebar ── */}
         <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
 
-          {/* Publish settings */}
+          {/* Publish */}
           <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <Heading>Publish settings</Heading>
@@ -405,7 +587,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 </span>
               )}
             </div>
-
             <div>
               <p className="mb-1.5 text-[11px] text-slate-500">Subdomain</p>
               <div className="flex overflow-hidden rounded-xl border border-white/8 bg-white/[0.03] focus-within:border-indigo-500/40 transition-colors">
@@ -415,18 +596,15 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 <span className="flex items-center border-l border-white/8 px-3 text-xs text-slate-500 whitespace-nowrap">.blox.app</span>
               </div>
             </div>
-
             <button type="button" onClick={() => void handlePublish()} disabled={publishing} className={BTN_PRIMARY}>
               {publishing ? 'Publishing…' : isLive ? 'Re-publish' : 'Publish Now'}
             </button>
-
             {isLive && (
               <button type="button" onClick={() => void handleUnpublish()} disabled={unpublishing}
                 className="w-full rounded-xl border border-rose-500/20 bg-rose-500/8 px-3 py-2.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/12 disabled:opacity-60 transition-colors">
                 {unpublishing ? 'Unpublishing…' : 'Unpublish'}
               </button>
             )}
-
             {publicUrl && (
               <a href={publicUrl} target="_blank" rel="noreferrer"
                 className="block break-all rounded-xl border border-emerald-500/20 bg-emerald-500/8 px-3 py-2.5 text-xs font-medium text-emerald-300 hover:bg-emerald-500/12 transition-colors">
@@ -444,7 +622,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 <Sparkles className="h-3 w-3" /> {suggestingSeo ? 'Generating…' : 'Auto-fill'}
               </button>
             </div>
-
             <div className="space-y-2.5">
               <label className="block space-y-1">
                 <span className="text-[11px] text-slate-500">Title <span className="text-slate-600">({seoForm.title.length}/60)</span></span>
@@ -474,14 +651,9 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 </div>
               </label>
             </div>
-
             <button type="button" onClick={() => void handleSaveSeo()} disabled={savingSeo} className={BTN_PRIMARY}>
               {savingSeo ? 'Saving…' : 'Save SEO'}
             </button>
-
-            {seoMsg && (
-              <p className={`text-[11px] ${seoMsgKind === 'ok' ? 'text-emerald-400' : 'text-rose-400'}`}>{seoMsg}</p>
-            )}
           </div>
 
           {/* SEO Audit */}
@@ -494,7 +666,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
                 </span>
               )}
             </div>
-
             {seoAudit ? (
               <div className="space-y-2">
                 <div className="h-1 rounded-full bg-white/8">
@@ -514,7 +685,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
             ) : (
               <p className="text-[11px] text-slate-600">Run an audit to check SEO quality.</p>
             )}
-
             <button type="button" onClick={() => void handleRunAudit()} disabled={auditing} className={BTN_GHOST}>
               <Zap className="mr-1.5 inline h-3.5 w-3.5" />
               {auditing ? 'Auditing…' : 'Run SEO Audit'}
@@ -522,7 +692,6 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
           </div>
         </aside>
       </div>
-    </div>
     </>
   );
 }
