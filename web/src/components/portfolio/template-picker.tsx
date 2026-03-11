@@ -89,7 +89,7 @@ function TemplateCard({
       }`}
     >
       {/* Thumbnail */}
-      <div className="relative w-full overflow-hidden bg-[#0C0F13]" style={{ aspectRatio: '16/10' }}>
+      <div className="relative w-full overflow-hidden bg-[#0C0F13] min-h-0 flex-none" style={{ aspectRatio: '16/10' }}>
         <TemplatePreview template={template} deviceMode={deviceMode} />
 
         {/* Hover overlay with template info */}

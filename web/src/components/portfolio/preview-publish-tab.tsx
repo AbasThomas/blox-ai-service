@@ -563,7 +563,7 @@ export function PreviewPublishTab({ assetId }: PreviewPublishTabProps) {
             </div>
 
             <div className="flex justify-center overflow-hidden rounded-xl border border-white/8 bg-[#060A12]">
-              <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] w-full overflow-y-auto transition-all duration-300`}>
+              <div className={`${VIEW_WIDTHS[viewMode]} relative isolate mx-auto h-[640px] min-h-0 w-full overflow-y-auto transition-all duration-300`}>
                 <PortfolioTemplateRenderer
                   profile={previewProfile}
                   subdomain={normSub(subdomain) || previewProfile.subdomain}
