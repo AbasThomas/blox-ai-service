@@ -8,6 +8,7 @@
     "build": {
       "executor": "@nx/js:tsc",
       "outputs": ["{options.outputPath}"],
+      "dependsOn": [{"projects": ["shared-types"], "target": "patch-dist"}, {"projects": ["shared-config"], "target": "patch-dist"}],
       "options": {
         "outputPath": "dist/api",
         "main": "api/src/main.ts",
